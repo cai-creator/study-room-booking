@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据报表 — 智约自习</title>
+    <style id="theme-vars">
+/* === Brand CSS: Study Room Smart Booking System === */
+/* Style: Fresh Academic — clean, trustworthy campus SaaS */
+
+:root {
+  /* === Brand Color System === */
+  --brand-hue: 195;
+  --brand-primary: #0E7C6B;
+  --brand-primary-light: #12A38D;
+  --brand-primary-lighter: #D1FAE5;
+  --brand-primary-lightest: #ECFDF5;
+  --brand-primary-dark: #065F52;
+
+  /* === State Colors (semantic only) === */
+  --state-success: #16A34A;
+  --state-success-bg: #F0FDF4;
+  --state-warning: #D97706;
+  --state-warning-bg: #FFFBEB;
+  --state-error: #DC2626;
+  --state-error-bg: #FEF2F2;
+  --state-info: #2563EB;
+  --state-info-bg: #EFF6FF;
+
+  /* === Seat Status Colors (product-specific) === */
+  --seat-available: #16A34A;
+  --seat-available-bg: #DCFCE7;
+  --seat-occupied: #EF4444;
+  --seat-occupied-bg: #FEE2E2;
+  --seat-reserved: #F59E0B;
+  --seat-reserved-bg: #FEF3C7;
+  --seat-away: #6B7280;
+  --seat-away-bg: #F3F4F6;
+
+  /* === Neutral Palette === */
+  --color-bg: #FFFFFF;
+  --color-bg-secondary: #F8FAFB;
+  --color-bg-tertiary: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94A3B8;
+  --color-text-inverse: #FFFFFF;
+
+  /* === Typography === */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0em;
+
+  /* === Radius Scale === */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* === Spacing === */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  /* === Shadow === */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  /* === Surface & Depth === */
+  --surface-card: #FFFFFF;
+  --surface-card-border: 1px solid var(--color-border);
+  --surface-raised: #FFFFFF;
+  --surface-raised-shadow: var(--shadow-md);
+
+  /* === Z-index === */
+  --z-dropdown: 100;
+  --z-modal-backdrop: 200;
+  --z-modal: 210;
+  --z-toast: 300;
+
+  /* === Layout === */
+  --max-width: 1280px;
+  --sidebar-width: 260px;
+  --header-height: 64px;
+}
+
+/* Dark mode support */
+.dark {
+  --color-bg: #0F172A;
+  --color-bg-secondary: #1E293B;
+  --color-bg-tertiary: #334155;
+  --color-surface: #1E293B;
+  --color-border: #334155;
+  --color-border-light: #1E293B;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #CBD5E1;
+  --color-text-tertiary: #64748B;
+  --color-text-inverse: #0F172A;
+
+  --brand-primary-lighter: rgba(14, 124, 107, 0.15);
+  --brand-primary-lightest: rgba(14, 124, 107, 0.08);
+
+  --state-success-bg: rgba(22, 163, 74, 0.12);
+  --state-warning-bg: rgba(217, 119, 6, 0.12);
+  --state-error-bg: rgba(220, 38, 38, 0.12);
+  --state-info-bg: rgba(37, 99, 235, 0.12);
+
+  --seat-available-bg: rgba(22, 163, 74, 0.15);
+  --seat-occupied-bg: rgba(239, 68, 68, 0.15);
+  --seat-reserved-bg: rgba(245, 158, 11, 0.15);
+  --seat-away-bg: rgba(107, 114, 128, 0.15);
+
+  --surface-card: #1E293B;
+  --surface-card-border: 1px solid var(--color-border);
+  --surface-raised: #263548;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--brand-primary);
+  }
+  @layer base {
+    body { background: var(--brand-background); color: var(--brand-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+  <!-- ===== Header ===== -->
+  <header style="height: 64px; background-color: var(--color-bg); border-bottom: 1px solid var(--color-border);" class="sticky top-0 z-50 flex items-center justify-between px-6">
+    <!-- Left: Logo -->
+    <a href="#" class="flex items-center gap-2 no-underline" style="color: var(--color-text-primary);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+      <span class="text-lg font-bold" style="font-family: var(--font-family); color: var(--color-text-primary);">智约自习</span>
+    </a>
+
+    <!-- Center: Navigation Links -->
+    <nav class="flex items-center gap-6" style="font-family: var(--font-family);">
+      <a href="#" data-nav-key="home" data-dom-id="nav-home" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">首页</a>
+      <a href="#" data-nav-key="room-selection" data-dom-id="nav-room-selection" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">自习室</a>
+      <a href="#" data-nav-key="my-reservations" data-dom-id="nav-my-reservations" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">我的预约</a>
+      <a href="#" data-nav-key="dashboard" data-dom-id="nav-dashboard" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">实时看板</a>
+      <a href="#" data-nav-key="reports" data-dom-id="nav-reports" data-active="true" class="nav-link text-sm transition-colors" style="color: var(--brand-primary); font-weight: 600; border-bottom: 2px solid var(--brand-primary); padding-bottom: 2px;">数据报表</a>
+    </nav>
+
+    <!-- Right: User Avatar -->
+    <div class="flex items-center gap-1">
+      <div class="flex items-center justify-center rounded-full cursor-pointer" style="width: 32px; height: 32px; background-color: var(--brand-primary); color: var(--color-text-inverse); font-size: var(--text-sm); font-weight: 600; font-family: var(--font-family);">
+        张
+      </div>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </header>
+
+  <!-- ===== Main Content ===== -->
+  <main id="main-content" class="max-w-[1280px] mx-auto px-6 py-8" style="font-family: var(--font-family);">
+
+    <!-- Section: Title + Export -->
+    <div class="flex items-center justify-between mb-8 fade-in" style="animation-delay: 0ms;">
+      <div>
+        <h1 class="text-2xl font-semibold" style="color: var(--color-text-primary); letter-spacing: -0.02em; text-wrap: balance;">数据报表</h1>
+        <p class="text-sm mt-1" style="color: var(--color-text-tertiary);">全局运营数据概览与分析</p>
+      </div>
+      <button class="btn-export flex items-center gap-2 text-sm font-medium px-5 py-2 transition-colors" style="background: transparent; border: 1.5px solid var(--brand-primary); border-radius: var(--radius-md); color: var(--brand-primary); cursor: pointer; height: 40px;" onmouseover="this.style.background='var(--brand-primary)';this.style.color='var(--color-text-inverse)';" onmouseout="this.style.background='transparent';this.style.color='var(--brand-primary)';">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        导出 Excel
+      </button>
+    </div>
+
+    <!-- Section: Date Range Filter Card -->
+    <div class="fade-in" style="animation-delay: 60ms; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 32px; box-shadow: var(--shadow-sm);">
+      <div class="flex items-center gap-5 flex-wrap">
+        <!-- Date start -->
+        <div class="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <label class="text-sm font-medium" style="color: var(--color-text-secondary);">开始日期</label>
+          <input type="date" value="2026-06-01" class="filter-date-input">
+        </div>
+
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+
+        <!-- Date end -->
+        <div class="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <label class="text-sm font-medium" style="color: var(--color-text-secondary);">结束日期</label>
+          <input type="date" value="2026-06-30" class="filter-date-input">
+        </div>
+
+        <!-- Divider -->
+        <div style="width: 1px; height: 28px; background: var(--color-border);"></div>
+
+        <!-- Dimension Tabs with slider indicator -->
+        <div class="dim-tabs-wrap" style="position: relative; display: inline-flex; background: var(--color-bg-secondary); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 3px;">
+          <div class="dim-tab-slider" style="position: absolute; top: 3px; left: 3px; height: calc(100% - 6px); width: 36px; background: var(--brand-primary); border-radius: 6px; transition: transform 240ms cubic-bezier(.3,0,0,1); transform: translateX(40px);"></div>
+          <button class="dim-tab text-sm px-3 py-1" style="position: relative; z-index: 1; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: var(--color-text-secondary); font-weight: 500; transition: color 160ms;" onmouseover="this.style.color='var(--color-text-primary)'" onmouseout="if(!this.classList.contains('active'))this.style.color='var(--color-text-secondary)'" data-idx="0">日</button>
+          <button class="dim-tab active text-sm px-3 py-1" style="position: relative; z-index: 1; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: var(--color-text-inverse); font-weight: 600;" data-idx="1">周</button>
+          <button class="dim-tab text-sm px-3 py-1" style="position: relative; z-index: 1; border-radius: 6px; border: none; cursor: pointer; background: transparent; color: var(--color-text-secondary); font-weight: 500; transition: color 160ms;" onmouseover="this.style.color='var(--color-text-primary)'" onmouseout="if(!this.classList.contains('active'))this.style.color='var(--color-text-secondary)'" data-idx="2">月</button>
+        </div>
+
+        <!-- Query button (prominent) -->
+        <button class="text-sm font-semibold px-6 py-2 transition-all" style="background: var(--brand-primary); color: var(--color-text-inverse); border: none; border-radius: var(--radius-md); cursor: pointer; height: 40px; box-shadow: 0 1px 3px rgba(14, 124, 107, 0.25);" onmouseover="this.style.background='var(--brand-primary-dark)';this.style.boxShadow='0 2px 6px rgba(14, 124, 107, 0.35)';" onmouseout="this.style.background='var(--brand-primary)';this.style.boxShadow='0 1px 3px rgba(14, 124, 107, 0.25)';">
+          查询
+        </button>
+      </div>
+    </div>
+
+    <!-- Section: KPI Summary Cards -->
+    <div class="grid grid-cols-4 gap-5 mb-10">
+
+      <!-- KPI 1: 日均使用率 -->
+      <div class="kpi-card flex flex-col gap-2 fade-in" style="animation-delay: 120ms; background: var(--color-bg); border: 1px solid var(--color-border); border-left: 3px solid var(--brand-primary); border-radius: var(--radius-lg); padding: 20px 20px 16px 20px; position: relative; overflow: hidden;">
+        <span class="text-xs font-medium" style="color: var(--color-text-secondary);">日均使用率</span>
+        <div class="flex items-end justify-between gap-2">
+          <span class="text-3xl font-bold" style="color: var(--color-text-primary); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.2;">78.5%</span>
+          <svg class="sparkline" width="64" height="28" viewBox="0 0 64 28" fill="none"><polyline points="4,22 18,16 32,18 46,10 60,6" stroke="var(--brand-primary)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polyline points="4,22 18,16 32,18 46,10 60,6 60,28 4,28" fill="var(--brand-primary-lightest)" opacity="0.5"/></svg>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="flex items-center gap-0.5 text-xs font-semibold" style="color: var(--state-success);">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            2.3%
+          </span>
+          <span class="text-xs" style="color: var(--color-text-tertiary);">较上月</span>
+        </div>
+      </div>
+
+      <!-- KPI 2: 预约转化率 -->
+      <div class="kpi-card flex flex-col gap-2 fade-in" style="animation-delay: 180ms; background: var(--color-bg); border: 1px solid var(--color-border); border-left: 3px solid var(--state-success); border-radius: var(--radius-lg); padding: 20px 20px 16px 20px; position: relative; overflow: hidden;">
+        <span class="text-xs font-medium" style="color: var(--color-text-secondary);">预约转化率</span>
+        <div class="flex items-end justify-between gap-2">
+          <span class="text-3xl font-bold" style="color: var(--color-text-primary); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.2;">89.2%</span>
+          <svg class="sparkline" width="64" height="28" viewBox="0 0 64 28" fill="none"><polyline points="4,20 18,14 32,16 46,8 60,4" stroke="var(--state-success)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polyline points="4,20 18,14 32,16 46,8 60,4 60,28 4,28" fill="var(--state-success-bg)" opacity="0.5"/></svg>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="flex items-center gap-0.5 text-xs font-semibold" style="color: var(--state-success);">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            1.1%
+          </span>
+          <span class="text-xs" style="color: var(--color-text-tertiary);">较上月</span>
+        </div>
+      </div>
+
+      <!-- KPI 3: 爽约率 -->
+      <div class="kpi-card flex flex-col gap-2 fade-in" style="animation-delay: 240ms; background: var(--color-bg); border: 1px solid var(--color-border); border-left: 3px solid var(--state-warning); border-radius: var(--radius-lg); padding: 20px 20px 16px 20px; position: relative; overflow: hidden;">
+        <span class="text-xs font-medium" style="color: var(--color-text-secondary);">爽约率</span>
+        <div class="flex items-end justify-between gap-2">
+          <span class="text-3xl font-bold" style="color: var(--color-text-primary); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.2;">4.7%</span>
+          <svg class="sparkline" width="64" height="28" viewBox="0 0 64 28" fill="none"><polyline points="4,8 18,14 32,12 46,18 60,20" stroke="var(--state-warning)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polyline points="4,8 18,14 32,12 46,18 60,20 60,28 4,28" fill="var(--state-warning-bg)" opacity="0.5"/></svg>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="flex items-center gap-0.5 text-xs font-semibold" style="color: var(--state-success);">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+            0.8%
+          </span>
+          <span class="text-xs" style="color: var(--color-text-tertiary);">较上月</span>
+        </div>
+      </div>
+
+      <!-- KPI 4: 日活用户 -->
+      <div class="kpi-card flex flex-col gap-2 fade-in" style="animation-delay: 300ms; background: var(--color-bg); border: 1px solid var(--color-border); border-left: 3px solid var(--state-info); border-radius: var(--radius-lg); padding: 20px 20px 16px 20px; position: relative; overflow: hidden;">
+        <span class="text-xs font-medium" style="color: var(--color-text-secondary);">日活用户</span>
+        <div class="flex items-end justify-between gap-2">
+          <span class="text-3xl font-bold" style="color: var(--color-text-primary); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.2;">1,256</span>
+          <svg class="sparkline" width="64" height="28" viewBox="0 0 64 28" fill="none"><polyline points="4,24 18,18 32,20 46,12 60,6" stroke="var(--state-info)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polyline points="4,24 18,18 32,20 46,12 60,6 60,28 4,28" fill="var(--state-info-bg)" opacity="0.5"/></svg>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="flex items-center gap-0.5 text-xs font-semibold" style="color: var(--state-success);">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+            12%
+          </span>
+          <span class="text-xs" style="color: var(--color-text-tertiary);">较上月</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Section Divider -->
+    <div style="height: 1px; background: var(--color-border); margin-bottom: 32px;" class="fade-in" ></div>
+
+    <!-- Section: Usage Bar Chart -->
+    <section class="mb-10 fade-in" style="animation-delay: 360ms;">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-semibold" style="color: var(--color-text-primary); letter-spacing: -0.015em;">各自习室周均使用率</h2>
+        <span class="text-xs font-medium px-2 py-1" style="background: var(--brand-primary-lightest); color: var(--brand-primary); border-radius: var(--radius-sm);">周均数据</span>
+      </div>
+      <div class="flex flex-col gap-3" style="background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 24px; position: relative;">
+
+        <!-- Average line label -->
+        <div style="position: absolute; top: 8px; right: 24px; display: flex; align-items: center; gap: 6px;">
+          <span class="text-xs" style="color: var(--color-text-tertiary);">均值</span>
+          <span class="text-xs font-semibold" style="color: var(--brand-primary);">78%</span>
+          <svg width="24" height="8" viewBox="0 0 24 8"><line x1="0" y1="4" x2="18" y2="4" stroke="var(--brand-primary)" stroke-width="1.5" stroke-dasharray="3 2"/><polyline points="16,1 20,4 16,7" fill="none" stroke="var(--brand-primary)" stroke-width="1.5"/></svg>
+        </div>
+
+        <!-- Bar 1: 教学楼 B栋 201 — 91% -->
+        <div class="bar-row flex items-center gap-3" style="position: relative;">
+          <span class="rank-num text-xs font-semibold flex-shrink-0" style="width: 18px; text-align: center; color: var(--brand-primary);">1</span>
+          <span class="text-sm flex-shrink-0" style="width: 140px; color: var(--color-text-primary); font-weight: 500;">教学楼 B栋 201</span>
+          <div class="flex-1 relative" style="height: 30px; background: var(--color-bg-tertiary); border-radius: 10px; overflow: hidden;">
+            <div class="bar-fill" data-target="91" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-light)); border-radius: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+              <span class="bar-label text-xs font-semibold" style="color: var(--color-text-inverse); white-space: nowrap;">91%</span>
+            </div>
+            <!-- Average dashed line marker at 78% -->
+            <div class="avg-marker" style="position: absolute; left: 78%; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed var(--brand-primary); opacity: 0.45;"></div>
+          </div>
+        </div>
+
+        <!-- Bar 2: 图书馆一楼大厅 — 88% -->
+        <div class="bar-row flex items-center gap-3">
+          <span class="rank-num text-xs font-semibold flex-shrink-0" style="width: 18px; text-align: center; color: var(--brand-primary);">2</span>
+          <span class="text-sm flex-shrink-0" style="width: 140px; color: var(--color-text-primary); font-weight: 500;">图书馆一楼大厅</span>
+          <div class="flex-1 relative" style="height: 30px; background: var(--color-bg-tertiary); border-radius: 10px; overflow: hidden;">
+            <div class="bar-fill" data-target="88" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-light)); border-radius: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+              <span class="bar-label text-xs font-semibold" style="color: var(--color-text-inverse); white-space: nowrap;">88%</span>
+            </div>
+            <div class="avg-marker" style="position: absolute; left: 78%; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed var(--brand-primary); opacity: 0.45;"></div>
+          </div>
+        </div>
+
+        <!-- Bar 3: 图书馆三楼 A区 — 85% -->
+        <div class="bar-row flex items-center gap-3">
+          <span class="rank-num text-xs font-semibold flex-shrink-0" style="width: 18px; text-align: center; color: var(--brand-primary);">3</span>
+          <span class="text-sm flex-shrink-0" style="width: 140px; color: var(--color-text-primary); font-weight: 500;">图书馆三楼 A区</span>
+          <div class="flex-1 relative" style="height: 30px; background: var(--color-bg-tertiary); border-radius: 10px; overflow: hidden;">
+            <div class="bar-fill" data-target="85" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-light)); border-radius: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+              <span class="bar-label text-xs font-semibold" style="color: var(--color-text-inverse); white-space: nowrap;">85%</span>
+            </div>
+            <div class="avg-marker" style="position: absolute; left: 78%; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed var(--brand-primary); opacity: 0.45;"></div>
+          </div>
+        </div>
+
+        <!-- Bar 4: 教学楼 C栋 102 — 76% -->
+        <div class="bar-row flex items-center gap-3">
+          <span class="rank-num text-xs font-semibold flex-shrink-0" style="width: 18px; text-align: center; color: var(--color-text-tertiary);">4</span>
+          <span class="text-sm flex-shrink-0" style="width: 140px; color: var(--color-text-primary); font-weight: 500;">教学楼 C栋 102</span>
+          <div class="flex-1 relative" style="height: 30px; background: var(--color-bg-tertiary); border-radius: 10px; overflow: hidden;">
+            <div class="bar-fill" data-target="76" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-light)); border-radius: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+              <span class="bar-label text-xs font-semibold" style="color: var(--color-text-inverse); white-space: nowrap;">76%</span>
+            </div>
+            <div class="avg-marker" style="position: absolute; left: 78%; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed var(--brand-primary); opacity: 0.45;"></div>
+          </div>
+        </div>
+
+        <!-- Bar 5: 图书馆二楼阅览室 — 72% -->
+        <div class="bar-row flex items-center gap-3">
+          <span class="rank-num text-xs font-semibold flex-shrink-0" style="width: 18px; text-align: center; color: var(--color-text-tertiary);">5</span>
+          <span class="text-sm flex-shrink-0" style="width: 140px; color: var(--color-text-primary); font-weight: 500;">图书馆二楼阅览室</span>
+          <div class="flex-1 relative" style="height: 30px; background: var(--color-bg-tertiary); border-radius: 10px; overflow: hidden;">
+            <div class="bar-fill" data-target="72" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-light)); border-radius: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+              <span class="bar-label text-xs font-semibold" style="color: var(--color-text-inverse); white-space: nowrap;">72%</span>
+            </div>
+            <div class="avg-marker" style="position: absolute; left: 78%; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed var(--brand-primary); opacity: 0.45;"></div>
+          </div>
+        </div>
+
+        <!-- Bar 6: 教学楼 A栋 305 — 68% -->
+        <div class="bar-row flex items-center gap-3">
+          <span class="rank-num text-xs font-semibold flex-shrink-0" style="width: 18px; text-align: center; color: var(--color-text-tertiary);">6</span>
+          <span class="text-sm flex-shrink-0" style="width: 140px; color: var(--color-text-primary); font-weight: 500;">教学楼 A栋 305</span>
+          <div class="flex-1 relative" style="height: 30px; background: var(--color-bg-tertiary); border-radius: 10px; overflow: hidden;">
+            <div class="bar-fill" data-target="68" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-light)); border-radius: 10px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;">
+              <span class="bar-label text-xs font-semibold" style="color: var(--color-text-inverse); white-space: nowrap;">68%</span>
+            </div>
+            <div class="avg-marker" style="position: absolute; left: 78%; top: 0; bottom: 0; width: 0; border-left: 1.5px dashed var(--brand-primary); opacity: 0.45;"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Section Divider -->
+    <div style="height: 1px; background: var(--color-border); margin-bottom: 32px;" class="fade-in"></div>
+
+    <!-- Section: Peak Hours Table -->
+    <section class="mb-8 fade-in" style="animation-delay: 420ms;">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-semibold" style="color: var(--color-text-primary); letter-spacing: -0.015em;">热门时段排名</h2>
+        <span class="text-xs" style="color: var(--color-text-tertiary);">基于本周预约数据</span>
+      </div>
+      <div style="background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden;">
+        <table class="data-table w-full" style="border-collapse: collapse; font-size: 14px;">
+          <thead>
+            <tr style="background: var(--color-bg-secondary);">
+              <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border);">
+                <span class="flex items-center gap-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  排名
+                </span>
+              </th>
+              <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border);">
+                <span class="flex items-center gap-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  时段
+                </span>
+              </th>
+              <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border);">
+                <span class="flex items-center gap-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                  平均使用率
+                </span>
+              </th>
+              <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border);">
+                <span class="flex items-center gap-1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  预约量
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Row 1: >90% -->
+            <tr class="data-row" style="background: var(--color-bg);">
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                <span class="flex items-center gap-2">
+                  <span class="flex items-center justify-center" style="width: 22px; height: 22px; background: var(--state-error-bg); border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; color: var(--state-error);">1</span>
+                </span>
+              </td>
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary); font-variant-numeric: tabular-nums;">19:00 - 20:00</td>
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light); font-variant-numeric: tabular-nums;">
+                <span class="flex items-center gap-2">
+                  <span class="heat-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--state-error); flex-shrink: 0;"></span>
+                  <span class="font-semibold" style="color: var(--state-error); min-width: 52px;">95.2%</span>
+                  <span class="inline-bar" style="width: 80px; height: 6px; background: var(--color-bg-tertiary); border-radius: 3px; overflow: hidden; flex-shrink: 0;">
+                    <span style="display: block; width: 95.2%; height: 100%; background: var(--state-error); border-radius: 3px;"></span>
+                  </span>
+                </span>
+              </td>
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary); font-variant-numeric: tabular-nums;">428次</td>
+            </tr>
+            <!-- Row 2: >90% -->
+            <tr class="data-row" style="background: var(--color-bg-secondary);">
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                <span class="flex items-center gap-2">
+                  <span class="flex items-center justify-center" style="width: 22px; height: 22px; background: var(--state-error-bg); border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; color: var(--state-error);">2</span>
+                </span>
+              </td>
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary); font-variant-numeric: tabular-nums;">20:00 - 21:00</td>
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light); font-variant-numeric: tabular-nums;">
+                <span class="flex items-center gap-2">
+                  <span class="heat-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--state-error); flex-shrink: 0;"></span>
+                  <span class="font-semibold" style="color: var(--state-error); min-width: 52px;">92.8%</span>
+                  <span class="inline-bar" style="width: 80px; height: 6px; background: var(--color-bg-tertiary); border-radius: 3px; overflow: hidden; flex-shrink: 0;">
+                    <span style="display: block; width: 92.8%; height: 100%; background: var(--state-error); border-radius: 3px;"></span>
+                  </span>
+                </span>
+              </td>
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary); font-variant-numeric: tabular-nums;">415次</td>
+            </tr>
+            <!-- Row 3: 80-90% -->
+            <tr class="data-row" style="background: var(--color-bg);">
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                <span class="flex items-center gap-2">
+                  <span class="flex items-center justify-center" style="width: 22px; height: 22px; background: var(--state-warning-bg); border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; color: var(--state-warning);">3</span>
+                </span>
+              </td>
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary); font-variant-numeric: tabular-nums;">18:00 - 19:00</td>
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light); font-variant-numeric: tabular-nums;">
+                <span class="flex items-center gap-2">
+                  <span class="heat-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--state-warning); flex-shrink: 0;"></span>
+                  <span class="font-semibold" style="color: var(--state-warning); min-width: 52px;">88.5%</span>
+                  <span class="inline-bar" style="width: 80px; height: 6px; background: var(--color-bg-tertiary); border-radius: 3px; overflow: hidden; flex-shrink: 0;">
+                    <span style="display: block; width: 88.5%; height: 100%; background: var(--state-warning); border-radius: 3px;"></span>
+                  </span>
+                </span>
+              </td>
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary); font-variant-numeric: tabular-nums;">386次</td>
+            </tr>
+            <!-- Row 4: 80-90% -->
+            <tr class="data-row" style="background: var(--color-bg-secondary);">
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                <span class="flex items-center gap-2">
+                  <span class="flex items-center justify-center" style="width: 22px; height: 22px; background: var(--state-warning-bg); border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; color: var(--state-warning);">4</span>
+                </span>
+              </td>
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary); font-variant-numeric: tabular-nums;">09:00 - 10:00</td>
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light); font-variant-numeric: tabular-nums;">
+                <span class="flex items-center gap-2">
+                  <span class="heat-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--state-warning); flex-shrink: 0;"></span>
+                  <span class="font-semibold" style="color: var(--state-warning); min-width: 52px;">82.1%</span>
+                  <span class="inline-bar" style="width: 80px; height: 6px; background: var(--color-bg-tertiary); border-radius: 3px; overflow: hidden; flex-shrink: 0;">
+                    <span style="display: block; width: 82.1%; height: 100%; background: var(--state-warning); border-radius: 3px;"></span>
+                  </span>
+                </span>
+              </td>
+              <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary); font-variant-numeric: tabular-nums;">352次</td>
+            </tr>
+            <!-- Row 5: <80% -->
+            <tr class="data-row" style="background: var(--color-bg);">
+              <td class="py-3.5 px-6">
+                <span class="flex items-center gap-2">
+                  <span class="flex items-center justify-center" style="width: 22px; height: 22px; background: var(--color-bg-tertiary); border-radius: var(--radius-sm); font-size: 11px; font-weight: 700; color: var(--color-text-secondary);">5</span>
+                </span>
+              </td>
+              <td class="py-3.5 px-6" style="color: var(--color-text-primary); font-variant-numeric: tabular-nums;">14:00 - 15:00</td>
+              <td class="py-3.5 px-6" style="font-variant-numeric: tabular-nums;">
+                <span class="flex items-center gap-2">
+                  <span class="heat-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--state-success); flex-shrink: 0;"></span>
+                  <span class="font-semibold" style="color: var(--color-text-primary); min-width: 52px;">79.6%</span>
+                  <span class="inline-bar" style="width: 80px; height: 6px; background: var(--color-bg-tertiary); border-radius: 3px; overflow: hidden; flex-shrink: 0;">
+                    <span style="display: block; width: 79.6%; height: 100%; background: var(--state-success); border-radius: 3px;"></span>
+                  </span>
+                </span>
+              </td>
+              <td class="py-3.5 px-6" style="color: var(--color-text-primary); font-variant-numeric: tabular-nums;">338次</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer style="border-top: 1px solid var(--color-border-light);" class="py-4 mt-8">
+    <p class="text-center text-xs" style="color: var(--color-text-tertiary); font-family: var(--font-family);">高校自习室智能预约系统 &copy; 2026</p>
+  </footer>
+
+    <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif; background: var(--color-bg); color: var(--color-text-primary); margin: 0; }
+
+    /* === Staggered Entrance Animation === */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeSlideIn 480ms cubic-bezier(.3,0,0,1) forwards;
+    }
+    @keyframes fadeSlideIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === Bar Chart Fill Animation === */
+    .bar-fill {
+      transition: width 640ms cubic-bezier(.3,0,0,1);
+    }
+
+    /* === Bar Chart Row Hover === */
+    .bar-row {
+      transition: background-color 120ms cubic-bezier(.2,.8,.2,1);
+      border-radius: var(--radius-md);
+    }
+    .bar-row:hover {
+      background: var(--brand-primary-lightest);
+    }
+
+    /* === Date Input Styling === */
+    .filter-date-input {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      color: var(--color-text-primary);
+      background: var(--color-bg);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 160ms cubic-bezier(.2,.8,.2,1), box-shadow 160ms cubic-bezier(.2,.8,.2,1);
+    }
+    .filter-date-input:focus {
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 2px rgba(14, 124, 107, 0.12);
+    }
+
+    /* === Table Row Hover === */
+    .data-table tbody tr {
+      transition: background-color 160ms cubic-bezier(.2,.8,.2,1);
+    }
+    .data-table tbody tr:hover {
+      background: var(--brand-primary-lightest) !important;
+    }
+
+    /* === KPI Card Hover === */
+    .kpi-card {
+      transition: transform 160ms cubic-bezier(.2,.8,.2,1), box-shadow 160ms cubic-bezier(.2,.8,.2,1);
+    }
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* === Export Button Icon Animation === */
+    .btn-export svg {
+      transition: transform 160ms cubic-bezier(.2,.8,.2,1);
+    }
+    .btn-export:hover svg {
+      transform: translateY(2px);
+    }
+
+    /* === Inline Bar Animation === */
+    .inline-bar span {
+      transition: width 640ms cubic-bezier(.3,0,0,1);
+    }
+
+    /* === Sparkline Entrance === */
+    .sparkline {
+      opacity: 0;
+      animation: sparkIn 480ms cubic-bezier(.3,0,0,1) forwards;
+      animation-delay: 400ms;
+    }
+    @keyframes sparkIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === Rank Number Styling === */
+    .rank-num {
+      font-variant-numeric: tabular-nums;
+      line-height: 30px;
+    }
+
+    /* === Reduced Motion === */
+    @media (prefers-reduced-motion: reduce) {
+      .fade-in, .sparkline {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+      .bar-fill, .inline-bar span, .kpi-card, .btn-export svg, .data-table tbody tr, .bar-row {
+        transition-duration: 0.01ms !important;
+      }
+    }
+    </style>
+
+    <script>
+    /* === Dimension Tab Slider Interaction === */
+    (function() {
+      var tabs = document.querySelectorAll('.dim-tab');
+      var slider = document.querySelector('.dim-tab-slider');
+      var tabWidth = 40; // approximate tab width + gap
+
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          tabs.forEach(function(t) {
+            t.classList.remove('active');
+            t.style.color = 'var(--color-text-secondary)';
+            t.style.fontWeight = '500';
+          });
+          tab.classList.add('active');
+          tab.style.color = 'var(--color-text-inverse)';
+          tab.style.fontWeight = '600';
+          var idx = parseInt(tab.getAttribute('data-idx'), 10);
+          slider.style.transform = 'translateX(' + (idx * tabWidth) + 'px)';
+        });
+      });
+    })();
+
+    /* === Bar Chart Entrance Animation === */
+    (function() {
+      var bars = document.querySelectorAll('.bar-fill[data-target]');
+      function animateBars() {
+        bars.forEach(function(bar) {
+          var target = bar.getAttribute('data-target');
+          bar.style.width = target + '%';
+        });
+      }
+      /* Trigger after a short delay for visual effect */
+      setTimeout(animateBars, 200);
+    })();
+    </script>
+</body>
+</html>

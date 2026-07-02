@@ -1,0 +1,140 @@
+/* === Brand CSS: Study Room Smart Booking System === */
+/* Style: Fresh Academic — clean, trustworthy campus SaaS */
+
+:root {
+  /* === Brand Color System === */
+  --brand-hue: 195;
+  --brand-primary: #0E7C6B;
+  --brand-primary-light: #12A38D;
+  --brand-primary-lighter: #D1FAE5;
+  --brand-primary-lightest: #ECFDF5;
+  --brand-primary-dark: #065F52;
+
+  /* === State Colors (semantic only) === */
+  --state-success: #16A34A;
+  --state-success-bg: #F0FDF4;
+  --state-warning: #D97706;
+  --state-warning-bg: #FFFBEB;
+  --state-error: #DC2626;
+  --state-error-bg: #FEF2F2;
+  --state-info: #2563EB;
+  --state-info-bg: #EFF6FF;
+
+  /* === Seat Status Colors (product-specific) === */
+  --seat-available: #16A34A;
+  --seat-available-bg: #DCFCE7;
+  --seat-occupied: #EF4444;
+  --seat-occupied-bg: #FEE2E2;
+  --seat-reserved: #F59E0B;
+  --seat-reserved-bg: #FEF3C7;
+  --seat-away: #6B7280;
+  --seat-away-bg: #F3F4F6;
+
+  /* === Neutral Palette === */
+  --color-bg: #FFFFFF;
+  --color-bg-secondary: #F8FAFB;
+  --color-bg-tertiary: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94A3B8;
+  --color-text-inverse: #FFFFFF;
+
+  /* === Typography === */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0em;
+
+  /* === Radius Scale === */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* === Spacing === */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  /* === Shadow === */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  /* === Surface & Depth === */
+  --surface-card: #FFFFFF;
+  --surface-card-border: 1px solid var(--color-border);
+  --surface-raised: #FFFFFF;
+  --surface-raised-shadow: var(--shadow-md);
+
+  /* === Z-index === */
+  --z-dropdown: 100;
+  --z-modal-backdrop: 200;
+  --z-modal: 210;
+  --z-toast: 300;
+
+  /* === Layout === */
+  --max-width: 1280px;
+  --sidebar-width: 260px;
+  --header-height: 64px;
+}
+
+/* Dark mode support */
+.dark {
+  --color-bg: #0F172A;
+  --color-bg-secondary: #1E293B;
+  --color-bg-tertiary: #334155;
+  --color-surface: #1E293B;
+  --color-border: #334155;
+  --color-border-light: #1E293B;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #CBD5E1;
+  --color-text-tertiary: #64748B;
+  --color-text-inverse: #0F172A;
+
+  --brand-primary-lighter: rgba(14, 124, 107, 0.15);
+  --brand-primary-lightest: rgba(14, 124, 107, 0.08);
+
+  --state-success-bg: rgba(22, 163, 74, 0.12);
+  --state-warning-bg: rgba(217, 119, 6, 0.12);
+  --state-error-bg: rgba(220, 38, 38, 0.12);
+  --state-info-bg: rgba(37, 99, 235, 0.12);
+
+  --seat-available-bg: rgba(22, 163, 74, 0.15);
+  --seat-occupied-bg: rgba(239, 68, 68, 0.15);
+  --seat-reserved-bg: rgba(245, 158, 11, 0.15);
+  --seat-away-bg: rgba(107, 114, 128, 0.15);
+
+  --surface-card: #1E293B;
+  --surface-card-border: 1px solid var(--color-border);
+  --surface-raised: #263548;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.2);
+}

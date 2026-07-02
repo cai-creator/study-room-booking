@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户权限管理 - 智约自习</title>
+    <style id="theme-vars">
+/* === Brand CSS: Study Room Smart Booking System === */
+/* Style: Fresh Academic — clean, trustworthy campus SaaS */
+
+:root {
+  /* === Brand Color System === */
+  --brand-hue: 195;
+  --brand-primary: #0E7C6B;
+  --brand-primary-light: #12A38D;
+  --brand-primary-lighter: #D1FAE5;
+  --brand-primary-lightest: #ECFDF5;
+  --brand-primary-dark: #065F52;
+
+  /* === State Colors (semantic only) === */
+  --state-success: #16A34A;
+  --state-success-bg: #F0FDF4;
+  --state-warning: #D97706;
+  --state-warning-bg: #FFFBEB;
+  --state-error: #DC2626;
+  --state-error-bg: #FEF2F2;
+  --state-info: #2563EB;
+  --state-info-bg: #EFF6FF;
+
+  /* === Neutral Palette === */
+  --color-bg: #FFFFFF;
+  --color-bg-secondary: #F8FAFB;
+  --color-bg-tertiary: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94A3B8;
+  --color-text-inverse: #FFFFFF;
+
+  /* === Typography === */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0em;
+
+  /* === Radius Scale === */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* === Spacing === */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  /* === Shadow === */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  /* === Surface & Depth === */
+  --surface-card: #FFFFFF;
+  --surface-card-border: 1px solid var(--color-border);
+  --surface-raised: #FFFFFF;
+  --surface-raised-shadow: var(--shadow-md);
+
+  /* === Z-index === */
+  --z-dropdown: 100;
+  --z-modal-backdrop: 200;
+  --z-modal: 210;
+  --z-toast: 300;
+
+  /* === Layout === */
+  --max-width: 1280px;
+  --sidebar-width: 260px;
+  --header-height: 64px;
+}
+
+/* Dark mode support */
+.dark {
+  --color-bg: #0F172A;
+  --color-bg-secondary: #1E293B;
+  --color-bg-tertiary: #334155;
+  --color-surface: #1E293B;
+  --color-border: #334155;
+  --color-border-light: #1E293B;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #CBD5E1;
+  --color-text-tertiary: #64748B;
+  --color-text-inverse: #0F172A;
+
+  --brand-primary-lighter: rgba(14, 124, 107, 0.15);
+  --brand-primary-lightest: rgba(14, 124, 107, 0.08);
+
+  --state-success-bg: rgba(22, 163, 74, 0.12);
+  --state-warning-bg: rgba(217, 119, 6, 0.12);
+  --state-error-bg: rgba(220, 38, 38, 0.12);
+  --state-info-bg: rgba(37, 99, 235, 0.12);
+
+  --surface-card: #1E293B;
+  --surface-card-border: 1px solid var(--color-border);
+  --surface-raised: #263548;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--brand-primary);
+  }
+  @layer base {
+    body { background: var(--color-bg); color: var(--color-text-primary); }
+    td, th { @apply break-words; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+  <!-- ===== Header ===== -->
+  <header style="height: 64px; background-color: var(--color-bg); border-bottom: 1px solid var(--color-border);" class="sticky top-0 z-50 flex items-center justify-between px-6">
+    <!-- Left: Logo -->
+    <a href="#" class="flex items-center gap-2 no-underline" style="color: var(--color-text-primary);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+      <span class="text-lg font-bold" style="font-family: var(--font-family); color: var(--color-text-primary);">智约自习</span>
+    </a>
+
+    <!-- Center: Navigation Links -->
+    <nav class="flex items-center gap-6" style="font-family: var(--font-family);">
+      <a href="#" data-nav-key="home" data-dom-id="nav-home" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">首页</a>
+      <a href="#" data-nav-key="room-selection" data-dom-id="nav-room-selection" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">自习室</a>
+      <a href="#" data-nav-key="my-reservations" data-dom-id="nav-my-reservations" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">我的预约</a>
+      <a href="#" data-nav-key="dashboard" data-dom-id="nav-dashboard" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">实时看板</a>
+      <a href="#" data-nav-key="reports" data-dom-id="nav-reports" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">数据报表</a>
+      <a href="#" data-nav-key="space-management" data-dom-id="nav-space-management" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">空间管理</a>
+      <a href="#" data-nav-key="blacklist" data-dom-id="nav-blacklist" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">黑名单管理</a>
+      <a href="#" data-nav-key="user-management" data-dom-id="nav-user-management" data-active="true" class="nav-link text-sm transition-colors" style="color: var(--brand-primary); font-weight: 600; border-bottom: 2px solid var(--brand-primary); padding-bottom: 2px;">用户权限</a>
+    </nav>
+
+    <!-- Right: User Avatar -->
+    <div class="flex items-center gap-1">
+      <div class="flex items-center justify-center rounded-full cursor-pointer" style="width: 32px; height: 32px; background-color: var(--brand-primary); color: var(--color-text-inverse); font-size: var(--text-sm); font-weight: 600; font-family: var(--font-family);">
+        张
+      </div>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </header>
+
+  <!-- ===== Main Content ===== -->
+  <main id="main-content" class="max-w-[1280px] mx-auto px-6 py-8" style="font-family: var(--font-family);">
+
+    <!-- Section: Page Header -->
+    <div class="flex items-center justify-between mb-8 fade-in" style="animation-delay: 0ms;">
+      <div style="min-width: 0; flex: 1;">
+        <h1 class="text-2xl font-semibold truncate" style="color: var(--color-text-primary); letter-spacing: -0.02em; text-wrap: balance;">用户权限管理</h1>
+        <p class="text-sm mt-1 truncate" style="color: var(--color-text-tertiary);">管理员角色分配与系统配置</p>
+      </div>
+      <button data-dom-id="btn-add-admin" class="flex items-center gap-2 text-sm font-semibold px-5 py-2 shrink-0 transition-all" style="background: var(--brand-primary); color: var(--color-text-inverse); border: none; border-radius: var(--radius-md); cursor: pointer; height: 40px; box-shadow: 0 1px 3px rgba(14, 124, 107, 0.25);" onmouseover="this.style.background='var(--brand-primary-dark)';this.style.boxShadow='0 2px 6px rgba(14, 124, 107, 0.35)';" onmouseout="this.style.background='var(--brand-primary)';this.style.boxShadow='0 1px 3px rgba(14, 124, 107, 0.25)';">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        添加管理员
+      </button>
+    </div>
+
+    <!-- Section: 管理员列表 -->
+    <section class="mb-10 fade-in" style="animation-delay: 60ms;">
+      <h2 class="text-lg font-semibold mb-5" style="color: var(--color-text-primary); letter-spacing: -0.015em;">管理员列表</h2>
+
+      <!-- Filter Bar -->
+      <div class="flex items-center gap-4 flex-wrap mb-5" style="background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 16px 20px;">
+        <input type="text" placeholder="搜索姓名或学号..." class="filter-input" style="flex: 1; min-width: 200px; height: 40px; padding: 0 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-bg); font-size: 14px; font-family: var(--font-family); outline: none; transition: border-color 160ms, box-shadow 160ms;">
+        <select class="filter-select" style="height: 40px; padding: 0 32px 0 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-bg); font-size: 14px; font-family: var(--font-family); outline: none; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg width=&quot;12&quot; height=&quot;12&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;%2394A3B8&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><polyline points=&quot;6 9 12 15 18 9&quot;/></svg>'); background-repeat: no-repeat; background-position: right 12px center; cursor: pointer; transition: border-color 160ms, box-shadow 160ms;">
+          <option>全部角色</option>
+          <option>自习室管理员</option>
+          <option>系统管理员</option>
+        </select>
+        <button class="text-sm font-semibold px-6 py-2 transition-all" style="background: var(--brand-primary); color: var(--color-text-inverse); border: none; border-radius: var(--radius-md); cursor: pointer; height: 40px; box-shadow: 0 1px 3px rgba(14, 124, 107, 0.25);" onmouseover="this.style.background='var(--brand-primary-dark)';" onmouseout="this.style.background='var(--brand-primary)';">
+          搜索
+        </button>
+      </div>
+
+      <!-- Admin Table -->
+      <div style="background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden;">
+        <div style="overflow-x: auto;">
+          <table class="data-table w-full" style="border-collapse: collapse; font-size: 14px;">
+            <thead>
+              <tr style="background: var(--color-bg-secondary);">
+                <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); min-width: 80px;">姓名</th>
+                <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); min-width: 120px;">学号/工号</th>
+                <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); min-width: 120px;">角色</th>
+                <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); min-width: 180px;">管辖范围</th>
+                <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); min-width: 150px;">最后登录</th>
+                <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); min-width: 80px;">状态</th>
+                <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); min-width: 160px;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Row 1: 李老师 - 系统管理员 -->
+              <tr class="data-row" style="background: var(--color-bg);">
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <div class="flex items-center gap-2.5">
+                    <div class="flex items-center justify-center rounded-full shrink-0" style="width: 28px; height: 28px; background-color: var(--brand-primary); color: var(--color-text-inverse); font-size: 12px; font-weight: 600;">李</div>
+                    <span class="truncate" style="color: var(--color-text-primary); font-weight: 500;">李老师</span>
+                  </div>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">T20240001</td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: rgba(88, 28, 135, 0.08); color: #7C3AED; border-radius: var(--radius-md);">系统管理员</span>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary);">全校</td>
+                <td class="py-3.5 px-6 whitespace-nowrap" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">2026-07-02 09:15</td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--state-success-bg); color: var(--state-success); border-radius: var(--radius-md);">正常</span>
+                </td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <div class="flex items-center gap-3">
+                    <a href="#" class="text-sm font-medium whitespace-nowrap transition-colors" style="color: var(--brand-primary);" onmouseover="this.style.color='var(--brand-primary-dark)';" onmouseout="this.style.color='var(--brand-primary)';">编辑权限</a>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 2: 王管理员 - 自习室管理员 -->
+              <tr class="data-row" style="background: var(--color-bg-secondary);">
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <div class="flex items-center gap-2.5">
+                    <div class="flex items-center justify-center rounded-full shrink-0" style="width: 28px; height: 28px; background-color: var(--state-info-bg); color: var(--state-info); font-size: 12px; font-weight: 600;">王</div>
+                    <span class="truncate" style="color: var(--color-text-primary); font-weight: 500;">王管理员</span>
+                  </div>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">T20240015</td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--state-info-bg); color: var(--state-info); border-radius: var(--radius-md);">自习室管理员</span>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary);">主校区-图书馆</td>
+                <td class="py-3.5 px-6 whitespace-nowrap" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">2026-07-01 14:30</td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--state-success-bg); color: var(--state-success); border-radius: var(--radius-md);">正常</span>
+                </td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <div class="flex items-center gap-3">
+                    <a href="#" class="text-sm font-medium whitespace-nowrap transition-colors" style="color: var(--brand-primary);" onmouseover="this.style.color='var(--brand-primary-dark)';" onmouseout="this.style.color='var(--brand-primary)';">编辑权限</a>
+                    <button class="text-xs font-medium px-3 py-1 whitespace-nowrap transition-colors" style="background: transparent; border: 1px solid var(--state-warning); color: var(--state-warning); border-radius: var(--radius-md); cursor: pointer;" onmouseover="this.style.background='var(--state-warning)';this.style.color='var(--color-text-inverse)';" onmouseout="this.style.background='transparent';this.style.color='var(--state-warning)';">停用</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 3: 赵管理员 - 自习室管理员 -->
+              <tr class="data-row" style="background: var(--color-bg);">
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <div class="flex items-center gap-2.5">
+                    <div class="flex items-center justify-center rounded-full shrink-0" style="width: 28px; height: 28px; background-color: var(--state-info-bg); color: var(--state-info); font-size: 12px; font-weight: 600;">赵</div>
+                    <span class="truncate" style="color: var(--color-text-primary); font-weight: 500;">赵管理员</span>
+                  </div>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">T20240022</td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--state-info-bg); color: var(--state-info); border-radius: var(--radius-md);">自习室管理员</span>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary);">主校区-教学楼A</td>
+                <td class="py-3.5 px-6 whitespace-nowrap" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">2026-06-30 10:00</td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--state-success-bg); color: var(--state-success); border-radius: var(--radius-md);">正常</span>
+                </td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <div class="flex items-center gap-3">
+                    <a href="#" class="text-sm font-medium whitespace-nowrap transition-colors" style="color: var(--brand-primary);" onmouseover="this.style.color='var(--brand-primary-dark)';" onmouseout="this.style.color='var(--brand-primary)';">编辑权限</a>
+                    <button class="text-xs font-medium px-3 py-1 whitespace-nowrap transition-colors" style="background: transparent; border: 1px solid var(--state-warning); color: var(--state-warning); border-radius: var(--radius-md); cursor: pointer;" onmouseover="this.style.background='var(--state-warning)';this.style.color='var(--color-text-inverse)';" onmouseout="this.style.background='transparent';this.style.color='var(--state-warning)';">停用</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 4: 孙管理员 - 已停用 -->
+              <tr class="data-row" style="background: var(--color-bg-secondary);">
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <div class="flex items-center gap-2.5">
+                    <div class="flex items-center justify-center rounded-full shrink-0" style="width: 28px; height: 28px; background-color: var(--color-bg-tertiary); color: var(--color-text-tertiary); font-size: 12px; font-weight: 600;">孙</div>
+                    <span class="truncate" style="color: var(--color-text-tertiary); font-weight: 500;">孙管理员</span>
+                  </div>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-tertiary); font-variant-numeric: tabular-nums;">T20240033</td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--state-info-bg); color: var(--state-info); border-radius: var(--radius-md);">自习室管理员</span>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-tertiary);">分校區-教学楼B</td>
+                <td class="py-3.5 px-6 whitespace-nowrap" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-tertiary); font-variant-numeric: tabular-nums;">2026-06-28 16:45</td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--state-error-bg); color: var(--state-error); border-radius: var(--radius-md);">已停用</span>
+                </td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <div class="flex items-center gap-3">
+                    <button class="text-xs font-medium px-3 py-1 whitespace-nowrap transition-colors" style="background: transparent; border: 1px solid var(--state-success); color: var(--state-success); border-radius: var(--radius-md); cursor: pointer;" onmouseover="this.style.background='var(--state-success)';this.style.color='var(--color-text-inverse)';" onmouseout="this.style.background='transparent';this.style.color='var(--state-success)';">启用</button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Row 5: 周管理员 - 自习室管理员 -->
+              <tr class="data-row" style="background: var(--color-bg);">
+                <td class="py-3.5 px-6">
+                  <div class="flex items-center gap-2.5">
+                    <div class="flex items-center justify-center rounded-full shrink-0" style="width: 28px; height: 28px; background-color: var(--state-info-bg); color: var(--state-info); font-size: 12px; font-weight: 600;">周</div>
+                    <span class="truncate" style="color: var(--color-text-primary); font-weight: 500;">周管理员</span>
+                  </div>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">T20240041</td>
+                <td class="py-3.5 px-6">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--state-info-bg); color: var(--state-info); border-radius: var(--radius-md);">自习室管理员</span>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="color: var(--color-text-primary);">主校区-图书馆-5F</td>
+                <td class="py-3.5 px-6 whitespace-nowrap" style="color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">2026-07-02 08:20</td>
+                <td class="py-3.5 px-6">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--state-success-bg); color: var(--state-success); border-radius: var(--radius-md);">正常</span>
+                </td>
+                <td class="py-3.5 px-6">
+                  <div class="flex items-center gap-3">
+                    <a href="#" class="text-sm font-medium whitespace-nowrap transition-colors" style="color: var(--brand-primary);" onmouseover="this.style.color='var(--brand-primary-dark)';" onmouseout="this.style.color='var(--brand-primary)';">编辑权限</a>
+                    <button class="text-xs font-medium px-3 py-1 whitespace-nowrap transition-colors" style="background: transparent; border: 1px solid var(--state-warning); color: var(--state-warning); border-radius: var(--radius-md); cursor: pointer;" onmouseover="this.style.background='var(--state-warning)';this.style.color='var(--color-text-inverse)';" onmouseout="this.style.background='transparent';this.style.color='var(--state-warning)';">停用</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section Divider -->
+    <div style="height: 1px; background: var(--color-border); margin-bottom: 32px;" class="fade-in"></div>
+
+    <!-- Section: 系统配置 - 预约规则配置 -->
+    <section class="mb-10 fade-in" style="animation-delay: 120ms;">
+      <h2 class="text-lg font-semibold mb-5" style="color: var(--color-text-primary); letter-spacing: -0.015em;">系统配置</h2>
+      <div style="background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 24px;">
+        <h3 class="text-base font-semibold mb-6" style="color: var(--color-text-primary);">预约规则配置</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 mb-8">
+          <!-- Field 1 -->
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--color-text-secondary);">单日预约次数上限</label>
+            <div class="flex items-center gap-2">
+              <input type="number" value="3" class="config-input" style="width: 80px; height: 40px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-bg); font-size: 14px; font-family: var(--font-family); outline: none; text-align: center; transition: border-color 160ms, box-shadow 160ms;">
+              <span class="text-sm" style="color: var(--color-text-tertiary);">次</span>
+            </div>
+          </div>
+          <!-- Field 2 -->
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--color-text-secondary);">单次最大时长</label>
+            <div class="flex items-center gap-2">
+              <input type="number" value="8" class="config-input" style="width: 80px; height: 40px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-bg); font-size: 14px; font-family: var(--font-family); outline: none; text-align: center; transition: border-color 160ms, box-shadow 160ms;">
+              <span class="text-sm" style="color: var(--color-text-tertiary);">小时</span>
+            </div>
+          </div>
+          <!-- Field 3 -->
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--color-text-secondary);">提前预约时间</label>
+            <div class="flex items-center gap-2">
+              <input type="number" value="24" class="config-input" style="width: 80px; height: 40px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-bg); font-size: 14px; font-family: var(--font-family); outline: none; text-align: center; transition: border-color 160ms, box-shadow 160ms;">
+              <span class="text-sm" style="color: var(--color-text-tertiary);">小时</span>
+            </div>
+          </div>
+          <!-- Field 4 -->
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--color-text-secondary);">最短提前时间</label>
+            <div class="flex items-center gap-2">
+              <input type="number" value="15" class="config-input" style="width: 80px; height: 40px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-bg); font-size: 14px; font-family: var(--font-family); outline: none; text-align: center; transition: border-color 160ms, box-shadow 160ms;">
+              <span class="text-sm" style="color: var(--color-text-tertiary);">分钟</span>
+            </div>
+          </div>
+          <!-- Field 5 -->
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--color-text-secondary);">签到宽限时间</label>
+            <div class="flex items-center gap-2">
+              <input type="number" value="15" class="config-input" style="width: 80px; height: 40px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-bg); font-size: 14px; font-family: var(--font-family); outline: none; text-align: center; transition: border-color 160ms, box-shadow 160ms;">
+              <span class="text-sm" style="color: var(--color-text-tertiary);">分钟</span>
+            </div>
+          </div>
+          <!-- Field 6 -->
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--color-text-secondary);">暂离保留时间</label>
+            <div class="flex items-center gap-2">
+              <input type="number" value="30" class="config-input" style="width: 80px; height: 40px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-bg); font-size: 14px; font-family: var(--font-family); outline: none; text-align: center; transition: border-color 160ms, box-shadow 160ms;">
+              <span class="text-sm" style="color: var(--color-text-tertiary);">分钟</span>
+            </div>
+          </div>
+          <!-- Field 7 -->
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--color-text-secondary);">黑名单阈值</label>
+            <div class="flex items-center gap-2">
+              <span class="text-sm whitespace-nowrap" style="color: var(--color-text-tertiary);">7天内爽约 &ge;</span>
+              <input type="number" value="3" class="config-input" style="width: 80px; height: 40px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-bg); font-size: 14px; font-family: var(--font-family); outline: none; text-align: center; transition: border-color 160ms, box-shadow 160ms;">
+              <span class="text-sm" style="color: var(--color-text-tertiary);">次</span>
+            </div>
+          </div>
+          <!-- Field 8 -->
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--color-text-secondary);">黑名单期限</label>
+            <div class="flex items-center gap-2">
+              <input type="number" value="7" class="config-input" style="width: 80px; height: 40px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); background: var(--color-bg); font-size: 14px; font-family: var(--font-family); outline: none; text-align: center; transition: border-color 160ms, box-shadow 160ms;">
+              <span class="text-sm" style="color: var(--color-text-tertiary);">天</span>
+            </div>
+          </div>
+        </div>
+        <!-- Config Action Buttons -->
+        <div class="flex items-center gap-4">
+          <button class="text-sm font-semibold px-6 py-2 transition-all" style="background: var(--brand-primary); color: var(--color-text-inverse); border: none; border-radius: var(--radius-md); cursor: pointer; height: 40px; box-shadow: 0 1px 3px rgba(14, 124, 107, 0.25);" onmouseover="this.style.background='var(--brand-primary-dark)';this.style.boxShadow='0 2px 6px rgba(14, 124, 107, 0.35)';" onmouseout="this.style.background='var(--brand-primary)';this.style.boxShadow='0 1px 3px rgba(14, 124, 107, 0.25)';">
+            保存配置
+          </button>
+          <button class="text-sm font-medium px-6 py-2 transition-all" style="background: transparent; color: var(--color-text-secondary); border: none; border-radius: var(--radius-md); cursor: pointer; height: 40px;" onmouseover="this.style.color='var(--color-text-primary)';" onmouseout="this.style.color='var(--color-text-secondary)';">
+            恢复默认
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section Divider -->
+    <div style="height: 1px; background: var(--color-border); margin-bottom: 32px;" class="fade-in"></div>
+
+    <!-- Section: 操作日志 -->
+    <section class="mb-8 fade-in" style="animation-delay: 180ms;">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-semibold" style="color: var(--color-text-primary); letter-spacing: -0.015em;">操作日志</h2>
+        <span class="text-xs" style="color: var(--color-text-tertiary);">最近操作记录</span>
+      </div>
+      <div style="background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden;">
+        <div style="overflow-x: auto;">
+          <table class="data-table w-full" style="border-collapse: collapse; font-size: 14px;">
+            <thead>
+              <tr style="background: var(--color-bg-secondary);">
+                <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); min-width: 160px;">操作时间</th>
+                <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); min-width: 100px;">操作人</th>
+                <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); min-width: 120px;">操作类型</th>
+                <th class="text-left text-xs font-semibold py-3 px-6" style="color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border);">详情</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Log 1 -->
+              <tr class="data-row" style="background: var(--color-bg);">
+                <td class="py-3.5 px-6 whitespace-nowrap" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">2026-07-02 09:00</td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary); font-weight: 500;">李老师</td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--state-info-bg); color: var(--state-info); border-radius: var(--radius-md);">修改配置</span>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary);">调整签到宽限时间为15分钟</td>
+              </tr>
+              <!-- Log 2 -->
+              <tr class="data-row" style="background: var(--color-bg-secondary);">
+                <td class="py-3.5 px-6 whitespace-nowrap" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">2026-07-01 16:30</td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary); font-weight: 500;">王管理员</td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--state-warning-bg); color: var(--state-warning); border-radius: var(--radius-md);">移出黑名单</span>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary);">手动移除学号2024001042</td>
+              </tr>
+              <!-- Log 3 -->
+              <tr class="data-row" style="background: var(--color-bg);">
+                <td class="py-3.5 px-6 whitespace-nowrap" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">2026-07-01 14:20</td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary); font-weight: 500;">李老师</td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--state-success-bg); color: var(--state-success); border-radius: var(--radius-md);">添加管理员</span>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary);">新增管理员赵管理员，管辖主校区教学楼A</td>
+              </tr>
+              <!-- Log 4 -->
+              <tr class="data-row" style="background: var(--color-bg-secondary);">
+                <td class="py-3.5 px-6 whitespace-nowrap" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">2026-06-30 11:00</td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-primary); font-weight: 500;">李老师</td>
+                <td class="py-3.5 px-6" style="border-bottom: 1px solid var(--color-border-light);">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: var(--color-bg-tertiary); color: var(--color-text-secondary); border-radius: var(--radius-md);">修改房间</span>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="border-bottom: 1px solid var(--color-border-light); color: var(--color-text-secondary);">修改5F自修室A状态为维护中</td>
+              </tr>
+              <!-- Log 5 -->
+              <tr class="data-row" style="background: var(--color-bg);">
+                <td class="py-3.5 px-6 whitespace-nowrap" style="color: var(--color-text-secondary); font-variant-numeric: tabular-nums;">2026-06-29 09:30</td>
+                <td class="py-3.5 px-6 truncate" style="color: var(--color-text-tertiary); font-weight: 500;">系统自动</td>
+                <td class="py-3.5 px-6">
+                  <span class="inline-flex items-center whitespace-nowrap text-xs font-medium px-2.5 py-1" style="background: rgba(107, 114, 128, 0.08); color: #6B7280; border-radius: var(--radius-md);">自动释放</span>
+                </td>
+                <td class="py-3.5 px-6 truncate" style="color: var(--color-text-secondary);">学号2024002035预约超时未签到，自动释放</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer style="border-top: 1px solid var(--color-border-light);" class="py-4 mt-8">
+    <p class="text-center text-xs" style="color: var(--color-text-tertiary); font-family: var(--font-family);">高校自习室智能预约系统 &copy; 2026</p>
+  </footer>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif; background: var(--color-bg); color: var(--color-text-primary); margin: 0; }
+
+    /* === Staggered Entrance Animation === */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeSlideIn 480ms cubic-bezier(.3,0,0,1) forwards;
+    }
+    @keyframes fadeSlideIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* === Form Input Focus Styles === */
+    .filter-input:focus,
+    .filter-select:focus,
+    .config-input:focus {
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 2px rgba(14, 124, 107, 0.12);
+    }
+
+    /* === Table Row Hover === */
+    .data-table tbody tr {
+      transition: background-color 160ms cubic-bezier(.2,.8,.2,1);
+    }
+    .data-table tbody tr:hover {
+      background: var(--brand-primary-lightest) !important;
+    }
+
+    /* === Reduced Motion === */
+    @media (prefers-reduced-motion: reduce) {
+      .fade-in {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+      .data-table tbody tr {
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</body>
+</html>

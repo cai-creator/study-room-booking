@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时看板 - 智约自习</title>
+    <style id="theme-vars">
+/* === Brand CSS: Study Room Smart Booking System === */
+/* Style: Fresh Academic — clean, trustworthy campus SaaS */
+
+:root {
+  /* === Brand Color System === */
+  --brand-hue: 195;
+  --brand-primary: #0E7C6B;
+  --brand-primary-light: #12A38D;
+  --brand-primary-lighter: #D1FAE5;
+  --brand-primary-lightest: #ECFDF5;
+  --brand-primary-dark: #065F52;
+
+  /* === State Colors (semantic only) === */
+  --state-success: #16A34A;
+  --state-success-bg: #F0FDF4;
+  --state-warning: #D97706;
+  --state-warning-bg: #FFFBEB;
+  --state-error: #DC2626;
+  --state-error-bg: #FEF2F2;
+  --state-info: #2563EB;
+  --state-info-bg: #EFF6FF;
+
+  /* === Seat Status Colors (product-specific) === */
+  --seat-available: #16A34A;
+  --seat-available-bg: #DCFCE7;
+  --seat-occupied: #EF4444;
+  --seat-occupied-bg: #FEE2E2;
+  --seat-reserved: #F59E0B;
+  --seat-reserved-bg: #FEF3C7;
+  --seat-away: #6B7280;
+  --seat-away-bg: #F3F4F6;
+
+  /* === Neutral Palette === */
+  --color-bg: #FFFFFF;
+  --color-bg-secondary: #F8FAFB;
+  --color-bg-tertiary: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94A3B8;
+  --color-text-inverse: #FFFFFF;
+
+  /* === Typography === */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0em;
+
+  /* === Radius Scale === */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* === Spacing === */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  /* === Shadow === */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  /* === Surface & Depth === */
+  --surface-card: #FFFFFF;
+  --surface-card-border: 1px solid var(--color-border);
+  --surface-raised: #FFFFFF;
+  --surface-raised-shadow: var(--shadow-md);
+
+  /* === Z-index === */
+  --z-dropdown: 100;
+  --z-modal-backdrop: 200;
+  --z-modal: 210;
+  --z-toast: 300;
+
+  /* === Layout === */
+  --max-width: 1280px;
+  --sidebar-width: 260px;
+  --header-height: 64px;
+}
+
+/* Dark mode support */
+.dark {
+  --color-bg: #0F172A;
+  --color-bg-secondary: #1E293B;
+  --color-bg-tertiary: #334155;
+  --color-surface: #1E293B;
+  --color-border: #334155;
+  --color-border-light: #1E293B;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #CBD5E1;
+  --color-text-tertiary: #64748B;
+  --color-text-inverse: #0F172A;
+
+  --brand-primary-lighter: rgba(14, 124, 107, 0.15);
+  --brand-primary-lightest: rgba(14, 124, 107, 0.08);
+
+  --state-success-bg: rgba(22, 163, 74, 0.12);
+  --state-warning-bg: rgba(217, 119, 6, 0.12);
+  --state-error-bg: rgba(220, 38, 38, 0.12);
+  --state-info-bg: rgba(37, 99, 235, 0.12);
+
+  --seat-available-bg: rgba(22, 163, 74, 0.15);
+  --seat-occupied-bg: rgba(239, 68, 68, 0.15);
+  --seat-reserved-bg: rgba(245, 158, 11, 0.15);
+  --seat-away-bg: rgba(107, 114, 128, 0.15);
+
+  --surface-card: #1E293B;
+  --surface-card-border: 1px solid var(--color-border);
+  --surface-raised: #263548;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--brand-primary);
+  }
+  @layer base {
+    body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased" style="background: var(--color-bg-secondary);">
+
+    <!-- ====== Shared Header ====== -->
+    <header style="height: 64px; background-color: var(--color-bg); border-bottom: 1px solid var(--color-border);" class="sticky top-0 z-50 flex items-center justify-between px-6">
+        <a href="#" class="flex items-center gap-2 no-underline" style="color: var(--color-text-primary);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+            <span class="text-lg font-bold" style="font-family: var(--font-family); color: var(--color-text-primary);">智约自习</span>
+        </a>
+        <nav class="flex items-center gap-6" style="font-family: var(--font-family);">
+            <a href="#" data-nav-key="home" data-dom-id="nav-home" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">首页</a>
+            <a href="#" data-nav-key="room-selection" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">自习室</a>
+            <a href="#" data-nav-key="my-reservations" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">我的预约</a>
+            <a href="#" data-nav-key="dashboard" data-active="true" class="nav-link text-sm transition-colors" style="color: var(--brand-primary); font-weight: 600; border-bottom: 2px solid var(--brand-primary); padding-bottom: 2px;">实时看板</a>
+            <a href="#" data-nav-key="reports" data-dom-id="cta-reports" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">数据报表</a>
+        </nav>
+        <div class="flex items-center gap-1">
+            <div class="flex items-center justify-center rounded-full cursor-pointer" style="width: 32px; height: 32px; background-color: var(--brand-primary); color: var(--color-text-inverse); font-size: var(--text-sm); font-weight: 600; font-family: var(--font-family);">
+                张
+            </div>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+    </header>
+
+    <!-- ====== Main Content ====== -->
+    <main class="max-w-[1280px] mx-auto px-6 py-6" style="padding-bottom: 80px;">
+
+        <!-- Section 1: Page Title + Last Updated -->
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-semibold" style="color: var(--color-text-primary); text-wrap: balance; word-break: keep-all;">实时看板</h1>
+                <span style="font-size: var(--text-xs); color: var(--color-text-tertiary); border: 1px solid var(--color-border); border-radius: var(--radius-full); padding: 2px 8px; background: var(--color-bg);">LIVE</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5" style="font-size: var(--text-sm); color: var(--color-text-tertiary);">
+                    <span class="auto-refresh-dot" style="width: 6px; height: 6px; border-radius: 50%; background: var(--state-success); display: inline-block;"></span>
+                    <span>自动刷新中</span>
+                </div>
+                <button class="flex items-center justify-center" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--color-border); background: var(--surface-card); cursor: pointer; transition: border-color 120ms cubic-bezier(.2,.8,.2,1), background-color 120ms cubic-bezier(.2,.8,.2,1);" aria-label="刷新数据">
+                    <svg class="refresh-spin-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                </button>
+                <span style="color: var(--color-text-tertiary); font-size: var(--text-sm);">30秒前</span>
+            </div>
+        </div>
+
+        <!-- Section 2: Overview Stats Row -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+
+            <!-- Card: 开放自习室 -->
+            <div class="stat-card" style="background: var(--surface-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 20px; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 16px; right: 16px; opacity: 0.06;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                </div>
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center justify-center" style="width: 40px; height: 40px; background: var(--brand-primary-lightest); border-radius: var(--radius-md); flex-shrink: 0;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                    </div>
+                    <svg class="sparkline-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <div class="tabular-nums text-2xl font-semibold" style="color: var(--state-success); line-height: var(--leading-tight); margin-top: 12px;">18</div>
+                <div style="color: var(--color-text-secondary); font-size: var(--text-sm); margin-top: 2px;">开放自习室</div>
+                <svg width="100%" height="28" viewBox="0 0 100 28" preserveAspectRatio="none" style="display: block; margin-top: 8px;">
+                    <polyline points="0,22 14,18 28,20 42,16 56,14 70,12 84,10 100,8" fill="none" stroke="var(--state-success)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+                    <polygon points="0,22 14,18 28,20 42,16 56,14 70,12 84,10 100,8 100,28 0,28" fill="var(--state-success)" opacity="0.06"/>
+                </svg>
+            </div>
+
+            <!-- Card: 总座位数 -->
+            <div class="stat-card" style="background: var(--surface-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 20px; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 16px; right: 16px; opacity: 0.06;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                </div>
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center justify-center" style="width: 40px; height: 40px; background: var(--brand-primary-lightest); border-radius: var(--radius-md); flex-shrink: 0;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    </div>
+                    <svg class="sparkline-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <div class="tabular-nums text-2xl font-semibold" style="color: var(--brand-primary); line-height: var(--leading-tight); margin-top: 12px;">1,280</div>
+                <div style="color: var(--color-text-secondary); font-size: var(--text-sm); margin-top: 2px;">总座位数</div>
+                <svg width="100%" height="28" viewBox="0 0 100 28" preserveAspectRatio="none" style="display: block; margin-top: 8px;">
+                    <polyline points="0,20 14,20 28,18 42,18 56,16 70,14 84,12 100,12" fill="none" stroke="var(--brand-primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+                    <polygon points="0,20 14,20 28,18 42,18 56,16 70,14 84,12 100,12 100,28 0,28" fill="var(--brand-primary)" opacity="0.06"/>
+                </svg>
+            </div>
+
+            <!-- Card: 当前使用 -->
+            <div class="stat-card" style="background: var(--surface-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 20px; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 16px; right: 16px; opacity: 0.06;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center justify-center" style="width: 40px; height: 40px; background: var(--state-warning-bg); border-radius: var(--radius-md); flex-shrink: 0;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--state-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <svg class="sparkline-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <div class="tabular-nums text-2xl font-semibold" style="color: var(--state-warning); line-height: var(--leading-tight); margin-top: 12px;">912</div>
+                <div style="color: var(--color-text-secondary); font-size: var(--text-sm); margin-top: 2px;">当前使用</div>
+                <svg width="100%" height="28" viewBox="0 0 100 28" preserveAspectRatio="none" style="display: block; margin-top: 8px;">
+                    <polyline points="0,24 14,20 28,18 42,22 56,14 70,10 84,12 100,6" fill="none" stroke="var(--state-warning)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+                    <polygon points="0,24 14,20 28,18 42,22 56,14 70,10 84,12 100,6 100,28 0,28" fill="var(--state-warning)" opacity="0.06"/>
+                </svg>
+            </div>
+
+            <!-- Card: 整体使用率 -->
+            <div class="stat-card" style="background: var(--surface-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 20px; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: 16px; right: 16px; opacity: 0.06;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" stroke="none"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                </div>
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center justify-center" style="width: 40px; height: 40px; background: var(--state-warning-bg); border-radius: var(--radius-md); flex-shrink: 0;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--state-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    </div>
+                    <svg class="sparkline-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                </div>
+                <div class="tabular-nums text-2xl font-semibold" style="color: var(--state-warning); line-height: var(--leading-tight); margin-top: 12px;">71%</div>
+                <div style="color: var(--color-text-secondary); font-size: var(--text-sm); margin-top: 2px;">整体使用率</div>
+                <svg width="100%" height="28" viewBox="0 0 100 28" preserveAspectRatio="none" style="display: block; margin-top: 8px;">
+                    <polyline points="0,22 14,18 28,20 42,16 56,18 70,14 84,12 100,10" fill="none" stroke="var(--state-warning)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+                    <polygon points="0,22 14,18 28,20 42,16 56,18 70,14 84,12 100,10 100,28 0,28" fill="var(--state-warning)" opacity="0.06"/>
+                </svg>
+            </div>
+
+        </div>
+
+        <!-- Section 3: Building Filter Tabs -->
+        <div class="flex items-center gap-1 mb-6" style="position: relative; background: var(--color-bg-tertiary); border-radius: var(--radius-full); padding: 3px; display: inline-flex;">
+            <button class="tab-button" data-building="all" style="position: relative; z-index: 2; background: var(--color-bg); color: var(--brand-primary); border-radius: var(--radius-full); padding: 6px 16px; font-size: var(--text-sm); font-weight: 600; border: none; cursor: pointer; transition: color 240ms cubic-bezier(.3,0,0,1); font-family: var(--font-family); box-shadow: var(--shadow-sm);">全部 <span class="tab-count-badge" style="margin-left: 4px; font-size: 11px; font-weight: 500; color: var(--color-text-tertiary);">6</span></button>
+            <button class="tab-button" data-building="library" style="position: relative; z-index: 2; background: transparent; color: var(--color-text-secondary); border-radius: var(--radius-full); padding: 6px 16px; font-size: var(--text-sm); font-weight: 500; border: none; cursor: pointer; transition: color 240ms cubic-bezier(.3,0,0,1); font-family: var(--font-family);">图书馆 <span class="tab-count-badge" style="margin-left: 4px; font-size: 11px; font-weight: 500; color: var(--color-text-tertiary);">3</span></button>
+            <button class="tab-button" data-building="teaching-a" style="position: relative; z-index: 2; background: transparent; color: var(--color-text-secondary); border-radius: var(--radius-full); padding: 6px 16px; font-size: var(--text-sm); font-weight: 500; border: none; cursor: pointer; transition: color 240ms cubic-bezier(.3,0,0,1); font-family: var(--font-family);">教学楼A栋 <span class="tab-count-badge" style="margin-left: 4px; font-size: 11px; font-weight: 500; color: var(--color-text-tertiary);">1</span></button>
+            <button class="tab-button" data-building="teaching-b" style="position: relative; z-index: 2; background: transparent; color: var(--color-text-secondary); border-radius: var(--radius-full); padding: 6px 16px; font-size: var(--text-sm); font-weight: 500; border: none; cursor: pointer; transition: color 240ms cubic-bezier(.3,0,0,1); font-family: var(--font-family);">教学楼B栋 <span class="tab-count-badge" style="margin-left: 4px; font-size: 11px; font-weight: 500; color: var(--color-text-tertiary);">1</span></button>
+            <button class="tab-button" data-building="teaching-c" style="position: relative; z-index: 2; background: transparent; color: var(--color-text-secondary); border-radius: var(--radius-full); padding: 6px 16px; font-size: var(--text-sm); font-weight: 500; border: none; cursor: pointer; transition: color 240ms cubic-bezier(.3,0,0,1); font-family: var(--font-family);">教学楼C栋 <span class="tab-count-badge" style="margin-left: 4px; font-size: 11px; font-weight: 500; color: var(--color-text-tertiary);">1</span></button>
+        </div>
+
+        <!-- Section 4: Room List -->
+        <div class="flex flex-col gap-3 mb-6">
+
+            <!-- Room Card 1: 图书馆三楼 A区 — 73% (index 0, even) -->
+            <div class="room-card room-card-enter" style="animation-delay: 0ms; background: var(--surface-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 20px 24px; display: flex; align-items: center; gap: 24px;">
+                <!-- Left: Room Info -->
+                <div class="flex-1 min-w-0" style="flex-shrink: 0;">
+                    <div class="flex items-center gap-2">
+                        <div class="font-semibold text-base" style="color: var(--state-warning);">图书馆三楼 A区</div>
+                        <span style="font-size: 11px; font-weight: 500; color: var(--state-warning); background: var(--state-warning-bg); border-radius: var(--radius-full); padding: 1px 8px;">偏高</span>
+                    </div>
+                    <div class="flex items-center gap-3 mt-1" style="color: var(--color-text-tertiary); font-size: var(--text-sm);">
+                        <span class="flex items-center gap-1">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                            主校区 · 图书馆 · 3楼
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            08:00 - 22:00
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1 mt-1" style="color: var(--color-text-tertiary); font-size: var(--text-xs);">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--state-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <span>高峰时段: 14:00 - 16:00</span>
+                    </div>
+                </div>
+
+                <!-- Center: Mini Seat Map -->
+                <div style="flex-shrink: 0; display: grid; grid-template-columns: repeat(8, 4px); grid-template-rows: repeat(6, 4px); gap: 2px;">
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                </div>
+
+                <!-- Center: Seat Status Indicators -->
+                <div class="flex items-center gap-4" style="flex-shrink: 0;">
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-available); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">32</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-reserved); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">16</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-occupied); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">68</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-away); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">4</span>
+                    </div>
+                    <span class="tabular-nums font-medium" style="color: var(--color-text-tertiary); font-size: var(--text-xs);">120座</span>
+                </div>
+
+                <!-- Right: Usage Bar -->
+                <div class="text-right" style="width: 120px; flex-shrink: 0;">
+                    <div class="tabular-nums text-xl font-semibold" style="color: var(--state-warning); line-height: var(--leading-tight);">73%</div>
+                    <div style="height: 8px; background: var(--color-bg-tertiary); border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                        <div class="usage-bar-fill" style="width: 73%; height: 100%; background: linear-gradient(90deg, var(--state-warning), #F59E0B); border-radius: 4px;"></div>
+                    </div>
+                </div>
+
+                <!-- Chevron -->
+                <div style="flex-shrink: 0; color: var(--color-text-tertiary);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+            </div>
+
+            <!-- Room Card 2: 图书馆二楼阅览室 — 40% (index 1, odd) -->
+            <div class="room-card room-card-enter" style="animation-delay: 60ms; background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-lg); padding: 20px 24px; display: flex; align-items: center; gap: 24px;">
+                <div class="flex-1 min-w-0" style="flex-shrink: 0;">
+                    <div class="flex items-center gap-2">
+                        <div class="font-semibold text-base" style="color: var(--color-text-primary);">图书馆二楼阅览室</div>
+                        <span style="font-size: 11px; font-weight: 500; color: var(--state-success); background: var(--state-success-bg); border-radius: var(--radius-full); padding: 1px 8px;">空闲</span>
+                    </div>
+                    <div class="flex items-center gap-3 mt-1" style="color: var(--color-text-tertiary); font-size: var(--text-sm);">
+                        <span class="flex items-center gap-1">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                            主校区 · 图书馆 · 2楼
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            08:00 - 22:00
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1 mt-1" style="color: var(--color-text-tertiary); font-size: var(--text-xs);">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--state-info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <span>高峰时段: 10:00 - 12:00</span>
+                    </div>
+                </div>
+
+                <div style="flex-shrink: 0; display: grid; grid-template-columns: repeat(8, 4px); grid-template-rows: repeat(6, 4px); gap: 2px;">
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                </div>
+
+                <div class="flex items-center gap-4" style="flex-shrink: 0;">
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-available); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">45</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-reserved); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">12</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-occupied); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">28</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-away); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">5</span>
+                    </div>
+                    <span class="tabular-nums font-medium" style="color: var(--color-text-tertiary); font-size: var(--text-xs);">90座</span>
+                </div>
+
+                <div class="text-right" style="width: 120px; flex-shrink: 0;">
+                    <div class="tabular-nums text-xl font-semibold" style="color: var(--state-success); line-height: var(--leading-tight);">40%</div>
+                    <div style="height: 8px; background: var(--color-bg-tertiary); border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                        <div class="usage-bar-fill" style="width: 40%; height: 100%; background: linear-gradient(90deg, var(--state-success), #22C55E); border-radius: 4px;"></div>
+                    </div>
+                </div>
+
+                <div style="flex-shrink: 0; color: var(--color-text-tertiary);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+            </div>
+
+            <!-- Room Card 3: 教学楼 B栋 201 — 88% (index 2, even) -->
+            <div class="room-card room-card-enter" style="animation-delay: 120ms; background: var(--surface-card); border: 1px solid var(--state-error); border-radius: var(--radius-lg); padding: 20px 24px; display: flex; align-items: center; gap: 24px;">
+                <div class="flex-1 min-w-0" style="flex-shrink: 0;">
+                    <div class="flex items-center gap-2">
+                        <div class="font-semibold text-base" style="color: var(--state-error);">教学楼 B栋 201</div>
+                        <span style="font-size: 11px; font-weight: 500; color: var(--state-error); background: var(--state-error-bg); border-radius: var(--radius-full); padding: 1px 8px;">紧张</span>
+                    </div>
+                    <div class="flex items-center gap-3 mt-1" style="color: var(--color-text-tertiary); font-size: var(--text-sm);">
+                        <span class="flex items-center gap-1">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                            主校区 · 教学楼B栋 · 2楼
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            07:00 - 22:30
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1 mt-1" style="color: var(--color-text-tertiary); font-size: var(--text-xs);">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--state-error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <span>高峰时段: 19:00 - 21:00</span>
+                    </div>
+                </div>
+
+                <div style="flex-shrink: 0; display: grid; grid-template-columns: repeat(8, 4px); grid-template-rows: repeat(6, 4px); gap: 2px;">
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span>
+                </div>
+
+                <div class="flex items-center gap-4" style="flex-shrink: 0;">
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-available); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">8</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-reserved); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">6</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-occupied); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">54</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-away); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">2</span>
+                    </div>
+                    <span class="tabular-nums font-medium" style="color: var(--color-text-tertiary); font-size: var(--text-xs);">70座</span>
+                </div>
+
+                <div class="text-right" style="width: 120px; flex-shrink: 0;">
+                    <div class="tabular-nums text-xl font-semibold" style="color: var(--state-error); line-height: var(--leading-tight);">88%</div>
+                    <div style="height: 8px; background: var(--color-bg-tertiary); border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                        <div class="usage-bar-fill" style="width: 88%; height: 100%; background: linear-gradient(90deg, var(--state-error), #F87171); border-radius: 4px;"></div>
+                    </div>
+                </div>
+
+                <div style="flex-shrink: 0; color: var(--color-text-tertiary);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+            </div>
+
+            <!-- Room Card 4: 教学楼 A栋 305 — 63% (index 3, odd) -->
+            <div class="room-card room-card-enter" style="animation-delay: 180ms; background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-lg); padding: 20px 24px; display: flex; align-items: center; gap: 24px;">
+                <div class="flex-1 min-w-0" style="flex-shrink: 0;">
+                    <div class="flex items-center gap-2">
+                        <div class="font-semibold text-base" style="color: var(--state-warning);">教学楼 A栋 305</div>
+                        <span style="font-size: 11px; font-weight: 500; color: var(--state-warning); background: var(--state-warning-bg); border-radius: var(--radius-full); padding: 1px 8px;">偏高</span>
+                    </div>
+                    <div class="flex items-center gap-3 mt-1" style="color: var(--color-text-tertiary); font-size: var(--text-sm);">
+                        <span class="flex items-center gap-1">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                            主校区 · 教学楼A栋 · 3楼
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            07:00 - 22:30
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1 mt-1" style="color: var(--color-text-tertiary); font-size: var(--text-xs);">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--state-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <span>高峰时段: 14:00 - 16:00</span>
+                    </div>
+                </div>
+
+                <div style="flex-shrink: 0; display: grid; grid-template-columns: repeat(8, 4px); grid-template-rows: repeat(6, 4px); gap: 2px;">
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                </div>
+
+                <div class="flex items-center gap-4" style="flex-shrink: 0;">
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-available); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">20</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-reserved); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">15</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-occupied); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">30</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-away); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">5</span>
+                    </div>
+                    <span class="tabular-nums font-medium" style="color: var(--color-text-tertiary); font-size: var(--text-xs);">70座</span>
+                </div>
+
+                <div class="text-right" style="width: 120px; flex-shrink: 0;">
+                    <div class="tabular-nums text-xl font-semibold" style="color: var(--state-warning); line-height: var(--leading-tight);">63%</div>
+                    <div style="height: 8px; background: var(--color-bg-tertiary); border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                        <div class="usage-bar-fill" style="width: 63%; height: 100%; background: linear-gradient(90deg, var(--state-warning), #F59E0B); border-radius: 4px;"></div>
+                    </div>
+                </div>
+
+                <div style="flex-shrink: 0; color: var(--color-text-tertiary);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+            </div>
+
+            <!-- Room Card 5: 图书馆一楼大厅 — 85% (index 4, even) -->
+            <div class="room-card room-card-enter" style="animation-delay: 240ms; background: var(--surface-card); border: 1px solid var(--state-error); border-radius: var(--radius-lg); padding: 20px 24px; display: flex; align-items: center; gap: 24px;">
+                <div class="flex-1 min-w-0" style="flex-shrink: 0;">
+                    <div class="flex items-center gap-2">
+                        <div class="font-semibold text-base" style="color: var(--state-error);">图书馆一楼大厅</div>
+                        <span style="font-size: 11px; font-weight: 500; color: var(--state-error); background: var(--state-error-bg); border-radius: var(--radius-full); padding: 1px 8px;">紧张</span>
+                    </div>
+                    <div class="flex items-center gap-3 mt-1" style="color: var(--color-text-tertiary); font-size: var(--text-sm);">
+                        <span class="flex items-center gap-1">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                            主校区 · 图书馆 · 1楼
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            07:00 - 23:00
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1 mt-1" style="color: var(--color-text-tertiary); font-size: var(--text-xs);">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--state-error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <span>高峰时段: 09:00 - 11:00</span>
+                    </div>
+                </div>
+
+                <div style="flex-shrink: 0; display: grid; grid-template-columns: repeat(8, 4px); grid-template-rows: repeat(6, 4px); gap: 2px;">
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                </div>
+
+                <div class="flex items-center gap-4" style="flex-shrink: 0;">
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-available); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">60</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-reserved); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">25</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-occupied); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">80</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-away); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">10</span>
+                    </div>
+                    <span class="tabular-nums font-medium" style="color: var(--color-text-tertiary); font-size: var(--text-xs);">175座</span>
+                </div>
+
+                <div class="text-right" style="width: 120px; flex-shrink: 0;">
+                    <div class="tabular-nums text-xl font-semibold" style="color: var(--state-error); line-height: var(--leading-tight);">85%</div>
+                    <div style="height: 8px; background: var(--color-bg-tertiary); border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                        <div class="usage-bar-fill" style="width: 85%; height: 100%; background: linear-gradient(90deg, var(--state-error), #F87171); border-radius: 4px;"></div>
+                    </div>
+                </div>
+
+                <div style="flex-shrink: 0; color: var(--color-text-tertiary);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+            </div>
+
+            <!-- Room Card 6: 教学楼 C栋 102 — 75% (index 5, odd) -->
+            <div class="room-card room-card-enter" style="animation-delay: 300ms; background: var(--color-bg-secondary); border: 1px solid var(--color-border-light); border-radius: var(--radius-lg); padding: 20px 24px; display: flex; align-items: center; gap: 24px;">
+                <div class="flex-1 min-w-0" style="flex-shrink: 0;">
+                    <div class="flex items-center gap-2">
+                        <div class="font-semibold text-base" style="color: var(--state-warning);">教学楼 C栋 102</div>
+                        <span style="font-size: 11px; font-weight: 500; color: var(--state-warning); background: var(--state-warning-bg); border-radius: var(--radius-full); padding: 1px 8px;">偏高</span>
+                    </div>
+                    <div class="flex items-center gap-3 mt-1" style="color: var(--color-text-tertiary); font-size: var(--text-sm);">
+                        <span class="flex items-center gap-1">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                            主校区 · 教学楼C栋 · 1楼
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            07:00 - 22:00
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1 mt-1" style="color: var(--color-text-tertiary); font-size: var(--text-xs);">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--state-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        <span>高峰时段: 15:00 - 17:00</span>
+                    </div>
+                </div>
+
+                <div style="flex-shrink: 0; display: grid; grid-template-columns: repeat(8, 4px); grid-template-rows: repeat(6, 4px); gap: 2px;">
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span>
+                    <span style="width:4px;height:4px;border-radius:1px;background:var(--seat-available);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-reserved);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-away);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span><span style="width:4px;height:4px;border-radius:1px;background:var(--seat-occupied);"></span>
+                </div>
+
+                <div class="flex items-center gap-4" style="flex-shrink: 0;">
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-available); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">40</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-reserved); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">8</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-occupied); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">42</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--seat-away); display: inline-block;"></span>
+                        <span class="tabular-nums" style="color: var(--color-text-secondary); font-size: var(--text-sm);">10</span>
+                    </div>
+                    <span class="tabular-nums font-medium" style="color: var(--color-text-tertiary); font-size: var(--text-xs);">100座</span>
+                </div>
+
+                <div class="text-right" style="width: 120px; flex-shrink: 0;">
+                    <div class="tabular-nums text-xl font-semibold" style="color: var(--state-warning); line-height: var(--leading-tight);">75%</div>
+                    <div style="height: 8px; background: var(--color-bg-tertiary); border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                        <div class="usage-bar-fill" style="width: 75%; height: 100%; background: linear-gradient(90deg, var(--state-warning), #F59E0B); border-radius: 4px;"></div>
+                    </div>
+                </div>
+
+                <div style="flex-shrink: 0; color: var(--color-text-tertiary);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ====== Floating Color Legend ====== -->
+    <div style="position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); background: var(--surface-card); border: 1px solid var(--color-border); border-bottom: none; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 12px 24px; z-index: 40; box-shadow: 0 -2px 12px rgba(0,0,0,0.06);">
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-1.5">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--seat-available); display: inline-block;"></span>
+                    <span style="color: var(--color-text-secondary); font-size: var(--text-xs);">空闲</span>
+                    <span class="tabular-nums" style="color: var(--color-text-primary); font-size: var(--text-xs); font-weight: 600;">205</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--seat-reserved); display: inline-block;"></span>
+                    <span style="color: var(--color-text-secondary); font-size: var(--text-xs);">已预约</span>
+                    <span class="tabular-nums" style="color: var(--color-text-primary); font-size: var(--text-xs); font-weight: 600;">82</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--seat-occupied); display: inline-block;"></span>
+                    <span style="color: var(--color-text-secondary); font-size: var(--text-xs);">已占用</span>
+                    <span class="tabular-nums" style="color: var(--color-text-primary); font-size: var(--text-xs); font-weight: 600;">302</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--seat-away); display: inline-block;"></span>
+                    <span style="color: var(--color-text-secondary); font-size: var(--text-xs);">暂离</span>
+                    <span class="tabular-nums" style="color: var(--color-text-primary); font-size: var(--text-xs); font-weight: 600;">36</span>
+                </div>
+            </div>
+            <div style="width: 1px; height: 16px; background: var(--color-border);"></div>
+            <div class="flex items-center gap-1.5">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span style="color: var(--color-text-tertiary); font-size: var(--text-xs);">数据每30秒自动刷新</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== Footer ====== -->
+    <footer style="border-top: 1px solid var(--color-border-light);" class="py-4 mt-8">
+        <p class="text-center text-xs" style="color: var(--color-text-tertiary); font-family: var(--font-family);">高校自习室智能预约系统 &copy; 2026</p>
+    </footer>
+
+    <script>lucide.createIcons();</script>
+<style>
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Auto-refresh dot pulse */
+@keyframes dot-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } }
+.auto-refresh-dot { animation: dot-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+/* Refresh button hover */
+button[aria-label="刷新数据"]:hover {
+  border-color: var(--brand-primary);
+  background-color: var(--brand-primary-lightest);
+}
+button[aria-label="刷新-data"]:hover svg {
+  stroke: var(--brand-primary);
+}
+
+/* Usage bar fill animation */
+@keyframes bar-fill { from { width: 0%; } }
+.usage-bar-fill { animation: bar-fill 0.8s cubic-bezier(.3, 0, 0, 1) forwards; }
+
+/* Staggered room card entrance */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.room-card-enter {
+  opacity: 0;
+  animation: card-enter 0.4s cubic-bezier(.3, 0, 0, 1) forwards;
+}
+
+/* Tab button hover */
+.tab-button:hover {
+  color: var(--color-text-primary) !important;
+}
+
+/* Stat card hover */
+.stat-card {
+  transition: box-shadow 160ms cubic-bezier(.2,.8,.2,1), border-color 160ms cubic-bezier(.2,.8,.2,1);
+}
+.stat-card:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--brand-primary);
+}
+
+/* Room card hover */
+.room-card {
+  transition: box-shadow 160ms cubic-bezier(.2,.8,.2,1);
+}
+.room-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .auto-refresh-dot { animation-duration: 0.01ms; animation-iteration-count: 1; }
+  .usage-bar-fill { animation-duration: 0.01ms; }
+  .room-card-enter { animation-duration: 0.01ms; }
+}
+</style>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!-- Top Navbar -->
+<header style="height: 64px; background-color: var(--color-bg); border-bottom: 1px solid var(--color-border);" class="sticky top-0 z-50 flex items-center justify-between px-6">
+  <!-- Left: Logo -->
+  <a href="#" class="flex items-center gap-2 no-underline" style="color: var(--color-text-primary);">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+    <span class="text-lg font-bold" style="font-family: var(--font-family); color: var(--color-text-primary);">智约自习</span>
+  </a>
+
+  <!-- Center: Navigation Links -->
+  <nav class="flex items-center gap-6" style="font-family: var(--font-family);">
+    <a href="#" data-nav-key="home" data-dom-id="nav-home" class="nav-link text-sm transition-colors" style="color: var(--brand-primary); font-weight: 600; border-bottom: 2px solid var(--brand-primary); padding-bottom: 2px;">首页</a>
+    <a href="#" data-nav-key="room-selection" data-dom-id="nav-room-selection" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">自习室</a>
+    <a href="#" data-nav-key="my-reservations" data-dom-id="nav-my-reservations" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">我的预约</a>
+    <a href="#" data-nav-key="dashboard" data-dom-id="nav-dashboard" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">实时看板</a>
+    <a href="#" data-nav-key="reports" data-dom-id="nav-reports" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">数据报表</a>
+  </nav>
+
+  <!-- Right: User Avatar -->
+  <div class="flex items-center gap-1">
+    <div class="flex items-center justify-center rounded-full cursor-pointer" style="width: 32px; height: 32px; background-color: var(--brand-primary); color: var(--color-text-inverse); font-size: var(--text-sm); font-weight: 600; font-family: var(--font-family);">
+      张
+    </div>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+</header>
+
+<!-- Page Title Slot -->
+<!-- SLOT: pageTitle -->
+
+<!-- Main Content Slot -->
+<main id="main-content" class="max-w-[1280px] mx-auto px-6 py-6">
+<!-- SLOT: mainContent -->
+</main>
+
+<!-- Footer -->
+<footer style="border-top: 1px solid var(--color-border-light);" class="py-4 mt-8">
+  <p class="text-center text-xs" style="color: var(--color-text-tertiary); font-family: var(--font-family);">高校自习室智能预约系统 &copy; 2026</p>
+</footer>

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的预约</title>
+    <style id="theme-vars">
+/* === Brand CSS: Study Room Smart Booking System === */
+/* Style: Fresh Academic — clean, trustworthy campus SaaS */
+
+:root {
+  /* === Brand Color System === */
+  --brand-hue: 195;
+  --brand-primary: #0E7C6B;
+  --brand-primary-light: #12A38D;
+  --brand-primary-lighter: #D1FAE5;
+  --brand-primary-lightest: #ECFDF5;
+  --brand-primary-dark: #065F52;
+
+  /* === State Colors (semantic only) === */
+  --state-success: #16A34A;
+  --state-success-bg: #F0FDF4;
+  --state-warning: #D97706;
+  --state-warning-bg: #FFFBEB;
+  --state-error: #DC2626;
+  --state-error-bg: #FEF2F2;
+  --state-info: #2563EB;
+  --state-info-bg: #EFF6FF;
+
+  /* === Seat Status Colors (product-specific) === */
+  --seat-available: #16A34A;
+  --seat-available-bg: #DCFCE7;
+  --seat-occupied: #EF4444;
+  --seat-occupied-bg: #FEE2E2;
+  --seat-reserved: #F59E0B;
+  --seat-reserved-bg: #FEF3C7;
+  --seat-away: #6B7280;
+  --seat-away-bg: #F3F4F6;
+
+  /* === Neutral Palette === */
+  --color-bg: #FFFFFF;
+  --color-bg-secondary: #F8FAFB;
+  --color-bg-tertiary: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+  --color-text-primary: #1E293B;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94A3B8;
+  --color-text-inverse: #FFFFFF;
+
+  /* === Typography === */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0em;
+
+  /* === Radius Scale === */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* === Spacing === */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  /* === Shadow === */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  /* === Surface & Depth === */
+  --surface-card: #FFFFFF;
+  --surface-card-border: 1px solid var(--color-border);
+  --surface-raised: #FFFFFF;
+  --surface-raised-shadow: var(--shadow-md);
+
+  /* === Z-index === */
+  --z-dropdown: 100;
+  --z-modal-backdrop: 200;
+  --z-modal: 210;
+  --z-toast: 300;
+
+  /* === Layout === */
+  --max-width: 1280px;
+  --sidebar-width: 260px;
+  --header-height: 64px;
+}
+
+/* Dark mode support */
+.dark {
+  --color-bg: #0F172A;
+  --color-bg-secondary: #1E293B;
+  --color-bg-tertiary: #334155;
+  --color-surface: #1E293B;
+  --color-border: #334155;
+  --color-border-light: #1E293B;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #CBD5E1;
+  --color-text-tertiary: #64748B;
+  --color-text-inverse: #0F172A;
+
+  --brand-primary-lighter: rgba(14, 124, 107, 0.15);
+  --brand-primary-lightest: rgba(14, 124, 107, 0.08);
+
+  --state-success-bg: rgba(22, 163, 74, 0.12);
+  --state-warning-bg: rgba(217, 119, 6, 0.12);
+  --state-error-bg: rgba(220, 38, 38, 0.12);
+  --state-info-bg: rgba(37, 99, 235, 0.12);
+
+  --seat-available-bg: rgba(22, 163, 74, 0.15);
+  --seat-occupied-bg: rgba(239, 68, 68, 0.15);
+  --seat-reserved-bg: rgba(245, 158, 11, 0.15);
+  --seat-away-bg: rgba(107, 114, 128, 0.15);
+
+  --surface-card: #1E293B;
+  --surface-card-border: 1px solid var(--color-border);
+  --surface-raised: #263548;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-primary: var(--brand-primary);
+  }
+    @layer base {
+    body { background: var(--color-bg); color: var(--color-text-primary); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased" style="background-color: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family);">
+
+  <!-- Shared Header -->
+  <header style="height: 64px; background-color: var(--color-bg); border-bottom: 1px solid var(--color-border);" class="sticky top-0 z-50 flex items-center justify-between px-6">
+    <!-- Left: Logo -->
+    <a href="#" class="flex items-center gap-2 no-underline" style="color: var(--color-text-primary);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+      <span class="text-lg font-bold" style="font-family: var(--font-family); color: var(--color-text-primary);">智约自习</span>
+    </a>
+
+    <!-- Center: Navigation Links -->
+    <nav class="flex items-center gap-6" style="font-family: var(--font-family);">
+      <a href="#" data-nav-key="home" data-dom-id="nav-home" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">首页</a>
+      <a href="#" data-nav-key="room-selection" data-dom-id="nav-room-selection" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">自习室</a>
+      <a href="#" data-nav-key="my-reservations" data-active="true" class="nav-link text-sm transition-colors" style="color: var(--brand-primary); font-weight: 600; border-bottom: 2px solid var(--brand-primary); padding-bottom: 2px;">我的预约</a>
+      <a href="#" data-nav-key="dashboard" data-dom-id="nav-dashboard" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">实时看板</a>
+      <a href="#" data-nav-key="reports" data-dom-id="nav-reports" class="nav-link text-sm transition-colors" style="color: var(--color-text-secondary); padding-bottom: 2px;">数据报表</a>
+    </nav>
+
+    <!-- Right: User Avatar -->
+    <div class="flex items-center gap-1">
+      <div class="flex items-center justify-center rounded-full cursor-pointer" style="width: 32px; height: 32px; background-color: var(--brand-primary); color: var(--color-text-inverse); font-size: var(--text-sm); font-weight: 600; font-family: var(--font-family);">
+        张
+      </div>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-0.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main id="main-content" class="max-w-[1280px] mx-auto px-6 py-6">
+
+    <!-- Page Title Row -->
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-xl font-semibold" style="color: var(--color-text-primary); text-wrap: balance; word-break: keep-all;">我的预约</h1>
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-medium px-3 py-1.5" style="background-color: var(--brand-primary-lightest); color: var(--brand-primary); border: 1px solid var(--brand-primary-lighter); border-radius: var(--radius-full);">
+          今日剩余预约次数: 2/3
+        </span>
+      </div>
+    </div>
+
+    <!-- Status Filter Tabs with Slide Indicator -->
+    <div class="relative flex items-center mb-8" style="background-color: var(--color-bg-secondary); border-radius: var(--radius-lg); padding: 4px;">
+      <!-- Slide indicator background -->
+      <div id="tab-indicator" class="absolute" style="background-color: var(--brand-primary); border-radius: var(--radius-md); height: calc(100% - 8px); top: 4px; transition: left 240ms cubic-bezier(.3,0,0,1), width 240ms cubic-bezier(.3,0,0,1); z-index: 0;"></div>
+      <button class="filter-tab active relative z-10 text-sm font-medium px-4 py-2" data-filter="all" data-count="4" onclick="switchTab(this)">
+        <span>全部</span><span class="tab-count ml-1.5 text-xs font-semibold px-1.5 py-0.5 rounded-md" style="line-height: 1;">4</span>
+      </button>
+      <button class="filter-tab relative z-10 text-sm font-medium px-4 py-2" data-filter="pending" data-count="2" onclick="switchTab(this)" style="color: var(--color-text-secondary);">
+        <span>待签到</span><span class="tab-count ml-1.5 text-xs font-semibold px-1.5 py-0.5 rounded-md" style="background-color: var(--state-warning-bg); color: var(--state-warning); line-height: 1;">2</span>
+      </button>
+      <button class="filter-tab relative z-10 text-sm font-medium px-4 py-2" data-filter="active" data-count="1" onclick="switchTab(this)" style="color: var(--color-text-secondary);">
+        <span>使用中</span><span class="tab-count ml-1.5 text-xs font-semibold px-1.5 py-0.5 rounded-md" style="background-color: var(--state-success-bg); color: var(--state-success); line-height: 1;">1</span>
+      </button>
+      <button class="filter-tab relative z-10 text-sm font-medium px-4 py-2" data-filter="completed" data-count="1" onclick="switchTab(this)" style="color: var(--color-text-secondary);">
+        <span>已完成</span><span class="tab-count ml-1.5 text-xs font-semibold px-1.5 py-0.5 rounded-md" style="line-height: 1;">1</span>
+      </button>
+      <button class="filter-tab relative z-10 text-sm font-medium px-4 py-2" data-filter="cancelled" data-count="0" onclick="switchTab(this)" style="color: var(--color-text-secondary);">
+        <span>已取消</span><span class="tab-count ml-1.5 text-xs font-semibold px-1.5 py-0.5 rounded-md" style="line-height: 1;">0</span>
+      </button>
+    </div>
+
+    <!-- Reservation Cards List with Timeline -->
+    <div class="relative" style="padding-left: 24px;">
+      <!-- Timeline vertical connector line -->
+      <div class="absolute" style="left: 7px; top: 16px; bottom: 16px; width: 2px; background-color: var(--color-border);"></div>
+
+      <div class="flex flex-col gap-5">
+
+        <!-- Card 1 — 使用中 (Active, Prominent) -->
+        <div class="reservation-card relative rounded-lg overflow-hidden" data-status="active" style="background-color: var(--surface-card); border: 1px solid var(--color-border); box-shadow: 0 0 0 1px var(--state-success-bg); animation: card-enter 320ms cubic-bezier(.3,0,0,1) both;">
+          <!-- Left color-coded border accent -->
+          <div class="absolute left-0 top-0 bottom-0" style="width: 4px; background-color: var(--state-success);"></div>
+          <!-- Timeline dot -->
+          <div class="absolute" style="left: -21px; top: 28px; width: 10px; height: 10px; border-radius: 50%; background-color: var(--state-success); border: 2px solid var(--color-bg); box-shadow: 0 0 0 2px var(--state-success);"></div>
+
+          <div class="p-5" style="padding-left: 20px;">
+            <!-- Top Row: Status + QR placeholder -->
+            <div class="flex items-start justify-between mb-3">
+              <!-- Status Badge with live indicator -->
+              <span class="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5" style="background-color: var(--state-success-bg); color: var(--state-success); border-radius: var(--radius-md);">
+                <span class="live-dot inline-block rounded-full" style="width: 8px; height: 8px; background-color: var(--state-success); box-shadow: 0 0 6px var(--state-success);"></span>
+                <span>使用中</span>
+                <span class="font-normal" style="opacity: 0.7;">学习中</span>
+              </span>
+              <!-- QR Code Placeholder -->
+              <div class="flex items-center gap-2 px-2.5 py-1.5" style="background-color: var(--color-bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+                <div class="flex items-center justify-center" style="width: 32px; height: 32px; background-color: var(--color-bg-tertiary); border-radius: var(--radius-sm);">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="3" height="3" rx="0.5"/><rect x="18" y="18" width="3" height="3" rx="0.5"/>
+                  </svg>
+                </div>
+                <span class="text-xs font-medium" style="color: var(--color-text-secondary);">签到码</span>
+              </div>
+            </div>
+
+            <!-- Room Info -->
+            <div class="flex items-center gap-2 mb-3">
+              <svg class="flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span class="text-base font-semibold" style="color: var(--color-text-primary);">图书馆三楼 A区 · 座位 A-05</span>
+            </div>
+
+            <!-- Time pill -->
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 mb-3" style="background-color: var(--color-bg-secondary); border-radius: var(--radius-full); border: 1px solid var(--color-border);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="text-sm font-medium" style="color: var(--color-text-secondary);">09:00 - 12:00</span>
+              <span class="text-xs" style="color: var(--color-text-tertiary);">· 2026年7月2日</span>
+            </div>
+
+            <!-- Duration Timer + Countdown Row -->
+            <div class="flex items-center gap-4 mb-4">
+              <div class="inline-flex items-center gap-1.5 px-3 py-1.5" style="background-color: var(--state-success-bg); border-radius: var(--radius-full);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--state-success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 8 14"/></svg>
+                <span class="text-sm font-semibold" style="color: var(--state-success);">已学习 1小时23分</span>
+              </div>
+              <div class="inline-flex items-center gap-1.5 px-3 py-1.5" style="background-color: var(--brand-primary-lightest); border-radius: var(--radius-full);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span class="text-sm font-medium" style="color: var(--brand-primary);">预计 12:00 结束</span>
+                <span class="text-xs" style="color: var(--brand-primary); opacity: 0.7;">(剩余37分)</span>
+              </div>
+            </div>
+
+            <!-- Actions Group -->
+            <div class="flex items-center gap-2 pt-2" style="border-top: 1px solid var(--color-border-light);">
+              <button class="btn-action text-sm px-4 py-2 font-medium" style="border: 1px solid var(--color-border); color: var(--color-text-secondary); background-color: transparent; border-radius: var(--radius-md);">
+                暂离
+              </button>
+              <button class="btn-action text-sm px-5 py-2 font-semibold" style="background-color: var(--brand-primary); color: var(--color-text-inverse); border: 1px solid var(--brand-primary); border-radius: var(--radius-md);">
+                签退
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 — 待签到 (Pending Check-in, Today) -->
+        <div class="reservation-card relative rounded-lg overflow-hidden" data-status="pending" style="background-color: var(--surface-card); border: 1px solid var(--color-border); animation: card-enter 320ms cubic-bezier(.3,0,0,1) 60ms both;">
+          <!-- Left amber accent -->
+          <div class="absolute left-0 top-0 bottom-0" style="width: 4px; background-color: var(--state-warning);"></div>
+          <!-- Timeline dot -->
+          <div class="absolute" style="left: -21px; top: 28px; width: 10px; height: 10px; border-radius: 50%; background-color: var(--color-bg); border: 2px solid var(--state-warning);"></div>
+
+          <div class="p-5" style="padding-left: 20px;">
+            <!-- Status Badge -->
+            <div class="flex items-start justify-between mb-3">
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5" style="background-color: var(--state-warning-bg); color: var(--state-warning); border-radius: var(--radius-md);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                待签到
+              </span>
+            </div>
+
+            <!-- Room Info -->
+            <div class="flex items-center gap-2 mb-3">
+              <svg class="flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span class="text-base font-semibold" style="color: var(--color-text-primary);">教学楼 B栋 201 · 座位 C-03</span>
+            </div>
+
+            <!-- Time pill -->
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 mb-3" style="background-color: var(--color-bg-secondary); border-radius: var(--radius-full); border: 1px solid var(--color-border);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="text-sm font-medium" style="color: var(--color-text-secondary);">14:00 - 17:00</span>
+              <span class="text-xs" style="color: var(--color-text-tertiary);">· 2026年7月2日</span>
+            </div>
+
+            <!-- Check-in Deadline -->
+            <div class="flex items-center gap-1.5 mb-4 px-3 py-1.5" style="background-color: var(--state-warning-bg); border-radius: var(--radius-full);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--state-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span class="text-xs font-medium" style="color: var(--state-warning);">距签到截止还有 2小时15分</span>
+            </div>
+
+            <!-- Actions Group -->
+            <div class="flex items-center gap-2 pt-2" style="border-top: 1px solid var(--color-border-light);">
+              <button class="btn-action text-sm px-5 py-2 font-semibold" style="background-color: var(--brand-primary); color: var(--color-text-inverse); border: 1px solid var(--brand-primary); border-radius: var(--radius-md);">
+                签到
+              </button>
+              <button class="btn-action text-sm px-4 py-2 font-medium" style="border: 1px solid var(--color-border); color: var(--color-text-secondary); background-color: transparent; border-radius: var(--radius-md);">
+                取消预约
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 — 已完成 (Completed) -->
+        <div class="reservation-card relative rounded-lg overflow-hidden" data-status="completed" style="background-color: var(--surface-card); border: 1px solid var(--color-border); animation: card-enter 320ms cubic-bezier(.3,0,0,1) 120ms both;">
+          <!-- Left gray accent -->
+          <div class="absolute left-0 top-0 bottom-0" style="width: 4px; background-color: var(--color-text-tertiary);"></div>
+          <!-- Timeline dot -->
+          <div class="absolute" style="left: -21px; top: 28px; width: 10px; height: 10px; border-radius: 50%; background-color: var(--color-bg); border: 2px solid var(--color-text-tertiary);"></div>
+
+          <div class="p-5" style="padding-left: 20px;">
+            <!-- Status Badge -->
+            <span class="absolute top-5 right-5 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1" style="background-color: var(--color-bg-tertiary); color: var(--color-text-tertiary); border-radius: var(--radius-md);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              已完成
+            </span>
+
+            <!-- Room Info -->
+            <div class="flex items-center gap-2 mb-3">
+              <svg class="flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span class="text-base font-semibold" style="color: var(--color-text-primary);">图书馆二楼阅览室 · 座位 B-07</span>
+            </div>
+
+            <!-- Time pill -->
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 mb-3" style="background-color: var(--color-bg-secondary); border-radius: var(--radius-full); border: 1px solid var(--color-border);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="text-sm font-medium" style="color: var(--color-text-secondary);">08:00 - 11:30</span>
+              <span class="text-xs" style="color: var(--color-text-tertiary);">· 2026年7月1日</span>
+            </div>
+
+            <!-- Duration -->
+            <div class="inline-flex items-center gap-1.5 px-3 py-1.5" style="background-color: var(--color-bg-secondary); border-radius: var(--radius-full);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 8 14"/></svg>
+              <span class="text-sm" style="color: var(--color-text-tertiary);">实际使用 3小时12分</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4 — 待签到 (Pending, Tomorrow) -->
+        <div class="reservation-card relative rounded-lg overflow-hidden" data-status="pending" style="background-color: var(--surface-card); border: 1px solid var(--color-border); animation: card-enter 320ms cubic-bezier(.3,0,0,1) 180ms both;">
+          <!-- Left amber accent -->
+          <div class="absolute left-0 top-0 bottom-0" style="width: 4px; background-color: var(--state-warning);"></div>
+          <!-- Timeline dot -->
+          <div class="absolute" style="left: -21px; top: 28px; width: 10px; height: 10px; border-radius: 50%; background-color: var(--color-bg); border: 2px solid var(--state-warning);"></div>
+
+          <div class="p-5" style="padding-left: 20px;">
+            <!-- Status Badge -->
+            <div class="flex items-start justify-between mb-3">
+              <span class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5" style="background-color: var(--state-warning-bg); color: var(--state-warning); border-radius: var(--radius-md);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                待签到
+              </span>
+            </div>
+
+            <!-- Room Info -->
+            <div class="flex items-center gap-2 mb-3">
+              <svg class="flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span class="text-base font-semibold" style="color: var(--color-text-primary);">教学楼 A栋 305 · 座位 D-01</span>
+            </div>
+
+            <!-- Time pill -->
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 mb-3" style="background-color: var(--color-bg-secondary); border-radius: var(--radius-full); border: 1px solid var(--color-border);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="text-sm font-medium" style="color: var(--color-text-secondary);">09:00 - 12:00</span>
+              <span class="text-xs" style="color: var(--color-text-tertiary);">· 2026年7月3日</span>
+            </div>
+
+            <!-- Tomorrow Note -->
+            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 mb-4" style="background-color: var(--color-bg-secondary); border-radius: var(--radius-full);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span class="text-xs" style="color: var(--color-text-tertiary);">明日预约</span>
+            </div>
+
+            <!-- Actions Group -->
+            <div class="flex items-center gap-2 pt-2" style="border-top: 1px solid var(--color-border-light);">
+              <button class="btn-action text-sm px-4 py-2 font-medium" style="border: 1px solid var(--color-border); color: var(--color-text-secondary); background-color: transparent; border-radius: var(--radius-md);">
+                取消预约
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Empty State (hidden by default, shown when filter yields no results) -->
+    <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.5;">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+        <line x1="9" y1="14" x2="15" y2="14"/>
+      </svg>
+      <p class="mt-4 text-sm font-medium" style="color: var(--color-text-secondary);">暂无相关预约</p>
+      <p class="mt-1 text-xs" style="color: var(--color-text-tertiary);">当前筛选条件下没有匹配的预约记录</p>
+      <button class="btn-action mt-4 text-sm px-5 py-2 font-medium" style="border: 1px solid var(--brand-primary); color: var(--brand-primary); background-color: transparent; border-radius: var(--radius-md);">
+        预约自习室
+      </button>
+    </div>
+
+    <!-- CTA: Dashboard Button + Rules -->
+    <div class="mt-8 flex items-center justify-between">
+      <!-- Rules Reminder — Collapsible -->
+      <div class="flex-1" style="max-width: 480px;">
+        <button id="rules-toggle" class="flex items-center gap-2 text-xs font-medium w-full py-2" style="color: var(--color-text-tertiary); background: transparent; border: none; cursor: pointer; text-align: left;" onclick="toggleRules()">
+          <svg id="rules-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 200ms cubic-bezier(.3,0,0,1); transform: rotate(0deg);"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>预约规则</span>
+        </button>
+        <div id="rules-content" class="overflow-hidden" style="max-height: 0; opacity: 0; transition: max-height 240ms cubic-bezier(.3,0,0,1), opacity 200ms cubic-bezier(.3,0,0,1);">
+          <div class="px-3 py-2.5" style="background-color: var(--brand-primary-lightest); border: 1px solid var(--brand-primary-lighter); border-radius: var(--radius-md);">
+            <div class="flex items-start gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span class="text-xs leading-relaxed" style="color: var(--brand-primary-dark);">单日最多3次 · 单次最长8小时 · 签到宽限15分钟 · 7天内爽约3次将加入黑名单</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard CTA -->
+      <a href="#" data-dom-id="cta-dashboard" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium" style="background-color: var(--surface-card); color: var(--brand-primary); border: 1px solid var(--color-border); border-radius: var(--radius-md); transition: background-color 120ms cubic-bezier(.2,.8,.2,1), border-color 120ms cubic-bezier(.2,.8,.2,1);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        查看实时看板
+      </a>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer style="border-top: 1px solid var(--color-border-light);" class="py-4 mt-8">
+    <p class="text-center text-xs" style="color: var(--color-text-tertiary); font-family: var(--font-family);">高校自习室智能预约系统 &copy; 2026</p>
+  </footer>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Tab switch logic with slide indicator
+    function switchTab(el) {
+      // Update active tab styling
+      document.querySelectorAll('.filter-tab').forEach(function(tab) {
+        tab.classList.remove('active');
+        tab.style.color = 'var(--color-text-secondary)';
+      });
+      el.classList.add('active');
+      el.style.color = 'var(--color-text-inverse)';
+
+      // Update badge colors for non-active tabs (reset to original)
+      document.querySelectorAll('.filter-tab:not(.active) .tab-count').forEach(function(badge) {
+        var tab = badge.closest('.filter-tab');
+        var filter = tab.getAttribute('data-filter');
+        if (filter === 'pending') {
+          badge.style.backgroundColor = 'var(--state-warning-bg)';
+          badge.style.color = 'var(--state-warning)';
+        } else if (filter === 'active') {
+          badge.style.backgroundColor = 'var(--state-success-bg)';
+          badge.style.color = 'var(--state-success)';
+        } else {
+          badge.style.backgroundColor = 'var(--color-bg-tertiary)';
+          badge.style.color = 'var(--color-text-tertiary)';
+        }
+      });
+      // Active tab badges turn white
+      document.querySelectorAll('.filter-tab.active .tab-count').forEach(function(badge) {
+        badge.style.backgroundColor = 'rgba(255,255,255,0.25)';
+        badge.style.color = 'var(--color-text-inverse)';
+      });
+
+      // Move slide indicator
+      var indicator = document.getElementById('tab-indicator');
+      var parentRect = el.parentElement.getBoundingClientRect();
+      var rect = el.getBoundingClientRect();
+      indicator.style.left = (rect.left - parentRect.left) + 'px';
+      indicator.style.width = rect.width + 'px';
+
+      // Filter cards
+      var filter = el.getAttribute('data-filter');
+      var cards = document.querySelectorAll('.reservation-card');
+      var visibleCount = 0;
+
+      cards.forEach(function(card) {
+        var status = card.getAttribute('data-status');
+        var show = (filter === 'all' || status === filter);
+        card.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+      });
+
+      // Show/hide empty state
+      var emptyState = document.getElementById('empty-state');
+      var timelineContainer = cards[0] ? cards[0].closest('.relative[style*="padding-left"]') : null;
+      if (visibleCount === 0) {
+        emptyState.classList.remove('hidden');
+        if (timelineContainer) timelineContainer.style.display = 'none';
+      } else {
+        emptyState.classList.add('hidden');
+        if (timelineContainer) timelineContainer.style.display = '';
+      }
+    }
+
+    // Initialize slide indicator position on load
+    window.addEventListener('DOMContentLoaded', function() {
+      var activeTab = document.querySelector('.filter-tab.active');
+      if (activeTab) {
+        var indicator = document.getElementById('tab-indicator');
+        var parentRect = activeTab.parentElement.getBoundingClientRect();
+        var rect = activeTab.getBoundingClientRect();
+        indicator.style.left = (rect.left - parentRect.left) + 'px';
+        indicator.style.width = rect.width + 'px';
+        // Set initial badge style for active
+        activeTab.querySelector('.tab-count').style.backgroundColor = 'rgba(255,255,255,0.25)';
+        activeTab.querySelector('.tab-count').style.color = 'var(--color-text-inverse)';
+      }
+    });
+
+    // Rules collapsible toggle
+    var rulesOpen = false;
+    function toggleRules() {
+      rulesOpen = !rulesOpen;
+      var content = document.getElementById('rules-content');
+      var chevron = document.getElementById('rules-chevron');
+      if (rulesOpen) {
+        content.style.maxHeight = '120px';
+        content.style.opacity = '1';
+        chevron.style.transform = 'rotate(180deg)';
+      } else {
+        content.style.maxHeight = '0';
+        content.style.opacity = '0';
+        chevron.style.transform = 'rotate(0deg)';
+      }
+    }
+  </script>
+<style>
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Pulsing live dot */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--state-success); }
+  50% { opacity: 0.5; box-shadow: 0 0 2px var(--state-success); }
+}
+.live-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Filter tab transitions */
+.filter-tab {
+  transition: color 120ms cubic-bezier(.2,.8,.2,1);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+}
+.filter-tab:hover {
+  color: var(--color-text-primary) !important;
+}
+.filter-tab.active {
+  color: var(--color-text-inverse);
+}
+.tab-count {
+  transition: background-color 120ms cubic-bezier(.2,.8,.2,1), color 120ms cubic-bezier(.2,.8,.2,1);
+}
+
+/* Button interactions */
+.btn-action {
+  transition: background-color 120ms cubic-bezier(.2,.8,.2,1), border-color 120ms cubic-bezier(.2,.8,.2,1), color 120ms cubic-bezier(.2,.8,.2,1), transform 120ms cubic-bezier(.2,.8,.2,1);
+  cursor: pointer;
+}
+.btn-action:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+.btn-action:active {
+  transform: translateY(0);
+  filter: brightness(0.97);
+}
+
+/* Card entrance animation */
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.reservation-card {
+  animation: card-enter 320ms cubic-bezier(.3,0,0,1) both;
+}
+.reservation-card:nth-child(2) { animation-delay: 60ms; }
+.reservation-card:nth-child(3) { animation-delay: 120ms; }
+.reservation-card:nth-child(4) { animation-delay: 180ms; }
+
+/* Timeline dot hover */
+.reservation-card:hover .absolute[style*="border-radius: 50%"] {
+  transform: scale(1.2);
+  transition: transform 200ms cubic-bezier(.2,.8,.2,1);
+}
+
+/* Dashboard CTA hover */
+[data-dom-id="cta-dashboard"]:hover {
+  background-color: var(--brand-primary-lightest) !important;
+  border-color: var(--brand-primary) !important;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .live-dot { animation-duration: 0.01ms !important; }
+  .reservation-card { animation-duration: 0.01ms !important; }
+  .filter-tab, .btn-action, #tab-indicator, #rules-content, #rules-chevron {
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</body>
+</html>
