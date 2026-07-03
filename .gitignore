@@ -52,6 +52,9 @@ logs/
 # Database
 *.db
 
+# MySQL (local database server, not for git)
+mysql/
+
 # Temp files
 *.tmp
 *.temp

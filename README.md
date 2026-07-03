@@ -13,7 +13,7 @@
 - **API文档**: Knife4j / OpenAPI 3
 - **工具库**: Hutool
 - **构建工具**: Maven
-- **JDK版本**: Java 17+
+- **JDK版本**: Java 21+
 
 ## 项目结构
 
@@ -42,9 +42,11 @@ study-room-booking/
 │   │       ├── application-dev.yml                 # 开发环境配置
 │   │       └── application-prod.yml                # 生产环境配置
 │   └── test/                                       # 测试代码
+├── frontend/                                        # 前端工程（成员E/F）
 ├── docs/
 │   ├── sql/                                        # 数据库脚本
 │   └── api/                                        # API文档
+├── 示例与设计/                                      # 前端页面设计原型与PRD文档
 └── pom.xml
 ```
 
@@ -52,24 +54,24 @@ study-room-booking/
 
 | 目录 | 模块名 | 负责人 | 说明 |
 |------|--------|--------|------|
-| `modules/user/` | 用户与权限 | 成员A | 用户认证、RBAC权限、账号管理 |
-| `modules/space/` | 空间管理 | 成员B | 校区/楼栋/楼层/自习室/座位的CRUD、批量导入、座位排布 |
-| `modules/reservation/` | 预约核心 | 成员C | 预约创建/取消/查询、规则引擎、并发控制、实时状态 |
-| `modules/seat/` | 座位管控 | 成员D | 签到/签退/暂离、定时任务、黑名单、消息通知 |
-| `modules/report/` | 数据报表 | 成员C + 成员D | C提供使用率/时段分布接口，D提供爽约率/转化率接口 |
-| `common/` | 公共组件 | 成员A | 统一响应、异常处理、配置类、自定义注解等公共基础设施 |
-| `utils/` | 工具类 | 成员A（可由各成员补充） | 通用工具方法，各模块开发中遇到可往里补充 |
+| `modules/user/` | 用户与权限 | 蔡俊晨 | 用户认证、RBAC权限、账号管理 |
+| `modules/space/` | 空间管理 | 陈梦涵 | 校区/楼栋/楼层/自习室/座位的CRUD、批量导入、座位排布 |
+| `modules/reservation/` | 预约核心 | 郭学威 | 预约创建/取消/查询、规则引擎、并发控制、实时状态 |
+| `modules/seat/` | 座位管控 | 邓祺然 | 签到/签退/暂离、定时任务、黑名单、消息通知 |
+| `modules/report/` | 数据报表 | 郭学威 + 邓祺然 | C提供使用率/时段分布接口，D提供爽约率/转化率接口 |
+| `common/` | 公共组件 | 蔡俊晨 | 统一响应、异常处理、配置类、自定义注解等公共基础设施 |
+| `utils/` | 工具类 | 蔡俊晨（可由各成员补充） | 通用工具方法，各模块开发中遇到可往里补充 |
 
 ## 团队分工
 
-| 成员 | 角色 | 负责模块 | 技术侧重 |
+| 姓名 | 角色 | 负责模块 | 技术侧重 |
 |------|------|---------|---------|
-| 成员A | 项目负责人/后端 | 用户与权限、数据库设计、API规范制定、项目基础设施 | 后端 + 协调 |
-| 成员B | 后端开发 | 空间管理（校区/楼栋/楼层/自习室/座位CRUD） | 后端 |
-| 成员C | 后端开发 | 预约核心（预约流程、规则引擎、并发控制、报表统计） | 后端 |
-| 成员D | 后端开发 | 座位管控（签到/签退/暂离、定时任务、黑名单、报表统计） | 后端 |
-| 成员E | 前端开发 | 学生端全部页面（选座、预约、看板） | 前端 |
-| 成员F | 前端开发 | 管理端后台、数据报表页、大屏看板 | 前端 |
+| 蔡俊晨 | 项目负责人/后端 | 用户与权限、数据库设计、API规范制定、项目基础设施 | 后端 + 协调 |
+| 陈梦涵 | 后端开发 | 空间管理（校区/楼栋/楼层/自习室/座位CRUD） | 后端 |
+| 郭学威 | 后端开发 | 预约核心（预约流程、规则引擎、并发控制、报表统计） | 后端 |
+| 邓祺然 | 后端开发 | 座位管控（签到/签退/暂离、定时任务、黑名单、报表统计） | 后端 |
+| 虞上昕 | 前端开发 | 学生端全部页面（选座、预约、看板） | 前端 |
+| 黄宇涵 | 前端开发 | 管理端后台、数据报表页、大屏看板 | 前端 |
 
 ---
 
@@ -127,7 +129,7 @@ study-room-booking/
 
 #### 4.1 跨域配置
 - 后端已配置CORS跨域支持（前端开发阶段无需配置代理）
-- 前端请求base URL：`http://localhost:8080/api`
+- 前端请求base URL：`http://localhost:8081/api`
 - 生产环境建议使用Nginx反向代理，统一域名下部署
 
 #### 4.2 认证对接
@@ -163,9 +165,9 @@ study-room-booking/
 
 后端启动后，可通过以下地址查看在线接口文档：
 
-- **Knife4j（推荐）**: http://localhost:8080/api/doc.html
-- **Swagger UI**: http://localhost:8080/api/swagger-ui.html
-- **OpenAPI JSON**: http://localhost:8080/api/v3/api-docs
+- **Knife4j（推荐）**: http://localhost:8081/api/doc.html
+- **Swagger UI**: http://localhost:8081/api/swagger-ui.html
+- **OpenAPI JSON**: http://localhost:8081/api/v3/api-docs
 
 ---
 
@@ -738,7 +740,7 @@ chore: 构建/工具相关
 ## 快速开始
 
 ### 环境要求
-- JDK 17+
+- JDK 21+
 - Maven 3.8+
 - MySQL 8.0+
 
@@ -764,8 +766,8 @@ mvn spring-boot:run
 ```
 
 5. 访问接口文档
-- Knife4j: http://localhost:8080/api/doc.html
-- Swagger UI: http://localhost:8080/api/swagger-ui.html
+- Knife4j: http://localhost:8081/api/doc.html
+- Swagger UI: http://localhost:8081/api/swagger-ui.html
 
 ---
 
