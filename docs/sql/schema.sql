@@ -109,8 +109,8 @@ CREATE TABLE seat (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '座位ID',
     room_id BIGINT NOT NULL COMMENT '所属自习室ID',
     seat_code VARCHAR(50) NOT NULL COMMENT '座位编号',
-    row_number INT NOT NULL COMMENT '行号',
-    col_number INT NOT NULL COMMENT '列号',
+    `row_number` INT NOT NULL COMMENT '行号',
+    `col_number` INT NOT NULL COMMENT '列号',
     tags VARCHAR(255) DEFAULT NULL COMMENT '标签（逗号分隔）: WINDOW-靠窗, POWER-有电源, ACCESSIBLE-无障碍',
     status TINYINT NOT NULL DEFAULT 1 COMMENT '状态: 0-不可用, 1-可用',
     deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除',
@@ -292,7 +292,7 @@ BEGIN
                 END IF;
             END IF;
 
-            INSERT INTO seat (room_id, seat_code, row_number, col_number, tags, status)
+            INSERT INTO seat (room_id, seat_code, `row_number`, `col_number`, tags, status)
             VALUES (p_room_id, seat_code, r, c, tags, 1);
 
             SET c = c + 1;

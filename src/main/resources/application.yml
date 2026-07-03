@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8081
   servlet:
     context-path: /api
 
@@ -34,15 +34,26 @@ springdoc:
     path: /swagger-ui.html
   group-configs:
     - group: '用户与权限'
-      paths-to-match: '/auth/**', '/users/**'
+      paths-to-match:
+        - '/auth/**'
+        - '/users/**'
     - group: '空间管理'
-      paths-to-match: '/campuses/**', '/buildings/**', '/floors/**', '/rooms/**', '/seats/**'
+      paths-to-match:
+        - '/campuses/**'
+        - '/buildings/**'
+        - '/floors/**'
+        - '/rooms/**'
+        - '/seats/**'
     - group: '预约核心'
-      paths-to-match: '/reservations/**'
+      paths-to-match:
+        - '/reservations/**'
     - group: '座位管控'
-      paths-to-match: '/checkin/**', '/blacklist/**'
+      paths-to-match:
+        - '/checkin/**'
+        - '/blacklist/**'
     - group: '数据报表'
-      paths-to-match: '/reports/**'
+      paths-to-match:
+        - '/reports/**'
 
 knife4j:
   enable: true
