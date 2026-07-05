@@ -133,7 +133,7 @@ CREATE TABLE reservation (
     room_id BIGINT NOT NULL COMMENT '自习室ID（冗余，方便查询）',
     start_time DATETIME NOT NULL COMMENT '预约开始时间',
     end_time DATETIME NOT NULL COMMENT '预约结束时间',
-    status VARCHAR(20) NOT NULL DEFAULT 'RESERVED' COMMENT '状态: RESERVED-已预约, CHECKED_IN-已签到, TEMPOEARY_LEAVE-暂离, COMPLETED-已完成, CANCELLED-已取消, NO_SHOW-爽约',
+    status VARCHAR(20) NOT NULL DEFAULT 'RESERVED' COMMENT '状态: RESERVED-已预约, CHECKED_IN-已签到, TEMPORARY_LEAVE-暂离, COMPLETED-已完成, CANCELLED-已取消, NO_SHOW-爽约',
     checkin_time DATETIME DEFAULT NULL COMMENT '签到时间',
     checkout_time DATETIME DEFAULT NULL COMMENT '签退时间',
     temporary_leave_time DATETIME DEFAULT NULL COMMENT '暂离开始时间',
