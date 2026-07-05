@@ -50,10 +50,15 @@ springdoc:
     - group: '座位管控'
       paths-to-match:
         - '/checkin/**'
+        - '/checkout/**'
+        - '/temporary-leave/**'
+        - '/return-seat/**'
         - '/blacklist/**'
+        - '/no-show-records/**'
     - group: '数据报表'
       paths-to-match:
         - '/reports/**'
+        - '/dashboard/**'
 
 knife4j:
   enable: true

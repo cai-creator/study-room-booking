@@ -37,8 +37,13 @@ public enum ResultCode {
     CHECKIN_TOO_EARLY(4003, "签到时间过早"),
     CHECKIN_TIMEOUT(4004, "已超过签到时间"),
     CHECKOUT_NOT_ALLOWED(4005, "无法签退"),
+    TEMPORARY_LEAVE_NOT_ALLOWED(4006, "当前状态不允许暂离，仅已签到状态可暂离"),
+    RETURN_SEAT_NOT_ALLOWED(4007, "当前状态不允许返回，仅暂离状态可返回座位"),
+    TEMPORARY_LEAVE_TIMEOUT(4008, "暂离时间已超时，请重新预约"),
 
     BLACKLISTED(5001, "您已被加入黑名单，禁止预约"),
+    BLACKLIST_NOT_FOUND(5002, "黑名单记录不存在"),
+    BLACKLIST_ALREADY_EXISTS(5003, "该用户已在黑名单中，请勿重复添加"),
 
     SPACE_NOT_FOUND(6001, "空间不存在");
 
