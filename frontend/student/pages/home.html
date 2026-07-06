@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>首页 - 智约自习</title>
+  <link rel="stylesheet" href="../../colors_and_type.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+  <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+  <style type="text/tailwindcss">
+    @theme inline { --color-primary: var(--brand-primary); }
+    @layer base {
+      body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); }
+    }
+  </style>
+</head>
+<body class="min-h-screen" style="background: var(--color-bg-secondary);">
+  <div id="navbar-placeholder"></div>
+
+  <main class="mx-auto px-4 sm:px-6 py-6" style="max-width: var(--max-width);">
+    <!-- 欢迎横幅 -->
+    <div class="rounded-xl p-6 mb-6" style="background: var(--brand-primary); color: var(--color-text-inverse);">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 class="text-2xl font-bold mb-1" id="welcome-text">欢迎回来</h1>
+          <p class="opacity-90" id="date-text">今天是 2026年7月5日 星期日</p>
+        </div>
+        <a href="room-selection.html" class="px-5 py-2.5 rounded-lg font-medium text-sm transition-all"
+           style="background: var(--color-text-inverse); color: var(--brand-primary);">
+          立即选座 <i data-lucide="arrow-right" class="inline" style="width:16px;height:16px;"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- 快捷入口 -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <a href="room-selection.html" class="rounded-xl p-5 transition-all hover:shadow-lg"
+         style="background: var(--surface-card); border: var(--surface-card-border);">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
+             style="background: var(--brand-primary-lighter);">
+          <i data-lucide="map-pin" style="width:20px;height:20px;color:var(--brand-primary);"></i>
+        </div>
+        <h3 class="font-semibold text-sm mb-1">自习室选择</h3>
+        <p class="text-xs" style="color:var(--color-text-tertiary);">浏览并筛选自习室</p>
+      </a>
+      <a href="seat-selection.html" class="rounded-xl p-5 transition-all hover:shadow-lg"
+         style="background: var(--surface-card); border: var(--surface-card-border);">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
+             style="background: var(--state-info-bg);">
+          <i data-lucide="armchair" style="width:20px;height:20px;color:var(--state-info);"></i>
+        </div>
+        <h3 class="font-semibold text-sm mb-1">座位预约</h3>
+        <p class="text-xs" style="color:var(--color-text-tertiary);">选择心仪的座位</p>
+      </a>
+      <a href="my-reservations.html" class="rounded-xl p-5 transition-all hover:shadow-lg"
+         style="background: var(--surface-card); border: var(--surface-card-border);">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
+             style="background: var(--state-success-bg);">
+          <i data-lucide="calendar-check" style="width:20px;height:20px;color:var(--state-success);"></i>
+        </div>
+        <h3 class="font-semibold text-sm mb-1">我的预约</h3>
+        <p class="text-xs" style="color:var(--color-text-tertiary);">管理预约记录</p>
+      </a>
+      <a href="dashboard.html" class="rounded-xl p-5 transition-all hover:shadow-lg"
+         style="background: var(--surface-card); border: var(--surface-card-border);">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
+             style="background: var(--state-warning-bg);">
+          <i data-lucide="layout-dashboard" style="width:20px;height:20px;color:var(--state-warning);"></i>
+        </div>
+        <h3 class="font-semibold text-sm mb-1">实时看板</h3>
+        <p class="text-xs" style="color:var(--color-text-tertiary);">查看使用实况</p>
+      </a>
+    </div>
+
+    <!-- 数据概览 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <!-- 校区概览 -->
+      <div class="lg:col-span-2 rounded-xl p-5" style="background: var(--surface-card); border: var(--surface-card-border);">
+        <h2 class="font-semibold text-base mb-4 flex items-center gap-2">
+          <i data-lucide="building-2" style="width:18px;height:18px;color:var(--brand-primary);"></i>
+          校区概览
+        </h2>
+        <div id="campus-loading" class="py-8 text-center text-sm" style="color:var(--color-text-tertiary);">加载中...</div>
+        <div id="campus-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4 hidden"></div>
+      </div>
+
+      <!-- 今日预约 -->
+      <div class="rounded-xl p-5" style="background: var(--surface-card); border: var(--surface-card-border);">
+        <h2 class="font-semibold text-base mb-4 flex items-center gap-2">
+          <i data-lucide="calendar" style="width:18px;height:18px;color:var(--brand-primary);"></i>
+          今日预约
+        </h2>
+        <div id="today-loading" class="py-8 text-center text-sm" style="color:var(--color-text-tertiary);">加载中...</div>
+        <div id="today-list" class="space-y-3 hidden"></div>
+        <div id="today-empty" class="hidden py-8 text-center">
+          <i data-lucide="calendar-x" style="width:32px;height:32px;color:var(--color-text-tertiary);margin:0 auto 8px;"></i>
+          <p class="text-sm" style="color:var(--color-text-tertiary);">今日暂无预约</p>
+          <a href="room-selection.html" class="text-sm mt-2 inline-block" style="color:var(--brand-primary);">去预约</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 推荐自习室 -->
+    <div class="rounded-xl p-5" style="background: var(--surface-card); border: var(--surface-card-border);">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-semibold text-base flex items-center gap-2">
+          <i data-lucide="star" style="width:18px;height:18px;color:var(--brand-primary);"></i>
+          推荐自习室
+        </h2>
+        <a href="room-selection.html" class="text-sm" style="color:var(--brand-primary);">查看全部 <i data-lucide="chevron-right" class="inline" style="width:14px;height:14px;"></i></a>
+      </div>
+      <div id="rooms-loading" class="py-8 text-center text-sm" style="color:var(--color-text-tertiary);">加载中...</div>
+      <div id="rooms-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 hidden"></div>
+    </div>
+  </main>
+
+  <script src="../../public/js/config.js"></script>
+  <script src="../../public/js/utils.js"></script>
+  <script src="../../public/js/request.js"></script>
+  <script src="../../public/mock/auth.js"></script>
+  <script src="../../public/mock/space.js"></script>
+  <script src="../../public/mock/dashboard.js"></script>
+  <script src="../../public/mock/reservation.js"></script>
+  <script src="../../public/api/auth.js"></script>
+  <script src="../../public/api/space.js"></script>
+  <script src="../../public/api/dashboard.js"></script>
+  <script src="../../public/api/reservation.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // 加载导航栏
+      fetch('../partials/navbar.html')
+        .then(r => r.text())
+        .then(html => {
+          document.getElementById('navbar-placeholder').innerHTML = html;
+          lucide.createIcons();
+        });
+
+      // 欢迎语
+      var user = Utils.getUser();
+      if (user) {
+        document.getElementById('welcome-text').textContent = '欢迎回来，' + (user.realName || user.username);
+      }
+
+      // 日期
+      var now = new Date();
+      var weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+      document.getElementById('date-text').textContent = '今天是 ' + now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 ' + weekdays[now.getDay()];
+
+      // 加载校区概览
+      DashboardAPI.getCampusOverview()
+        .then(function(list) {
+          document.getElementById('campus-loading').classList.add('hidden');
+          var container = document.getElementById('campus-list');
+          container.classList.remove('hidden');
+          list.forEach(function(c) {
+            var el = document.createElement('div');
+            el.className = 'rounded-lg p-4';
+            el.style.cssText = 'background:var(--color-bg-secondary);';
+            el.innerHTML =
+              '<div class="flex items-center justify-between mb-2">' +
+                '<span class="font-medium text-sm">' + Utils.escapeHtml(c.campusName) + '</span>' +
+                '<span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--brand-primary-lighter);color:var(--brand-primary);">使用率 ' + c.usageRate + '%</span>' +
+              '</div>' +
+              '<div class="grid grid-cols-3 gap-2 text-center">' +
+                '<div><div class="text-lg font-semibold" style="color:var(--brand-primary);">' + c.totalRooms + '</div><div class="text-xs" style="color:var(--color-text-tertiary);">自习室</div></div>' +
+                '<div><div class="text-lg font-semibold" style="color:var(--brand-primary);">' + c.totalSeats + '</div><div class="text-xs" style="color:var(--color-text-tertiary);">总座位</div></div>' +
+                '<div><div class="text-lg font-semibold" style="color:var(--state-success);">' + c.availableSeats + '</div><div class="text-xs" style="color:var(--color-text-tertiary);">可用</div></div>' +
+              '</div>';
+            container.appendChild(el);
+          });
+          lucide.createIcons();
+        })
+        .catch(function() {
+          document.getElementById('campus-loading').textContent = '加载失败';
+        });
+
+      // 加载今日预约
+      var today = now.toISOString().slice(0,10);
+      ReservationAPI.getMyReservations({ date: today, pageSize: 5 })
+        .then(function(result) {
+          document.getElementById('today-loading').classList.add('hidden');
+          if (!result.list || result.list.length === 0) {
+            document.getElementById('today-empty').classList.remove('hidden');
+            lucide.createIcons();
+            return;
+          }
+          var container = document.getElementById('today-list');
+          container.classList.remove('hidden');
+          result.list.forEach(function(r) {
+            var statusColor = r.status === 'CHECKED_IN' ? 'var(--state-success)' : r.status === 'RESERVED' ? 'var(--state-warning)' : 'var(--color-text-tertiary)';
+            var statusBg = r.status === 'CHECKED_IN' ? 'var(--state-success-bg)' : r.status === 'RESERVED' ? 'var(--state-warning-bg)' : 'var(--color-bg-tertiary)';
+            var el = document.createElement('div');
+            el.className = 'rounded-lg p-3 flex items-center justify-between';
+            el.style.cssText = 'background:var(--color-bg-secondary);';
+            el.innerHTML =
+              '<div>' +
+                '<div class="text-sm font-medium">' + Utils.formatTime(r.startTime) + ' - ' + Utils.formatTime(r.endTime) + '</div>' +
+                '<div class="text-xs mt-0.5" style="color:var(--color-text-tertiary);">' + Utils.escapeHtml(r.roomName) + ' · ' + r.seatCode + '</div>' +
+              '</div>' +
+              '<span class="text-xs px-2 py-0.5 rounded-full" style="background:' + statusBg + ';color:' + statusColor + ';">' + Utils.getStatusLabel(r.status, 'reservation') + '</span>';
+            container.appendChild(el);
+          });
+        })
+        .catch(function() {
+          document.getElementById('today-loading').classList.add('hidden');
+          document.getElementById('today-empty').classList.remove('hidden');
+          lucide.createIcons();
+        });
+
+      // 加载推荐自习室
+      SpaceAPI.getRooms({ hasAvailableSeats: true, pageSize: 6 })
+        .then(function(result) {
+          document.getElementById('rooms-loading').classList.add('hidden');
+          var container = document.getElementById('rooms-list');
+          container.classList.remove('hidden');
+          var typeNames = { 'READING_ROOM': '阅览室', 'SELF_STUDY_ROOM': '自习室', 'COMPUTER_ROOM': '电子阅览室', 'GROUP_ROOM': '研讨间' };
+          result.list.forEach(function(room) {
+            var el = document.createElement('a');
+            el.href = 'seat-selection.html?roomId=' + room.id;
+            el.className = 'rounded-lg p-4 transition-all hover:shadow-md';
+            el.style.cssText = 'background:var(--color-bg-secondary);display:block;text-decoration:none;';
+            el.innerHTML =
+              '<div class="flex items-center justify-between mb-2">' +
+                '<span class="font-medium text-sm" style="color:var(--color-text-primary);">' + Utils.escapeHtml(room.name) + '</span>' +
+                '<span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--brand-primary-lighter);color:var(--brand-primary);">' + (typeNames[room.roomType] || room.roomType) + '</span>' +
+              '</div>' +
+              '<div class="text-xs mb-2" style="color:var(--color-text-tertiary);">' + Utils.escapeHtml(room.campusName) + ' · ' + Utils.escapeHtml(room.buildingName) + ' · ' + room.floorNumber + '层</div>' +
+              '<div class="flex items-center gap-3 text-xs">' +
+                '<span style="color:var(--color-text-secondary);"><i data-lucide="users" class="inline" style="width:12px;height:12px;"></i> ' + room.totalSeats + '座</span>' +
+                '<span style="color:var(--state-success);"><i data-lucide="circle-check" class="inline" style="width:12px;height:12px;"></i> 有空座</span>' +
+              '</div>';
+            container.appendChild(el);
+          });
+          lucide.createIcons();
+        })
+        .catch(function() {
+          document.getElementById('rooms-loading').textContent = '加载失败';
+        });
+    })();
+  </script>
+</body>
+</html>

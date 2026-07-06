@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的预约 - 智约自习</title>
+  <link rel="stylesheet" href="../../colors_and_type.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+  <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+  <style type="text/tailwindcss">
+    @theme inline { --color-primary: var(--brand-primary); }
+    @layer base {
+      body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); }
+    }
+  </style>
+</head>
+<body class="min-h-screen" style="background: var(--color-bg-secondary);">
+  <div id="navbar-placeholder"></div>
+
+  <main class="mx-auto px-4 sm:px-6 py-6" style="max-width: var(--max-width);">
+    <div class="flex items-center gap-3 mb-4">
+      <a href="home.html" class="flex items-center gap-1 text-sm transition-colors" style="color:var(--brand-primary);text-decoration:none;">
+        <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> 返回首页
+      </a>
+      <span class="text-sm" style="color:var(--color-text-tertiary);">/</span>
+      <h1 class="text-xl font-bold">我的预约</h1>
+    </div>
+
+    <!-- 状态筛选 -->
+    <div class="flex gap-2 mb-4 flex-wrap">
+      <button onclick="filterByStatus('')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all active" data-status="" style="background:var(--brand-primary);color:var(--color-text-inverse);border:1px solid var(--brand-primary);">全部</button>
+      <button onclick="filterByStatus('RESERVED')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all" data-status="RESERVED" style="background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);">已预约</button>
+      <button onclick="filterByStatus('CHECKED_IN')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all" data-status="CHECKED_IN" style="background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);">已签到</button>
+      <button onclick="filterByStatus('CHECKED_OUT')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all" data-status="CHECKED_OUT" style="background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);">已签退</button>
+      <button onclick="filterByStatus('CANCELLED')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all" data-status="CANCELLED" style="background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);">已取消</button>
+      <button onclick="filterByStatus('NO_SHOW')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all" data-status="NO_SHOW" style="background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);">爽约</button>
+    </div>
+
+    <!-- 列表 -->
+    <div id="list-loading" class="py-12 text-center text-sm" style="color:var(--color-text-tertiary);">加载中...</div>
+    <div id="reservation-list" class="space-y-3 hidden"></div>
+    <div id="list-empty" class="hidden py-12 text-center">
+      <i data-lucide="calendar-x" style="width:40px;height:40px;color:var(--color-text-tertiary);margin:0 auto 8px;"></i>
+      <p class="text-sm" style="color:var(--color-text-tertiary);">暂无预约记录</p>
+      <a href="room-selection.html" class="text-sm mt-2 inline-block" style="color:var(--brand-primary);">去预约</a>
+    </div>
+
+    <!-- 分页 -->
+    <div id="pagination" class="hidden mt-6 flex items-center justify-center gap-2"></div>
+  </main>
+
+  <script src="../../public/js/config.js"></script>
+  <script src="../../public/js/utils.js"></script>
+  <script src="../../public/js/request.js"></script>
+  <script src="../../public/mock/reservation.js"></script>
+  <script src="../../public/mock/seat.js"></script>
+  <script src="../../public/api/reservation.js"></script>
+  <script src="../../public/api/seat.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+
+      fetch('../partials/navbar.html')
+        .then(r => r.text())
+        .then(html => {
+          document.getElementById('navbar-placeholder').innerHTML = html;
+          lucide.createIcons();
+        });
+
+      var currentStatus = '';
+      var currentPage = 1;
+
+      var statusStyles = {
+        'RESERVED': { bg: 'var(--state-warning-bg)', color: 'var(--state-warning)' },
+        'CHECKED_IN': { bg: 'var(--state-success-bg)', color: 'var(--state-success)' },
+        'CHECKED_OUT': { bg: 'var(--state-info-bg)', color: 'var(--state-info)' },
+        'CANCELLED': { bg: 'var(--color-bg-tertiary)', color: 'var(--color-text-tertiary)' },
+        'NO_SHOW': { bg: 'var(--state-error-bg)', color: 'var(--state-error)' }
+      };
+
+      window.filterByStatus = function(status) {
+        currentStatus = status;
+        currentPage = 1;
+        document.querySelectorAll('.status-tab').forEach(function(btn) {
+          if (btn.dataset.status === status) {
+            btn.style.cssText = 'background:var(--brand-primary);color:var(--color-text-inverse);border:1px solid var(--brand-primary);';
+          } else {
+            btn.style.cssText = 'background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);';
+          }
+        });
+        loadReservations();
+      };
+
+      function loadReservations(page) {
+        currentPage = page || 1;
+        var params = { pageNum: currentPage, pageSize: 10 };
+        if (currentStatus) params.status = currentStatus;
+
+        document.getElementById('list-loading').classList.remove('hidden');
+        document.getElementById('reservation-list').classList.add('hidden');
+        document.getElementById('list-empty').classList.add('hidden');
+        document.getElementById('pagination').classList.add('hidden');
+
+        ReservationAPI.getMyReservations(params).then(function(result) {
+          document.getElementById('list-loading').classList.add('hidden');
+          var list = result.list || [];
+          if (list.length === 0) {
+            document.getElementById('list-empty').classList.remove('hidden');
+            lucide.createIcons();
+            return;
+          }
+          var container = document.getElementById('reservation-list');
+          container.innerHTML = '';
+          container.classList.remove('hidden');
+          list.forEach(function(r) {
+            var st = statusStyles[r.status] || statusStyles['CANCELLED'];
+            var el = document.createElement('div');
+            el.className = 'rounded-xl p-4 transition-all hover:shadow-md';
+            el.style.cssText = 'background:var(--surface-card);border:var(--surface-card-border);';
+
+            var actions = '';
+            if (r.status === 'RESERVED') {
+              actions =
+                '<button onclick="doCancel(' + r.id + ')" class="px-3 py-1.5 rounded-md text-xs font-medium" style="background:var(--state-error-bg);color:var(--state-error);border:none;cursor:pointer;">取消预约</button>' +
+                '<button onclick="doCheckin(' + r.id + ',\'' + r.seatCode + '\')" class="px-3 py-1.5 rounded-md text-xs font-medium text-white" style="background:var(--brand-primary);border:none;cursor:pointer;">签到</button>';
+            } else if (r.status === 'CHECKED_IN') {
+              actions =
+                '<button onclick="doTempLeave(' + r.id + ')" class="px-3 py-1.5 rounded-md text-xs font-medium" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);border:1px solid var(--color-border);cursor:pointer;">暂离</button>' +
+                '<button onclick="doCheckout(' + r.id + ')" class="px-3 py-1.5 rounded-md text-xs font-medium" style="background:var(--state-info-bg);color:var(--state-info);border:none;cursor:pointer;">签退</button>';
+            } else if (r.status === 'TEMPORARY_LEAVE') {
+              actions = '<button onclick="doReturn(' + r.id + ')" class="px-3 py-1.5 rounded-md text-xs font-medium text-white" style="background:var(--brand-primary);border:none;cursor:pointer;">返回座位</button>';
+            }
+
+            el.innerHTML =
+              '<div class="flex items-start justify-between flex-wrap gap-2">' +
+                '<div class="flex-1">' +
+                  '<div class="flex items-center gap-2 mb-1">' +
+                    '<span class="text-xs px-2 py-0.5 rounded-full font-medium" style="background:' + st.bg + ';color:' + st.color + ';">' + Utils.getStatusLabel(r.status, 'reservation') + '</span>' +
+                    '<span class="text-xs" style="color:var(--color-text-tertiary);">预约编号 #' + r.id + '</span>' +
+                  '</div>' +
+                  '<h3 class="font-medium text-sm mb-1">' + Utils.escapeHtml(r.roomName) + ' · ' + r.seatCode + '</h3>' +
+                  '<p class="text-xs" style="color:var(--color-text-tertiary);">' + Utils.escapeHtml(r.campusName) + ' · ' + Utils.escapeHtml(r.buildingName) + '</p>' +
+                  '<p class="text-xs mt-1" style="color:var(--color-text-secondary);"><i data-lucide="clock" class="inline" style="width:12px;height:12px;"></i> ' + Utils.formatDate(r.startTime, 'MM-dd HH:mm') + ' - ' + Utils.formatDate(r.endTime, 'MM-dd HH:mm') + '</p>' +
+                '</div>' +
+                '<div class="flex items-center gap-2 flex-wrap">' + actions + '</div>' +
+              '</div>';
+            container.appendChild(el);
+          });
+          renderPagination(result.total, result.pageNum, result.pageSize);
+          lucide.createIcons();
+        }).catch(function() {
+          document.getElementById('list-loading').textContent = '加载失败';
+        });
+      }
+
+      function renderPagination(total, pageNum, pageSize) {
+        var totalPages = Math.ceil(total / pageSize);
+        if (totalPages <= 1) return;
+        var container = document.getElementById('pagination');
+        container.innerHTML = '';
+        container.classList.remove('hidden');
+        for (var i = 1; i <= totalPages; i++) {
+          var btn = document.createElement('button');
+          btn.textContent = i;
+          btn.className = 'w-8 h-8 rounded-md text-sm font-medium transition-all';
+          if (i === pageNum) {
+            btn.style.cssText = 'background:var(--brand-primary);color:var(--color-text-inverse);';
+          } else {
+            btn.style.cssText = 'background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);';
+          }
+          btn.onclick = (function(p) { return function() { loadReservations(p); }; })(i);
+          container.appendChild(btn);
+        }
+      }
+
+      window.doCancel = function(id) {
+        if (!confirm('确定要取消这个预约吗？')) return;
+        ReservationAPI.cancelReservation(id).then(function() {
+          Utils.showToast('取消成功', 'success');
+          loadReservations(currentPage);
+        }).catch(function(err) {
+          Utils.showToast(err.message || '取消失败', 'error');
+        });
+      };
+
+      window.doCheckin = function(id, seatCode) {
+        SeatAPI.checkin({ reservationId: id, seatCode: seatCode }).then(function() {
+          Utils.showToast('签到成功', 'success');
+          loadReservations(currentPage);
+        }).catch(function(err) {
+          Utils.showToast(err.message || '签到失败', 'error');
+        });
+      };
+
+      window.doCheckout = function(id) {
+        SeatAPI.checkout({ reservationId: id }).then(function() {
+          Utils.showToast('签退成功', 'success');
+          loadReservations(currentPage);
+        }).catch(function(err) {
+          Utils.showToast(err.message || '签退失败', 'error');
+        });
+      };
+
+      window.doTempLeave = function(id) {
+        SeatAPI.temporaryLeave({ reservationId: id }).then(function() {
+          Utils.showToast('已暂离', 'success');
+          loadReservations(currentPage);
+        }).catch(function(err) {
+          Utils.showToast(err.message || '操作失败', 'error');
+        });
+      };
+
+      window.doReturn = function(id) {
+        SeatAPI.returnSeat({ reservationId: id }).then(function() {
+          Utils.showToast('已返回座位', 'success');
+          loadReservations(currentPage);
+        }).catch(function(err) {
+          Utils.showToast(err.message || '操作失败', 'error');
+        });
+      };
+    })();
+  </script>
+</body>
+</html>
