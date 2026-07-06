@@ -654,7 +654,7 @@ Authorization: Bearer {token}
 | 日均使用率报表 | GET | `/api/reports/usage-rate` | 日均使用率统计 | 管理员 |
 | 时段占用分布 | GET | `/api/reports/time-distribution` | 24小时时段占用分布 | 管理员 |
 | 热门时段排名 | GET | `/api/reports/hot-periods` | 热门时段TOP5 | 管理员 |
-| 爽约率统计 | GET | `/api/no-show-rate` | 爽约率统计 | 管理员 |
+| 爽约率统计 | GET | `/api/reports/no-show-rate` | 爽约率统计 | 管理员 |
 | 预约转化率 | GET | `/api/reports/conversion-rate` | 预约转化率 | 管理员 |
 | 导出报表 | GET | `/api/reports/export` | 导出Excel报表 | 管理员 |
 
