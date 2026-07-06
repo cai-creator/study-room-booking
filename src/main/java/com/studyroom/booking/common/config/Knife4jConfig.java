@@ -18,7 +18,7 @@ public class Knife4jConfig {
                         .version("1.0.0")
                         .description("高校自习室智能预约系统后端接口文档")
                         .contact(new Contact()
-                                .name("成员A")
+                                .name("蔡俊晨")
                                 .email("admin@example.com"))
                         .license(new License()
                                 .name("MIT License")

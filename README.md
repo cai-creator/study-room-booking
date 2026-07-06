@@ -356,7 +356,7 @@ Authorization: Bearer {token}
 | 新增用户 | POST | `/api/users` | 新增用户 | 超级管理员 |
 | 更新用户 | PUT | `/api/users/{id}` | 更新用户信息 | 管理员/本人 |
 | 删除用户 | DELETE | `/api/users/{id}` | 删除用户 | 超级管理员 |
-| 修改密码 | PUT | `/api/users/{id}/password` | 修改密码 | 本人/管理员 |
+| 修改密码 | PUT | `/api/users/{id}/password` | 修改密码 | 本人 |
 | 修改状态 | PATCH | `/api/users/{id}/status` | 启用/禁用用户 | 超级管理员 |
 
 **用户列表查询参数:**
@@ -649,14 +649,14 @@ Authorization: Bearer {token}
 
 #### 5.2 数据报表
 
-| 接口 | 方法 | 路径 | 说明 | 权限 |
-|------|------|------|------|------|
-| 日均使用率报表 | GET | `/api/reports/usage-rate` | 日均使用率统计 | 管理员 |
-| 时段占用分布 | GET | `/api/reports/time-distribution` | 24小时时段占用分布 | 管理员 |
-| 热门时段排名 | GET | `/api/reports/hot-periods` | 热门时段TOP5 | 管理员 |
-| 爽约率统计 | GET | `/api/reports/no-show-rate` | 爽约率统计 | 管理员 |
-| 预约转化率 | GET | `/api/reports/conversion-rate` | 预约转化率 | 管理员 |
-| 导出报表 | GET | `/api/reports/export` | 导出Excel报表 | 管理员 |
+| 接口 | 方法 | 路径 | 说明 | 权限 | 负责人 |
+|------|------|------|------|------|--------|
+| 日均使用率报表 | GET | `/api/reports/usage-rate` | 日均使用率统计 | 管理员 | 成员C |
+| 时段占用分布 | GET | `/api/reports/time-distribution` | 24小时时段占用分布 | 管理员 | 成员C |
+| 热门时段排名 | GET | `/api/reports/hot-periods` | 热门时段TOP5 | 管理员 | 成员C |
+| 爽约率统计 | GET | `/api/reports/no-show-rate` | 爽约率统计 | 管理员 | 成员D |
+| 预约转化率 | GET | `/api/reports/conversion-rate` | 预约转化率 | 管理员 | 成员D |
+| 导出报表 | GET | `/api/reports/export` | 导出Excel报表 | 管理员 | 成员C |
 
 **报表查询参数:**
 
