@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据报表 - 智约自习</title>
+    <link rel="stylesheet" href="../../colors_and_type.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+      @theme inline { --color-primary: var(--brand-primary); }
+      @layer base { body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); } }
+    </style>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="max-w-[1280px] mx-auto px-4 sm:px-6 py-6" style="max-width: var(--max-width);">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h1 class="text-2xl font-bold mb-1" style="color: var(--color-text-primary);">数据报表</h1>
+                <p style="color: var(--color-text-secondary); font-size: var(--text-sm);">查看自习室运营数据、使用趋势与分析指标</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <select id="range-select" class="px-3 py-2 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                    <option value="7">近 7 天</option>
+                    <option value="30" selected>近 30 天</option>
+                    <option value="90">近 90 天</option>
+                </select>
+                <button onclick="refreshAll()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);" title="刷新">
+                    <i data-lucide="refresh-cw" style="width:15px;height:15px;"></i>刷新
+                </button>
+                <button onclick="exportReport()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90" style="background:var(--brand-primary);color:white;">
+                    <i data-lucide="download" style="width:15px;height:15px;"></i>导出
+                </button>
+            </div>
+        </div>
+
+        <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+            <div class="lg:col-span-2 rounded-xl p-5" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="font-semibold text-base" style="color: var(--color-text-primary);">日均使用率趋势</h3>
+                        <p style="color: var(--color-text-tertiary); font-size: var(--text-xs); margin-top: 2px;">最近 7 天座位使用率变化</p>
+                    </div>
+                    <div id="avg-rate-badge" class="px-3 py-1 rounded-lg" style="background: var(--brand-primary-lighter); color: var(--brand-primary-dark); font-weight: 600; font-size: var(--text-sm);">—</div>
+                </div>
+                <div id="usage-chart"></div>
+            </div>
+            <div class="rounded-xl p-5" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+                <div class="mb-4">
+                    <h3 class="font-semibold text-base" style="color: var(--color-text-primary);">热门时段 TOP 5</h3>
+                    <p style="color: var(--color-text-tertiary); font-size: var(--text-xs); margin-top: 2px;">按平均使用率排序</p>
+                </div>
+                <div id="hot-periods" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <div class="rounded-xl p-5 mb-5" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="font-semibold text-base" style="color: var(--color-text-primary);">时段使用分布</h3>
+                    <p style="color: var(--color-text-tertiary); font-size: var(--text-xs); margin-top: 2px;">每日不同时段（6:00–22:00）的平均使用率</p>
+                </div>
+                <div class="flex items-center gap-3 text-xs" style="color: var(--color-text-secondary);">
+                    <span class="flex items-center gap-1.5"><span style="width:12px;height:12px;background:var(--brand-primary);border-radius:2px;display:inline-block;"></span>使用率 (%)</span>
+                </div>
+            </div>
+            <div id="time-chart"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="rounded-xl p-5" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+                <div class="mb-4">
+                    <h3 class="font-semibold text-base" style="color: var(--color-text-primary);">爽约率走势</h3>
+                    <p style="color: var(--color-text-tertiary); font-size: var(--text-xs); margin-top: 2px;">最近 6 个月爽约率变化</p>
+                </div>
+                <div id="noshow-chart"></div>
+            </div>
+            <div class="rounded-xl p-5" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+                <div class="mb-4">
+                    <h3 class="font-semibold text-base" style="color: var(--color-text-primary);">预约签到转化率</h3>
+                    <p style="color: var(--color-text-tertiary); font-size: var(--text-xs); margin-top: 2px;">预约 → 签到 转化率月度走势</p>
+                </div>
+                <div id="conversion-chart"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../../public/js/config.js"></script>
+    <script src="../../public/js/utils.js"></script>
+    <script src="../../public/js/request.js"></script>
+    <script src="../../public/mock/report.js"></script>
+    <script src="../../public/mock/auth.js"></script>
+    <script src="../../public/api/report.js"></script>
+    <script src="../../public/api/auth.js"></script>
+
+    <script>
+    (function () {
+        var NAVBAR_HTML = '<nav class="sticky top-0 z-50 border-b" style="height: var(--header-height); background: var(--color-surface); border-color: var(--color-border);"><div class="h-full max-w-[1280px] mx-auto px-4 sm:px-6 flex items-center justify-between" style="max-width: var(--max-width);"><div class="flex items-center gap-6"><a href="space-management.html" class="flex items-center gap-2 no-underline"><i data-lucide="book-open" style="width:22px;height:22px;color:var(--brand-primary);"></i><span style="font-size:var(--text-lg);font-weight:700;color:var(--color-text-primary);">智约自习</span><span class="px-2 py-0.5 rounded text-xs font-medium" style="background:var(--brand-primary-lighter);color:var(--brand-primary);">管理端</span></a><div class="hidden md:flex items-center gap-1" id="nav-links"><a href="space-management.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="space-management.html">空间管理</a><a href="user-management.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="user-management.html">用户管理</a><a href="blacklist.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="blacklist.html">黑名单管理</a><a href="reports.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="reports.html">数据报表</a><a href="dashboard.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="dashboard.html">大屏看板</a></div></div><div class="flex items-center gap-3"><div class="flex items-center gap-2 cursor-pointer relative" id="user-menu-trigger" onclick="toggleUserMenu()"><div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold" style="background:var(--brand-primary);color:var(--color-text-inverse);"><span id="navbar-user-avatar">A</span></div><span class="hidden sm:block text-sm font-medium" id="navbar-user-name" style="color:var(--color-text-primary);">管理员</span><i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--color-text-tertiary);"></i></div><div id="user-dropdown" class="hidden absolute right-4 top-14 w-48 rounded-lg py-1" style="background:var(--surface-card);border:var(--surface-card-border);box-shadow:var(--shadow-lg);z-index:var(--z-dropdown);"><div class="px-4 py-2 border-b" style="border-color:var(--color-border);"><p class="text-sm font-medium" style="color:var(--color-text-primary);" id="dropdown-name"></p><p style="font-size:var(--text-xs);color:var(--color-text-tertiary);" id="dropdown-role"></p></div><button onclick="handleLogout()" class="w-full text-left px-4 py-2 text-sm transition-colors flex items-center gap-2" style="color:var(--state-error);"><i data-lucide="log-out" style="width:15px;height:15px;"></i> 退出登录</button></div></div><button class="md:hidden p-2" onclick="toggleMobileMenu()" style="color:var(--color-text-secondary);"><i data-lucide="menu" style="width:22px;height:22px;"></i></button></div><div id="mobile-menu" class="hidden md:hidden border-t" style="background:var(--color-surface);border-color:var(--color-border);"><a href="space-management.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="space-management.html">空间管理</a><a href="user-management.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="user-management.html">用户管理</a><a href="blacklist.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="blacklist.html">黑名单管理</a><a href="reports.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="reports.html">数据报表</a><a href="dashboard.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="dashboard.html">大屏看板</a></div></nav>';
+
+        function execNavbarScript() {
+            var user = null;
+            var userKey = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
+            try { var raw = localStorage.getItem(userKey); if (raw) user = JSON.parse(raw); } catch (e) {}
+            if (user) {
+                var ae = document.getElementById('navbar-user-avatar');
+                var ne = document.getElementById('navbar-user-name');
+                var dn = document.getElementById('dropdown-name');
+                var dr = document.getElementById('dropdown-role');
+                var ch = (user.realName || user.username || 'U').charAt(0);
+                if (ae) ae.textContent = ch;
+                if (ne) ne.textContent = user.realName || user.username;
+                if (dn) dn.textContent = user.realName || user.username;
+                var rm = { STUDENT: '学生', ADMIN: '管理员', SUPER_ADMIN: '超级管理员' };
+                if (dr) dr.textContent = rm[user.role] || user.role;
+            }
+            var cp = window.location.pathname.split('/').pop() || 'reports.html';
+            document.querySelectorAll('.nav-link').forEach(function (l) {
+                var dp = l.getAttribute('data-page');
+                if (dp === cp) { l.style.color = 'var(--brand-primary)'; l.style.background = 'var(--brand-primary-lighter)'; }
+                else { l.style.color = 'var(--color-text-secondary)'; l.style.background = 'transparent'; }
+                l.addEventListener('mouseenter', function () { if (dp !== cp) l.style.background = 'var(--color-bg-tertiary)'; });
+                l.addEventListener('mouseleave', function () { if (dp !== cp) l.style.background = 'transparent'; });
+            });
+            window.toggleUserMenu = function () { var d = document.getElementById('user-dropdown'); if (d) d.classList.toggle('hidden'); if (window.lucide) lucide.createIcons(); };
+            window.toggleMobileMenu = function () { var m = document.getElementById('mobile-menu'); if (m) m.classList.toggle('hidden'); };
+            window.handleLogout = function () {
+                var tk = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.token) || 'study_room_token';
+                var uk = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
+                var lu = (window.AppConfig && AppConfig.loginUrl) || (BasePath.public + '/login.html');
+                localStorage.removeItem(tk); localStorage.removeItem(uk);
+                window.location.href = lu;
+            };
+            document.addEventListener('click', function (e) {
+                var t = document.getElementById('user-menu-trigger');
+                var d = document.getElementById('user-dropdown');
+                if (d && t && !t.contains(e.target) && !d.contains(e.target)) d.classList.add('hidden');
+            });
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function loadNavbar() {
+            var placeholder = document.getElementById('navbar-placeholder');
+            var navbarUrl = BasePath.admin + '/partials/navbar.html';
+            fetch(navbarUrl).then(function (r) { return r.text(); }).then(function (html) {
+                placeholder.innerHTML = html;
+                setTimeout(execNavbarScript, 0);
+            }).catch(function () {
+                placeholder.innerHTML = NAVBAR_HTML;
+                setTimeout(execNavbarScript, 0);
+            });
+        }
+
+        function kpiCard(icon, label, value, hint, gradFrom, gradTo, valueColor) {
+            return '<div class="rounded-xl p-5 relative overflow-hidden" style="background:var(--surface-card);border:var(--surface-card-border);box-shadow:var(--shadow-sm);"><div class="flex items-start justify-between gap-3 mb-3"><div class="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,' + gradFrom + ',' + gradTo + ');"><i data-lucide="' + icon + '" style="width:22px;height:22px;color:white;"></i></div></div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);margin-bottom:4px;">' + label + '</div><div class="text-3xl font-bold tracking-tight" style="color:' + (valueColor || 'var(--color-text-primary)') + ';">' + value + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);margin-top:4px;">' + hint + '</div></div>';
+        }
+
+        function renderKPIs(usage, noshow, conv) {
+            var box = document.getElementById('kpi-grid');
+            var avgRate = (usage && usage.averageRate) || 0;
+            var totalRes = (noshow && noshow.totalReservations) || (conv && conv.totalReservations) || 0;
+            var nsRate = (noshow && noshow.noShowRate) || 0;
+            var cRate = (conv && conv.conversionRate) || 0;
+            box.innerHTML =
+                kpiCard('calendar-check-2', '预约总量', String(totalRes).replace(/\B(?=(\d{3})+(?!\d))/g, ','), '统计周期内所有预约', '#0E7C6B', '#12A38D') +
+                kpiCard('trending-up', '平均使用率', avgRate + '%', '最近 7 天平均', '#2563EB', '#3B82F6') +
+                kpiCard('calendar-x', '爽约率', nsRate + '%', '统计周期内平均', '#DC2626', '#EF4444') +
+                kpiCard('target', '签到转化率', cRate + '%', '预约后实际签到', '#16A34A', '#22C55E', 'var(--state-success)');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function lineChartSvg(data, xKey, yKey, height, minY, maxY, color, fillColor, labelMap) {
+            height = height || 240;
+            var W = 760, H = height, padL = 40, padR = 20, padT = 20, padB = 36;
+            var gw = W - padL - padR, gh = H - padT - padB;
+            minY = (minY !== undefined) ? minY : 0;
+            maxY = (maxY !== undefined) ? maxY : 100;
+            var pts = data.map(function (d, i) {
+                var x = padL + (gw * i) / Math.max(1, data.length - 1);
+                var y = padT + gh - (gh * (Number(d[yKey]) - minY)) / (maxY - minY);
+                return { x: x, y: y, v: d[yKey], l: labelMap ? labelMap(d, i) : d[xKey] };
+            });
+            var path = pts.map(function (p, i) { return (i ? 'L' : 'M') + p.x.toFixed(2) + ',' + p.y.toFixed(2); }).join(' ');
+            var areaPath = path + ' L' + pts[pts.length - 1].x.toFixed(2) + ',' + (padT + gh).toFixed(2) + ' L' + pts[0].x.toFixed(2) + ',' + (padT + gh).toFixed(2) + ' Z';
+            var yTicks = 5;
+            var yGrid = '';
+            for (var yi = 0; yi <= yTicks; yi++) {
+                var y = padT + (gh * yi) / yTicks;
+                var vl = Math.round(maxY - (yi * (maxY - minY)) / yTicks);
+                yGrid += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#F1F5F9" stroke-width="1"/><text x="' + (padL - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="#94A3B8">' + vl + '</text>';
+            }
+            var xLabels = '';
+            pts.forEach(function (p, i) {
+                if (i % Math.max(1, Math.ceil(pts.length / 7)) === 0 || i === pts.length - 1)
+                    xLabels += '<text x="' + p.x + '" y="' + (H - padB + 20) + '" text-anchor="middle" font-size="11" fill="#64748B">' + p.l + '</text>';
+            });
+            var dots = pts.map(function (p) { return '<circle cx="' + p.x.toFixed(2) + '" cy="' + p.y.toFixed(2) + '" r="4" fill="white" stroke="' + color + '" stroke-width="2.5"><title>' + p.l + ' · ' + p.v + '%</title></circle>'; }).join('');
+            return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" style="display:block;"><defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + fillColor + '" stop-opacity="0.35"/><stop offset="100%" stop-color="' + fillColor + '" stop-opacity="0"/></linearGradient></defs>' + yGrid + xLabels + '<path d="' + areaPath + '" fill="url(#areaFill)"/><path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' + dots + '</svg>';
+        }
+
+        function barChartSvg(data, xKey, yKey, height, maxY, color) {
+            height = height || 260;
+            var W = 900, H = height, padL = 40, padR = 16, padT = 20, padB = 40;
+            var gw = W - padL - padR, gh = H - padT - padB;
+            maxY = maxY || 100;
+            var n = data.length;
+            var bw = Math.max(8, (gw / n) * 0.62);
+            var step = gw / n;
+            var yTicks = 5, yGrid = '';
+            for (var yi = 0; yi <= yTicks; yi++) {
+                var y = padT + (gh * yi) / yTicks;
+                var vl = Math.round(maxY - (yi * maxY) / yTicks);
+                yGrid += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#F1F5F9" stroke-width="1"/><text x="' + (padL - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="#94A3B8">' + vl + '</text>';
+            }
+            var bars = '', xLabels = '';
+            data.forEach(function (d, i) {
+                var v = Math.min(Number(d[yKey]) || 0, maxY);
+                var bh = (gh * v) / maxY;
+                var x = padL + step * i + (step - bw) / 2;
+                var y = padT + gh - bh;
+                bars += '<rect x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" width="' + bw.toFixed(2) + '" height="' + bh.toFixed(2) + '" rx="3" fill="' + color + '" opacity="0.92"><title>' + d[xKey] + ' · ' + v + '%</title></rect>';
+                if (i % 2 === 0 || n <= 10) xLabels += '<text x="' + (x + bw / 2).toFixed(2) + '" y="' + (H - padB + 16) + '" text-anchor="middle" font-size="10.5" fill="#64748B">' + d[xKey] + '</text>';
+            });
+            return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" style="display:block;">' + yGrid + bars + xLabels + '</svg>';
+        }
+
+        function renderHotPeriods(list) {
+            var box = document.getElementById('hot-periods');
+            if (!list || !list.length) { box.innerHTML = '<p style="color:var(--color-text-tertiary);font-size:var(--text-sm);" class="py-8 text-center">暂无数据</p>'; return; }
+            var maxRate = list.reduce(function (m, x) { return Math.max(m, x.avgUsageRate || 0); }, 1);
+            var h = '';
+            var medals = ['#F59E0B', '#94A3B8', '#B45309', '#64748B', '#64748B'];
+            var medalBg = ['#FEF3C7', '#F1F5F9', '#FEF3C7', '#F8FAFC', '#F8FAFC'];
+            list.forEach(function (p, i) {
+                var pct = Math.min(100, Math.round((p.avgUsageRate || 0) / maxRate * 100));
+                h += '<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0" style="background:' + medalBg[i] + ';color:' + medals[i] + ';">' + p.rank + '</div>';
+                h += '<div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-1.5"><div class="text-sm font-medium truncate" style="color:var(--color-text-primary);">' + p.period + '</div><div class="text-sm font-bold flex items-center gap-1" style="color:var(--brand-primary);">' + p.avgUsageRate + '%</div></div>';
+                h += '<div class="w-full h-2 rounded-full overflow-hidden" style="background:var(--color-bg-tertiary);"><div style="width:' + pct + '%;height:100%;background:linear-gradient(90deg,var(--brand-primary-light),var(--brand-primary));border-radius:9999px;"></div></div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);margin-top:4px;">' + (p.totalReservations || 0).toLocaleString() + ' 次预约</div>';
+                h += '</div></div>';
+            });
+            box.innerHTML = h;
+        }
+
+        function buildMonthLabel(d) { return d.month ? d.month.slice(2) : ''; }
+        function buildDateShort(d) { var s = (d.date || '').split('-'); return s.length === 3 ? (s[1] + '/' + s[2]) : (d.date || ''); }
+
+        function loadUsage() {
+            ReportAPI.getUsageRate().then(function (d) {
+                var list = (d && d.list) || [];
+                var avg = (d && d.averageRate) || 0;
+                document.getElementById('avg-rate-badge').textContent = '平均 ' + avg + '%';
+                document.getElementById('usage-chart').innerHTML = lineChartSvg(list, 'date', 'usageRate', 260, 0, 100, '#0E7C6B', '#0E7C6B', function (d) { return buildDateShort(d); });
+            }).catch(function (e) { Utils.showToast(e.message || '使用率加载失败', 'error'); });
+        }
+        function loadTimeDist() {
+            ReportAPI.getTimeDistribution().then(function (d) {
+                var list = (d || []).map(function (x) { return { hour: x.label, usageRate: x.usageRate }; });
+                document.getElementById('time-chart').innerHTML = barChartSvg(list, 'hour', 'usageRate', 260, 100, '#0E7C6B');
+            }).catch(function (e) { Utils.showToast(e.message || '时段分布加载失败', 'error'); });
+        }
+        function loadHotPeriods() {
+            ReportAPI.getHotPeriods().then(function (d) { renderHotPeriods(d || []); }).catch(function (e) { Utils.showToast(e.message || '热门时段加载失败', 'error'); });
+        }
+        function loadNoShow() {
+            ReportAPI.getNoShowRate().then(function (d) {
+                var trend = (d && d.trend) || [];
+                document.getElementById('noshow-chart').innerHTML = lineChartSvg(trend, 'month', 'rate', 240, 0, 5, '#DC2626', '#DC2626', function (m) { return buildMonthLabel(m); });
+                return d;
+            });
+        }
+        function loadConversion() {
+            ReportAPI.getConversionRate().then(function (d) {
+                var trend = (d && d.trend) || [];
+                document.getElementById('conversion-chart').innerHTML = lineChartSvg(trend, 'month', 'rate', 240, 70, 100, '#16A34A', '#16A34A', function (m) { return buildMonthLabel(m); });
+                return d;
+            });
+        }
+
+        window.refreshAll = function () {
+            Promise.all([ReportAPI.getUsageRate(), ReportAPI.getNoShowRate(), ReportAPI.getConversionRate()]).then(function (r) {
+                renderKPIs(r[0], r[1], r[2]);
+            });
+            loadUsage();
+            loadTimeDist();
+            loadHotPeriods();
+            loadNoShow();
+            loadConversion();
+            Utils.showToast('数据已刷新', 'success');
+        };
+
+        window.exportReport = function () {
+            ReportAPI.exportReport().then(function (r) {
+                Utils.showToast((r && r.message) || '导出请求已提交', 'info');
+            }).catch(function (e) { Utils.showToast(e.message || '导出失败', 'error'); });
+        };
+
+        document.getElementById('range-select').addEventListener('change', refreshAll);
+
+        loadNavbar();
+        Promise.all([ReportAPI.getUsageRate(), ReportAPI.getNoShowRate(), ReportAPI.getConversionRate()]).then(function (r) {
+            renderKPIs(r[0], r[1], r[2]);
+        });
+        loadUsage();
+        loadTimeDist();
+        loadHotPeriods();
+        loadNoShow();
+        loadConversion();
+    })();
+    </script>
+</body>
+</html>

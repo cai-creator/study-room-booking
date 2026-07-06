@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 智约自习</title>
+    <link rel="stylesheet" href="../colors_and_type.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+      @theme inline {
+        --color-primary: var(--brand-primary);
+      }
+      @layer base {
+        body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); }
+      }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4" style="background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--brand-primary-lightest) 100%);">
+
+<!-- ===== 登录卡片 ===== -->
+<div class="w-full max-w-md" style="background: var(--surface-card); border: var(--surface-card-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+  <div class="p-8 sm:p-10">
+
+    <!-- 已登录提示条 -->
+    <div id="logged-in-banner" class="hidden mb-6 px-4 py-3 rounded-md text-sm flex items-center justify-between gap-2"
+         style="background: var(--state-info-bg); color: var(--state-info); border: 1px solid rgba(37, 99, 235, 0.2);">
+      <div class="flex items-center gap-2">
+        <i data-lucide="user-check" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+        <span id="logged-in-text">您已登录</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="continueAsLoggedIn()"
+                class="px-3 py-1 text-xs font-medium rounded-md transition-all"
+                style="background: var(--state-info); color: #fff;">
+          继续进入
+        </button>
+        <button onclick="switchAccount()"
+                class="px-3 py-1 text-xs font-medium rounded-md transition-all"
+                style="background: transparent; color: var(--state-info); border: 1px solid var(--state-info);">
+          切换账号
+        </button>
+      </div>
+    </div>
+
+    <!-- Logo/品牌区 -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-full mb-4" style="background: var(--brand-primary-lighter);">
+        <i data-lucide="book-open" style="width: 28px; height: 28px; color: var(--brand-primary);"></i>
+      </div>
+      <h1 style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); letter-spacing: var(--tracking-tight);">智约自习</h1>
+      <p style="font-size: var(--text-sm); color: var(--color-text-tertiary); margin-top: 4px;">高校智能预约系统</p>
+    </div>
+
+    <!-- 登录方式切换 Tab -->
+    <div class="flex rounded-lg mb-6 p-1" style="background: var(--color-bg-tertiary);">
+      <button id="tab-password" onclick="switchTab('password')"
+              class="flex-1 py-2 text-sm font-medium rounded-md transition-all"
+              style="background: var(--color-surface); color: var(--color-text-primary); box-shadow: var(--shadow-sm);">
+        账号登录
+      </button>
+      <button id="tab-cas" onclick="switchTab('cas')"
+              class="flex-1 py-2 text-sm font-medium rounded-md transition-all"
+              style="background: transparent; color: var(--color-text-tertiary);">
+        CAS 认证
+      </button>
+    </div>
+
+    <!-- 错误提示 -->
+    <div id="error-msg" class="hidden mb-4 px-4 py-3 rounded-md text-sm flex items-center gap-2" style="background: var(--state-error-bg); color: var(--state-error);">
+      <i data-lucide="alert-circle" style="width: 16px; height: 16px; flex-shrink: 0;"></i>
+      <span id="error-text"></span>
+    </div>
+
+    <!-- ===== 账号密码登录表单 ===== -->
+    <form id="form-password" onsubmit="handleLogin(event)" class="space-y-4">
+      <div>
+        <label class="block mb-1.5 text-sm font-medium" style="color: var(--color-text-secondary);">用户名 / 学号</label>
+        <div class="relative">
+          <i data-lucide="user" class="absolute left-3 top-1/2 -translate-y-1/2" style="width: 16px; height: 16px; color: var(--color-text-tertiary);"></i>
+          <input id="username" type="text" autocomplete="username" placeholder="请输入用户名或学号"
+                 class="w-full pl-10 pr-4 py-2.5 text-sm rounded-md outline-none transition-all"
+                 style="border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-primary);">
+        </div>
+      </div>
+      <div>
+        <label class="block mb-1.5 text-sm font-medium" style="color: var(--color-text-secondary);">密码</label>
+        <div class="relative">
+          <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2" style="width: 16px; height: 16px; color: var(--color-text-tertiary);"></i>
+          <input id="password" type="password" autocomplete="current-password" placeholder="请输入密码"
+                 class="w-full pl-10 pr-4 py-2.5 text-sm rounded-md outline-none transition-all"
+                 style="border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-primary);">
+        </div>
+      </div>
+
+      <button type="submit" id="btn-login"
+              class="w-full py-2.5 text-sm font-semibold rounded-md transition-all flex items-center justify-center gap-2"
+              style="background: var(--brand-primary); color: var(--color-text-inverse);">
+        <span id="btn-text">登 录</span>
+        <i id="btn-spinner" data-lucide="loader-2" class="hidden animate-spin" style="width: 16px; height: 16px;"></i>
+      </button>
+    </form>
+
+    <!-- ===== CAS 认证区域 ===== -->
+    <div id="form-cas" class="hidden space-y-4">
+      <div class="text-center py-4" style="color: var(--color-text-secondary); font-size: var(--text-sm);">
+        <p class="mb-2">使用校园统一身份认证登录</p>
+        <p style="color: var(--color-text-tertiary); font-size: var(--text-xs);">点击下方按钮跳转至学校 CAS 认证页面</p>
+      </div>
+      <button onclick="handleCasLogin()" id="btn-cas"
+              class="w-full py-2.5 text-sm font-semibold rounded-md transition-all flex items-center justify-center gap-2"
+              style="border: 1.5px solid var(--brand-primary); color: var(--brand-primary); background: transparent;">
+        <i data-lucide="shield-check" style="width: 18px; height: 18px;"></i>
+        <span>校园统一认证登录</span>
+      </button>
+    </div>
+
+    <!-- 底部提示 -->
+    <p class="text-center mt-6" style="font-size: var(--text-xs); color: var(--color-text-tertiary);">
+      © 2026 智约自习 · 高校自习室智能预约系统
+    </p>
+  </div>
+</div>
+
+<!-- ===== Toast 容器 ===== -->
+<div id="toast-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2"></div>
+
+<!-- ===== 脚本 ===== -->
+<script src="./js/config.js"></script>
+<script src="./js/utils.js"></script>
+<script src="./js/request.js"></script>
+<script src="./mock/auth.js"></script>
+<script src="./api/auth.js"></script>
+
+<script>
+  'use strict';
+
+  var currentTab = 'password';
+
+  // ===== 初始化 =====
+  document.addEventListener('DOMContentLoaded', function () {
+    lucide.createIcons();
+    // 检查是否已登录（仅显示提示条，不再自动跳转）
+    var token = Utils.getToken();
+    var user = Utils.getUser();
+    if (token && user) {
+      showLoggedInBanner(user);
+    }
+    // 检测 CAS 回调（URL 中有 ticket 参数）
+    var ticket = Utils.getQueryParam('ticket');
+    if (ticket) {
+      handleCasCallback(ticket);
+    }
+    // 焦点样式
+    initInputStyles();
+  });
+
+  /** 显示已登录提示条 */
+  function showLoggedInBanner(user) {
+    var banner = document.getElementById('logged-in-banner');
+    var text = document.getElementById('logged-in-text');
+    var roleLabel = Utils.getStatusLabel(user.role, 'role') || '用户';
+    text.textContent = '您已登录为 ' + roleLabel + '：' + (user.name || user.username || '');
+    banner.classList.remove('hidden');
+    lucide.createIcons();
+  }
+
+  /** 以当前已登录身份继续进入系统 */
+  window.continueAsLoggedIn = function () {
+    var user = Utils.getUser();
+    if (!user) {
+      document.getElementById('logged-in-banner').classList.add('hidden');
+      return;
+    }
+    redirectByRole(user.role);
+  };
+
+  /** 切换账号：清除登录态，隐藏提示条 */
+  window.switchAccount = function () {
+    Utils.clearToken();
+    Utils.clearUser();
+    document.getElementById('logged-in-banner').classList.add('hidden');
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+    Utils.showToast('已退出登录，请重新登录', 'info');
+  };
+
+  /** 输入框焦点高亮 */
+  function initInputStyles() {
+    var inputs = document.querySelectorAll('input');
+    inputs.forEach(function (input) {
+      input.addEventListener('focus', function () {
+        this.style.borderColor = 'var(--brand-primary)';
+        this.style.boxShadow = '0 0 0 3px var(--brand-primary-lighter)';
+      });
+      input.addEventListener('blur', function () {
+        this.style.borderColor = 'var(--color-border)';
+        this.style.boxShadow = 'none';
+      });
+    });
+  }
+
+  // ===== Tab 切换 =====
+  window.switchTab = function (tab) {
+    currentTab = tab;
+    var formPwd = document.getElementById('form-password');
+    var formCas = document.getElementById('form-cas');
+    var tabPwd = document.getElementById('tab-password');
+    var tabCas = document.getElementById('tab-cas');
+
+    hideError();
+
+    if (tab === 'password') {
+      formPwd.classList.remove('hidden');
+      formCas.classList.add('hidden');
+      tabPwd.style.background = 'var(--color-surface)';
+      tabPwd.style.color = 'var(--color-text-primary)';
+      tabPwd.style.boxShadow = 'var(--shadow-sm)';
+      tabCas.style.background = 'transparent';
+      tabCas.style.color = 'var(--color-text-tertiary)';
+      tabCas.style.boxShadow = 'none';
+    } else {
+      formPwd.classList.add('hidden');
+      formCas.classList.remove('hidden');
+      tabCas.style.background = 'var(--color-surface)';
+      tabCas.style.color = 'var(--color-text-primary)';
+      tabCas.style.boxShadow = 'var(--shadow-sm)';
+      tabPwd.style.background = 'transparent';
+      tabPwd.style.color = 'var(--color-text-tertiary)';
+      tabPwd.style.boxShadow = 'none';
+    }
+    lucide.createIcons();
+  };
+
+  // ===== 账号密码登录 =====
+  window.handleLogin = function (event) {
+    event.preventDefault();
+    hideError();
+
+    var username = document.getElementById('username').value.trim();
+    var password = document.getElementById('password').value;
+
+    if (!username) { showError('请输入用户名或学号'); return; }
+    if (!password) { showError('请输入密码'); return; }
+
+    setLoading(true);
+
+    AuthAPI.login(username, password)
+      .catch(function (err) {
+        setLoading(false);
+        showError(err.message || '登录失败，请稍后重试');
+      });
+  };
+
+  // ===== CAS 登录 =====
+  window.handleCasLogin = function () {
+    if (AppConfig.useMock) {
+      // Mock 模式：直接模拟CAS回调
+      AuthAPI.casLogin('mock-ticket')
+        .catch(function (err) {
+          showError(err.message || 'CAS认证失败');
+        });
+    } else {
+      // 真实模式：跳转到CAS服务
+      var returnUrl = window.location.origin + window.location.pathname;
+      window.location.href = AppConfig.casLoginUrl + '?service=' + encodeURIComponent(returnUrl);
+    }
+  };
+
+  /** CAS 回调处理 */
+  function handleCasCallback(ticket) {
+    setLoading(true);
+    AuthAPI.casLogin(ticket)
+      .catch(function (err) {
+        setLoading(false);
+        showError(err.message || 'CAS认证失败，请重试');
+      });
+  }
+
+  // ===== 辅助函数 =====
+  function redirectByRole(role) {
+    if (role === 'STUDENT') {
+      window.location.href = BasePath.student + '/pages/home.html';
+    } else {
+      window.location.href = BasePath.admin + '/pages/space-management.html';
+    }
+  }
+
+  function showError(msg) {
+    var el = document.getElementById('error-msg');
+    document.getElementById('error-text').textContent = msg;
+    el.classList.remove('hidden');
+    lucide.createIcons();
+  }
+
+  function hideError() {
+    document.getElementById('error-msg').classList.add('hidden');
+  }
+
+  function setLoading(loading) {
+    var btn = document.getElementById('btn-login');
+    var text = document.getElementById('btn-text');
+    var spinner = document.getElementById('btn-spinner');
+    if (loading) {
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      btn.style.cursor = 'not-allowed';
+      text.textContent = '登录中...';
+      spinner.classList.remove('hidden');
+    } else {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      text.textContent = '登 录';
+      spinner.classList.add('hidden');
+    }
+    lucide.createIcons();
+  }
+
+  // 点击输入框时隐藏错误
+  document.getElementById('username').addEventListener('input', hideError);
+  document.getElementById('password').addEventListener('input', hideError);
+</script>
+</body>
+</html>

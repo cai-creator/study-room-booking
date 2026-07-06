@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黑名单管理 - 智约自习</title>
+    <link rel="stylesheet" href="../../colors_and_type.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+      @theme inline { --color-primary: var(--brand-primary); }
+      @layer base { body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); } }
+    </style>
+    <style>
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+      .modal-backdrop { animation: fadeIn 0.2s ease; }
+      .tab-btn { transition: all 0.2s ease; }
+      .tab-btn.active { color: var(--brand-primary); }
+      .tab-btn.active .tab-indicator { background: var(--brand-primary); transform: scaleX(1); }
+    </style>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="max-w-[1280px] mx-auto px-4 sm:px-6 py-6" style="max-width: var(--max-width);">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h1 class="text-2xl font-bold mb-1" style="color: var(--color-text-primary);">黑名单管理</h1>
+                <p style="color: var(--color-text-secondary); font-size: var(--text-sm);">管理黑名单记录与用户爽约历史</p>
+            </div>
+            <button onclick="openAddModal()" class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors hover:opacity-90" style="background: var(--state-error); color: white;">
+                <i data-lucide="user-minus" style="width:16px;height:16px;"></i>加入黑名单
+            </button>
+        </div>
+
+        <div class="rounded-xl overflow-hidden mb-5" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+            <div class="flex border-b" style="border-color: var(--color-border);">
+                <button class="tab-btn active flex items-center gap-2 px-6 py-4 text-sm font-semibold relative" onclick="switchTab('blacklist')" data-tab="blacklist" style="color: var(--color-text-secondary);">
+                    <i data-lucide="shield-alert" style="width:16px;height:16px;"></i>黑名单记录
+                    <span class="tab-indicator absolute left-0 bottom-0 w-full h-0.5" style="background:transparent;transform:scaleX(1);transition:all 0.2s ease;"></span>
+                    <span id="count-blacklist" class="px-2 py-0.5 rounded-full text-xs" style="background:var(--state-error-bg);color:var(--state-error);">0</span>
+                </button>
+                <button class="tab-btn flex items-center gap-2 px-6 py-4 text-sm font-semibold relative" onclick="switchTab('noshow')" data-tab="noshow" style="color: var(--color-text-secondary);">
+                    <i data-lucide="calendar-x" style="width:16px;height:16px;"></i>爽约记录
+                    <span class="tab-indicator absolute left-0 bottom-0 w-full h-0.5" style="background:transparent;transform:scaleX(0);transition:all 0.2s ease;"></span>
+                    <span id="count-noshow" class="px-2 py-0.5 rounded-full text-xs" style="background:var(--state-warning-bg);color:var(--state-warning);">0</span>
+                </button>
+            </div>
+
+            <div id="tab-blacklist">
+                <div class="p-5 grid grid-cols-1 md:grid-cols-12 gap-4 border-b" style="border-color: var(--color-border-light);">
+                    <div class="md:col-span-6">
+                        <div class="relative">
+                            <i data-lucide="search" style="position:absolute;left:0.875rem;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--color-text-tertiary);"></i>
+                            <input id="b-kw" type="text" placeholder="按学号 / 姓名搜索..." class="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                        </div>
+                    </div>
+                    <div class="md:col-span-4">
+                        <select id="b-status" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                            <option value="">全部状态</option>
+                            <option value="1">生效中</option>
+                            <option value="0">已解除</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2 flex items-end gap-2">
+                        <button onclick="loadBlacklist()" class="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium" style="background:var(--brand-primary);color:white;">
+                            <i data-lucide="search" style="width:15px;height:15px;"></i>搜索
+                        </button>
+                    </div>
+                </div>
+                <div id="kpi-b" class="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 border-b" style="border-color: var(--color-border-light);"></div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead style="background: var(--color-bg-secondary);">
+                            <tr>
+                                <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">用户信息</th>
+                                <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">加入原因</th>
+                                <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">封禁时段</th>
+                                <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">操作员</th>
+                                <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">状态</th>
+                                <th class="px-5 py-3.5 text-right font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="b-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="b-page" class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4" style="border-top:1px solid var(--color-border-light);"></div>
+            </div>
+
+            <div id="tab-noshow" class="hidden">
+                <div class="p-5 grid grid-cols-1 md:grid-cols-12 gap-4 border-b" style="border-color: var(--color-border-light);">
+                    <div class="md:col-span-6">
+                        <div class="relative">
+                            <i data-lucide="search" style="position:absolute;left:0.875rem;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--color-text-tertiary);"></i>
+                            <input id="n-kw" type="text" placeholder="按学号 / 姓名 / 自习室搜索..." class="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                        </div>
+                    </div>
+                    <div class="md:col-span-4"></div>
+                    <div class="md:col-span-2 flex items-end gap-2">
+                        <button onclick="loadNoShow()" class="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium" style="background:var(--brand-primary);color:white;">
+                            <i data-lucide="search" style="width:15px;height:15px;"></i>搜索
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead style="background: var(--color-bg-secondary);">
+                            <tr>
+                                <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">用户</th>
+                                <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">自习室 / 座位</th>
+                                <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">预约时段</th>
+                                <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">爽约原因</th>
+                                <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">记录日期</th>
+                            </tr>
+                        </thead>
+                        <tbody id="n-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="n-page" class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4" style="border-top:1px solid var(--color-border-light);"></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="add-modal" class="hidden fixed inset-0 z-[210] flex items-center justify-center p-4">
+        <div class="modal-backdrop absolute inset-0" style="background: rgba(15,23,42,0.45);" onclick="closeAddModal()"></div>
+        <div class="relative w-full rounded-xl p-6 z-10" style="background: var(--surface-card); box-shadow: var(--shadow-lg); max-width: 480px;">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-semibold" style="color: var(--color-text-primary);">加入黑名单</h3>
+                <button onclick="closeAddModal()" class="p-1 rounded-lg transition-colors hover:bg-gray-100" style="color: var(--color-text-tertiary);">
+                    <i data-lucide="x" style="width:20px;height:20px;"></i>
+                </button>
+            </div>
+            <form onsubmit="handleAddSubmit(event)">
+                <label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">学号 / 账号<span style="color:var(--state-error);">*</span></span>
+                    <input id="in-username" type="text" required placeholder="输入用户学号或账号" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                </label>
+                <label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">封禁原因<span style="color:var(--state-error);">*</span></span>
+                    <select id="in-reason" required class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                        <option value="累计爽约3次，系统自动加入">累计爽约3次（系统自动）</option>
+                        <option value="恶意占座">恶意占座</option>
+                        <option value="扰乱自习室秩序">扰乱自习室秩序</option>
+                        <option value="多次违规暂离超时">多次违规暂离超时</option>
+                        <option value="其他">其他原因</option>
+                    </select>
+                </label>
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <label class="block"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">开始日期<span style="color:var(--state-error);">*</span></span>
+                        <input id="in-start" type="date" required class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                    </label>
+                    <label class="block"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">结束日期<span style="color:var(--state-error);">*</span></span>
+                        <input id="in-end" type="date" required class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                    </label>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);">取消</button>
+                    <button type="submit" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors hover:opacity-90" style="background:var(--state-error);color:white;">确认加入</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../../public/js/config.js"></script>
+    <script src="../../public/js/utils.js"></script>
+    <script src="../../public/js/request.js"></script>
+    <script src="../../public/mock/seat.js"></script>
+    <script src="../../public/mock/user.js"></script>
+    <script src="../../public/mock/auth.js"></script>
+    <script src="../../public/api/seat.js"></script>
+    <script src="../../public/api/user.js"></script>
+    <script src="../../public/api/auth.js"></script>
+
+    <script>
+    (function () {
+        var NAVBAR_HTML = '<nav class="sticky top-0 z-50 border-b" style="height: var(--header-height); background: var(--color-surface); border-color: var(--color-border);"><div class="h-full max-w-[1280px] mx-auto px-4 sm:px-6 flex items-center justify-between" style="max-width: var(--max-width);"><div class="flex items-center gap-6"><a href="space-management.html" class="flex items-center gap-2 no-underline"><i data-lucide="book-open" style="width:22px;height:22px;color:var(--brand-primary);"></i><span style="font-size:var(--text-lg);font-weight:700;color:var(--color-text-primary);">智约自习</span><span class="px-2 py-0.5 rounded text-xs font-medium" style="background:var(--brand-primary-lighter);color:var(--brand-primary);">管理端</span></a><div class="hidden md:flex items-center gap-1" id="nav-links"><a href="space-management.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="space-management.html">空间管理</a><a href="user-management.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="user-management.html">用户管理</a><a href="blacklist.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="blacklist.html">黑名单管理</a><a href="reports.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="reports.html">数据报表</a><a href="dashboard.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="dashboard.html">大屏看板</a></div></div><div class="flex items-center gap-3"><div class="flex items-center gap-2 cursor-pointer relative" id="user-menu-trigger" onclick="toggleUserMenu()"><div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold" style="background:var(--brand-primary);color:var(--color-text-inverse);"><span id="navbar-user-avatar">A</span></div><span class="hidden sm:block text-sm font-medium" id="navbar-user-name" style="color:var(--color-text-primary);">管理员</span><i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--color-text-tertiary);"></i></div><div id="user-dropdown" class="hidden absolute right-4 top-14 w-48 rounded-lg py-1" style="background:var(--surface-card);border:var(--surface-card-border);box-shadow:var(--shadow-lg);z-index:var(--z-dropdown);"><div class="px-4 py-2 border-b" style="border-color:var(--color-border);"><p class="text-sm font-medium" style="color:var(--color-text-primary);" id="dropdown-name"></p><p style="font-size:var(--text-xs);color:var(--color-text-tertiary);" id="dropdown-role"></p></div><button onclick="handleLogout()" class="w-full text-left px-4 py-2 text-sm transition-colors flex items-center gap-2" style="color:var(--state-error);"><i data-lucide="log-out" style="width:15px;height:15px;"></i> 退出登录</button></div></div><button class="md:hidden p-2" onclick="toggleMobileMenu()" style="color:var(--color-text-secondary);"><i data-lucide="menu" style="width:22px;height:22px;"></i></button></div><div id="mobile-menu" class="hidden md:hidden border-t" style="background:var(--color-surface);border-color:var(--color-border);"><a href="space-management.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="space-management.html">空间管理</a><a href="user-management.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="user-management.html">用户管理</a><a href="blacklist.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="blacklist.html">黑名单管理</a><a href="reports.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="reports.html">数据报表</a><a href="dashboard.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="dashboard.html">大屏看板</a></div></nav>';
+
+        function execNavbarScript() {
+            var user = null;
+            var userKey = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
+            try { var raw = localStorage.getItem(userKey); if (raw) user = JSON.parse(raw); } catch (e) {}
+            if (user) {
+                var ae = document.getElementById('navbar-user-avatar');
+                var ne = document.getElementById('navbar-user-name');
+                var dn = document.getElementById('dropdown-name');
+                var dr = document.getElementById('dropdown-role');
+                var ch = (user.realName || user.username || 'U').charAt(0);
+                if (ae) ae.textContent = ch;
+                if (ne) ne.textContent = user.realName || user.username;
+                if (dn) dn.textContent = user.realName || user.username;
+                var rm = { STUDENT: '学生', ADMIN: '管理员', SUPER_ADMIN: '超级管理员' };
+                if (dr) dr.textContent = rm[user.role] || user.role;
+            }
+            var cp = window.location.pathname.split('/').pop() || 'blacklist.html';
+            document.querySelectorAll('.nav-link').forEach(function (l) {
+                var dp = l.getAttribute('data-page');
+                if (dp === cp) { l.style.color = 'var(--brand-primary)'; l.style.background = 'var(--brand-primary-lighter)'; }
+                else { l.style.color = 'var(--color-text-secondary)'; l.style.background = 'transparent'; }
+                l.addEventListener('mouseenter', function () { if (dp !== cp) l.style.background = 'var(--color-bg-tertiary)'; });
+                l.addEventListener('mouseleave', function () { if (dp !== cp) l.style.background = 'transparent'; });
+            });
+            window.toggleUserMenu = function () { var d = document.getElementById('user-dropdown'); if (d) d.classList.toggle('hidden'); if (window.lucide) lucide.createIcons(); };
+            window.toggleMobileMenu = function () { var m = document.getElementById('mobile-menu'); if (m) m.classList.toggle('hidden'); };
+            window.handleLogout = function () {
+                var tk = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.token) || 'study_room_token';
+                var uk = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
+                var lu = (window.AppConfig && AppConfig.loginUrl) || (BasePath.public + '/login.html');
+                localStorage.removeItem(tk); localStorage.removeItem(uk);
+                window.location.href = lu;
+            };
+            document.addEventListener('click', function (e) {
+                var t = document.getElementById('user-menu-trigger');
+                var d = document.getElementById('user-dropdown');
+                if (d && t && !t.contains(e.target) && !d.contains(e.target)) d.classList.add('hidden');
+            });
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function loadNavbar() {
+            var placeholder = document.getElementById('navbar-placeholder');
+            var navbarUrl = BasePath.admin + '/partials/navbar.html';
+            fetch(navbarUrl).then(function (r) { return r.text(); }).then(function (html) {
+                placeholder.innerHTML = html;
+                setTimeout(execNavbarScript, 0);
+            }).catch(function () {
+                placeholder.innerHTML = NAVBAR_HTML;
+                setTimeout(execNavbarScript, 0);
+            });
+        }
+
+        var state = {
+            tab: 'blacklist',
+            b: { page: 1, size: 8, list: [], total: 0 },
+            n: { page: 1, size: 8, list: [], total: 0 }
+        };
+
+        window.switchTab = function (tab) {
+            state.tab = tab;
+            document.querySelectorAll('.tab-btn').forEach(function (b) {
+                var t = b.getAttribute('data-tab');
+                var ind = b.querySelector('.tab-indicator');
+                if (t === tab) { b.classList.add('active'); b.style.color = 'var(--brand-primary)'; ind.style.background = 'var(--brand-primary)'; ind.style.transform = 'scaleX(1)'; }
+                else { b.classList.remove('active'); b.style.color = 'var(--color-text-secondary)'; ind.style.background = 'transparent'; ind.style.transform = 'scaleX(0)'; }
+            });
+            document.getElementById('tab-blacklist').classList.toggle('hidden', tab !== 'blacklist');
+            document.getElementById('tab-noshow').classList.toggle('hidden', tab !== 'noshow');
+            if (tab === 'blacklist') loadBlacklist(); else loadNoShow();
+            if (window.lucide) lucide.createIcons();
+        };
+
+        function renderKPI_B() {
+            var list = state.b.list;
+            var active = list.filter(function (b) { return b.status === 1; }).length;
+            var expired = list.length - active;
+            var due7 = list.filter(function (b) {
+                if (b.status !== 1 || !b.endTime) return false;
+                var d = new Date(b.endTime.replace(/-/g, '/')) - new Date();
+                return d >= 0 && d <= 7 * 86400000;
+            }).length;
+            function card(icon, label, val, bg, fg) {
+                return '<div class="rounded-xl p-4 flex items-center gap-4" style="background:var(--color-bg-secondary);"><div class="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink:0" style="background:' + bg + ';"><i data-lucide="' + icon + '" style="width:22px;height:22px;color:' + fg + ';"></i></div><div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">' + label + '</div><div class="text-2xl font-bold" style="color:var(--color-text-primary);">' + val + '</div></div></div>';
+            }
+            document.getElementById('kpi-b').innerHTML =
+                card('users', '当前页记录', state.b.total, 'var(--brand-primary-lighter)', 'var(--brand-primary)') +
+                card('shield-alert', '生效中', active, 'var(--state-error-bg)', 'var(--state-error)') +
+                card('shield-check', '已解除', expired, 'var(--state-success-bg)', 'var(--state-success)') +
+                card('clock', '7天内到期', due7, 'var(--state-warning-bg)', 'var(--state-warning)');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.loadBlacklist = function () {
+            var params = { pageNum: state.b.page, pageSize: state.b.size };
+            var kw = document.getElementById('b-kw').value.trim();
+            var st = document.getElementById('b-status').value;
+            if (kw) params.keyword = kw;
+            if (st !== '') params.status = st;
+            SeatAPI.getBlacklist(params).then(function (d) {
+                state.b.list = d.list || [];
+                state.b.total = d.total || 0;
+                document.getElementById('count-blacklist').textContent = state.b.total;
+                renderKPI_B();
+                renderBlacklistTbl();
+                renderPagination('b-page', state.b, 'goBlacklistPage');
+            }).catch(function (e) { Utils.showToast(e.message || '加载失败', 'error'); });
+        };
+        window.goBlacklistPage = function (n) { state.b.page = n; loadBlacklist(); };
+
+        function renderBlacklistTbl() {
+            var tb = document.getElementById('b-tbody');
+            var list = state.b.list;
+            if (!list.length) {
+                tb.innerHTML = '<tr><td colspan="6" class="px-5 py-16 text-center"><div class="inline-flex flex-col items-center gap-3"><div class="w-14 h-14 rounded-full flex items-center justify-center" style="background:var(--color-bg-tertiary);"><i data-lucide="shield-off" style="width:28px;height:28px;color:var(--color-text-tertiary);"></i></div><p style="color:var(--color-text-tertiary);">暂无黑名单记录</p></div></td></tr>';
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+            var h = '';
+            list.forEach(function (b) {
+                h += '<tr style="border-top:1px solid var(--color-border-light);" class="hover:bg-gray-50 transition-colors">';
+                h += '<td class="px-5 py-4"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold" style="background:var(--state-error-bg);color:var(--state-error);">' + (b.realName || b.username || 'U').charAt(0) + '</div><div><div class="font-medium" style="color:var(--color-text-primary);">' + Utils.escapeHtml(b.realName || '—') + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">' + Utils.escapeHtml(b.username || '') + '</div></div></div></td>';
+                h += '<td class="px-5 py-4" style="color:var(--color-text-secondary);"><div class="max-w-xs" title="' + Utils.escapeHtml(b.reason || '') + '">' + Utils.escapeHtml(b.reason || '—') + '</div></td>';
+                h += '<td class="px-5 py-4" style="color:var(--color-text-secondary);"><div>' + Utils.formatDate(b.startTime, 'yyyy-MM-dd') + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">至 ' + Utils.formatDate(b.endTime, 'yyyy-MM-dd') + '</div></td>';
+                h += '<td class="px-5 py-4"><div style="color:var(--color-text-primary);font-size:var(--text-sm);">' + Utils.escapeHtml(b.operatorName || '系统') + '</div></td>';
+                h += '<td class="px-5 py-4">' + (b.status === 1 ? '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium" style="background:var(--state-error-bg);color:var(--state-error);"><span style="width:6px;height:6px;background:var(--state-error);border-radius:50%;"></span>生效中</span>' : '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);"><span style="width:6px;height:6px;background:var(--color-text-tertiary);border-radius:50%;"></span>已解除</span>') + '</td>';
+                h += '<td class="px-5 py-4 text-right"><div class="flex items-center justify-end gap-1">';
+                if (b.status === 1) h += '<button onclick="removeBlacklist(' + b.id + ')" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-90" style="background:var(--state-success-bg);color:var(--state-success);"><i data-lucide="unlock" style="width:13px;height:13px;"></i>解除</button>';
+                else h += '<button onclick="reAdd(' + b.id + ',\'' + Utils.escapeHtml(b.username || '') + '\')" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors hover:opacity-90" style="background:var(--state-error-bg);color:var(--state-error);"><i data-lucide="user-minus" style="width:13px;height:13px;"></i>重新加入</button>';
+                h += '</div></td></tr>';
+            });
+            tb.innerHTML = h;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        window.loadNoShow = function () {
+            var params = { pageNum: state.n.page, pageSize: state.n.size };
+            var kw = document.getElementById('n-kw').value.trim();
+            if (kw) params.keyword = kw;
+            SeatAPI.getNoShowRecords(params).then(function (d) {
+                state.n.list = d.list || [];
+                state.n.total = d.total || 0;
+                document.getElementById('count-noshow').textContent = state.n.total;
+                renderNoShowTbl();
+                renderPagination('n-page', state.n, 'goNoShowPage');
+            }).catch(function (e) { Utils.showToast(e.message || '加载失败', 'error'); });
+        };
+        window.goNoShowPage = function (n) { state.n.page = n; loadNoShow(); };
+
+        function renderNoShowTbl() {
+            var tb = document.getElementById('n-tbody');
+            var list = state.n.list;
+            if (!list.length) {
+                tb.innerHTML = '<tr><td colspan="5" class="px-5 py-16 text-center"><div class="inline-flex flex-col items-center gap-3"><div class="w-14 h-14 rounded-full flex items-center justify-center" style="background:var(--color-bg-tertiary);"><i data-lucide="calendar-x" style="width:28px;height:28px;color:var(--color-text-tertiary);"></i></div><p style="color:var(--color-text-tertiary);">暂无爽约记录</p></div></td></tr>';
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+            var h = '';
+            list.forEach(function (r) {
+                h += '<tr style="border-top:1px solid var(--color-border-light);" class="hover:bg-gray-50 transition-colors">';
+                h += '<td class="px-5 py-4"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold" style="background:var(--state-warning-bg);color:var(--state-warning);">' + (r.realName || r.username || 'U').charAt(0) + '</div><div><div class="font-medium" style="color:var(--color-text-primary);">' + Utils.escapeHtml(r.realName || '—') + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">' + Utils.escapeHtml(r.username || '') + '</div></div></div></td>';
+                h += '<td class="px-5 py-4"><div style="color:var(--color-text-primary);">' + Utils.escapeHtml(r.roomName || '—') + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">座位号：' + Utils.escapeHtml(r.seatCode || '') + '</div></td>';
+                h += '<td class="px-5 py-4" style="color:var(--color-text-secondary);"><div>' + Utils.formatDate(r.startTime, 'MM-dd HH:mm') + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">至 ' + Utils.formatDate(r.endTime, 'MM-dd HH:mm') + '</div></td>';
+                h += '<td class="px-5 py-4"><span class="inline-block px-2.5 py-1 rounded-lg text-xs" style="background:var(--state-warning-bg);color:var(--state-warning);">' + Utils.escapeHtml(r.reason || '超时未签到') + '</span></td>';
+                h += '<td class="px-5 py-4" style="color:var(--color-text-secondary);">' + Utils.formatDate(r.recordDate || r.startTime, 'yyyy-MM-dd') + '</td>';
+                h += '</tr>';
+            });
+            tb.innerHTML = h;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderPagination(elId, st, fn) {
+            var el = document.getElementById(elId);
+            var totalPages = Math.max(1, Math.ceil(st.total / st.size));
+            var h = '<div class="text-sm" style="color:var(--color-text-tertiary);">共 <strong style="color:var(--color-text-primary);">' + st.total + '</strong> 条 · 第 <strong style="color:var(--color-text-primary);">' + st.page + '</strong>/' + totalPages + ' 页</div>';
+            h += '<div class="flex items-center gap-1">';
+            h += pbtn(st.page > 1 ? fn + '(' + (st.page - 1) + ')' : '', 'chevron-left', st.page <= 1);
+            var s = Math.max(1, st.page - 2), e = Math.min(totalPages, s + 4);
+            if (s > 1) { h += pgBtn(1, fn, st.page); if (s > 2) h += '<span class="px-2 text-xs" style="color:var(--color-text-tertiary);">…</span>'; }
+            for (var i = s; i <= e; i++) h += pgBtn(i, fn, st.page);
+            if (e < totalPages) { if (e < totalPages - 1) h += '<span class="px-2 text-xs" style="color:var(--color-text-tertiary);">…</span>'; h += pgBtn(totalPages, fn, st.page); }
+            h += pbtn(st.page < totalPages ? fn + '(' + (st.page + 1) + ')' : '', 'chevron-right', st.page >= totalPages);
+            h += '</div>';
+            el.innerHTML = h;
+            if (window.lucide) lucide.createIcons();
+            function pgBtn(n, fn, cur) { return '<button onclick="' + fn + '(' + n + ')" class="w-8 h-8 rounded-lg text-sm font-medium transition-colors" style="' + (n === cur ? 'background:var(--brand-primary);color:white;' : 'background:transparent;color:var(--color-text-secondary);') + ';">' + n + '</button>'; }
+            function pbtn(onclick, icon, disabled) { return '<button ' + (onclick ? 'onclick="' + onclick + '"' : 'disabled') + ' class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style="' + (disabled ? 'opacity:0.4;cursor:not-allowed;background:var(--color-bg-tertiary);' : 'background:var(--color-bg-tertiary);color:var(--color-text-secondary);') + ';"><i data-lucide="' + icon + '" style="width:15px;height:15px;"></i></button>'; }
+        }
+
+        window.removeBlacklist = function (id) {
+            Utils.confirm('确定要解除该用户的黑名单状态吗？').then(function (ok) {
+                if (!ok) return;
+                SeatAPI.removeFromBlacklist(id).then(function () { Utils.showToast('已解除黑名单', 'success'); loadBlacklist(); }).catch(function (e) { Utils.showToast(e.message || '操作失败', 'error'); });
+            });
+        };
+        window.reAdd = function (id, username) {
+            document.getElementById('in-username').value = username;
+            openAddModal();
+        };
+
+        window.openAddModal = function () {
+            var t = new Date();
+            var td = t.toISOString().slice(0, 10);
+            var nt = new Date(t.getTime() + 7 * 86400000).toISOString().slice(0, 10);
+            document.getElementById('in-start').value = td;
+            document.getElementById('in-end').value = nt;
+            document.getElementById('add-modal').classList.remove('hidden');
+        };
+        window.closeAddModal = function () { document.getElementById('add-modal').classList.add('hidden'); };
+        window.handleAddSubmit = function (e) {
+            e.preventDefault();
+            SeatAPI.addToBlacklist({
+                username: document.getElementById('in-username').value.trim(),
+                reason: document.getElementById('in-reason').value,
+                startTime: document.getElementById('in-start').value + ' 00:00:00',
+                endTime: document.getElementById('in-end').value + ' 23:59:59',
+            }).then(function () { Utils.showToast('已加入黑名单', 'success'); closeAddModal(); loadBlacklist(); })
+                .catch(function (e) { Utils.showToast(e.message || '操作失败', 'error'); });
+        };
+
+        loadNavbar();
+        loadBlacklist();
+        loadNoShow();
+    })();
+    </script>
+</body>
+</html>

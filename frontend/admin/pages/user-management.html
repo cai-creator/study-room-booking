@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - 智约自习</title>
+    <link rel="stylesheet" href="../../colors_and_type.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+      @theme inline { --color-primary: var(--brand-primary); }
+      @layer base { body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); } }
+    </style>
+    <style>
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+      .modal-backdrop { animation: fadeIn 0.2s ease; }
+    </style>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="max-w-[1280px] mx-auto px-4 sm:px-6 py-6" style="max-width: var(--max-width);">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <h1 class="text-2xl font-bold mb-1" style="color: var(--color-text-primary);">用户管理</h1>
+                <p style="color: var(--color-text-secondary); font-size: var(--text-sm);">管理系统用户、角色分配与账号状态</p>
+            </div>
+            <button onclick="openUserModal()" class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors hover:opacity-90" style="background: var(--brand-primary); color: white;">
+                <i data-lucide="user-plus" style="width:16px;height:16px;"></i>新增用户
+            </button>
+        </div>
+
+        <div class="rounded-xl p-5 mb-5" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div class="md:col-span-5">
+                    <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">关键字搜索</label>
+                    <div class="relative">
+                        <i data-lucide="search" style="position:absolute;left:0.875rem;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--color-text-tertiary);"></i>
+                        <input id="kw-input" type="text" placeholder="学号/姓名搜索" class="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                    </div>
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">角色</label>
+                    <select id="role-select" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                        <option value="">全部角色</option>
+                        <option value="STUDENT">学生</option>
+                        <option value="ADMIN">管理员</option>
+                        <option value="SUPER_ADMIN">超级管理员</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">状态</label>
+                    <select id="status-select" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                        <option value="">全部状态</option>
+                        <option value="1">启用</option>
+                        <option value="0">停用</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2 flex items-end gap-2">
+                    <button onclick="applyFilters()" class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:opacity-90" style="background:var(--brand-primary);color:white;">
+                        <i data-lucide="filter" style="width:15px;height:15px;"></i>筛选
+                    </button>
+                    <button onclick="resetFilters()" class="flex items-center justify-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);" title="重置">
+                        <i data-lucide="rotate-ccw" style="width:15px;height:15px;"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="kpi-row" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5"></div>
+
+        <div class="rounded-xl overflow-hidden" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead style="background: var(--color-bg-secondary);">
+                        <tr>
+                            <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">用户</th>
+                            <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">学号/账号</th>
+                            <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">角色</th>
+                            <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">联系方式</th>
+                            <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">状态</th>
+                            <th class="px-5 py-3.5 text-left font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">创建时间</th>
+                            <th class="px-5 py-3.5 text-right font-semibold whitespace-nowrap" style="color: var(--color-text-secondary);">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-tbody"></tbody>
+                </table>
+            </div>
+            <div id="pagination-row" class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4" style="border-top:1px solid var(--color-border-light);"></div>
+        </div>
+    </main>
+
+    <div id="user-modal" class="hidden fixed inset-0 z-[210] flex items-center justify-center p-4">
+        <div class="modal-backdrop absolute inset-0" style="background: rgba(15,23,42,0.45);" onclick="closeUserModal()"></div>
+        <div class="relative w-full rounded-xl p-6 z-10" style="background: var(--surface-card); box-shadow: var(--shadow-lg); max-width: 480px;">
+            <div class="flex items-center justify-between mb-5">
+                <h3 id="user-modal-title" class="text-lg font-semibold" style="color: var(--color-text-primary);"></h3>
+                <button onclick="closeUserModal()" class="p-1 rounded-lg transition-colors hover:bg-gray-100" style="color: var(--color-text-tertiary);">
+                    <i data-lucide="x" style="width:20px;height:20px;"></i>
+                </button>
+            </div>
+            <form id="user-form" onsubmit="handleUserSubmit(event)"></form>
+        </div>
+    </div>
+
+    <div id="pwd-modal" class="hidden fixed inset-0 z-[210] flex items-center justify-center p-4">
+        <div class="modal-backdrop absolute inset-0" style="background: rgba(15,23,42,0.45);" onclick="closePwdModal()"></div>
+        <div class="relative w-full rounded-xl p-6 z-10" style="background: var(--surface-card); box-shadow: var(--shadow-lg); max-width: 420px;">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-semibold" style="color: var(--color-text-primary);">重置密码</h3>
+                <button onclick="closePwdModal()" class="p-1 rounded-lg transition-colors hover:bg-gray-100" style="color: var(--color-text-tertiary);">
+                    <i data-lucide="x" style="width:20px;height:20px;"></i>
+                </button>
+            </div>
+            <p id="pwd-user-name" class="text-sm mb-4" style="color: var(--color-text-secondary);"></p>
+            <form onsubmit="handlePwdSubmit(event)">
+                <label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">新密码<span style="color:var(--state-error);">*</span></span>
+                    <input id="new-pwd" type="password" name="password" required minlength="6" placeholder="请输入新密码（至少6位）" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                </label>
+                <label class="block mb-5"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">确认密码<span style="color:var(--state-error);">*</span></span>
+                    <input id="new-pwd2" type="password" required minlength="6" placeholder="请再次输入新密码" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                </label>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closePwdModal()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);">取消</button>
+                    <button type="submit" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors hover:opacity-90" style="background:var(--brand-primary);color:white;">确认重置</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../../public/js/config.js"></script>
+    <script src="../../public/js/utils.js"></script>
+    <script src="../../public/js/request.js"></script>
+    <script src="../../public/mock/user.js"></script>
+    <script src="../../public/mock/auth.js"></script>
+    <script src="../../public/api/user.js"></script>
+    <script src="../../public/api/auth.js"></script>
+
+    <script>
+    (function () {
+        var NAVBAR_HTML = '<nav class="sticky top-0 z-50 border-b" style="height: var(--header-height); background: var(--color-surface); border-color: var(--color-border);"><div class="h-full max-w-[1280px] mx-auto px-4 sm:px-6 flex items-center justify-between" style="max-width: var(--max-width);"><div class="flex items-center gap-6"><a href="space-management.html" class="flex items-center gap-2 no-underline"><i data-lucide="book-open" style="width:22px;height:22px;color:var(--brand-primary);"></i><span style="font-size:var(--text-lg);font-weight:700;color:var(--color-text-primary);">智约自习</span><span class="px-2 py-0.5 rounded text-xs font-medium" style="background:var(--brand-primary-lighter);color:var(--brand-primary);">管理端</span></a><div class="hidden md:flex items-center gap-1" id="nav-links"><a href="space-management.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="space-management.html">空间管理</a><a href="user-management.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="user-management.html">用户管理</a><a href="blacklist.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="blacklist.html">黑名单管理</a><a href="reports.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="reports.html">数据报表</a><a href="dashboard.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="dashboard.html">大屏看板</a></div></div><div class="flex items-center gap-3"><div class="flex items-center gap-2 cursor-pointer relative" id="user-menu-trigger" onclick="toggleUserMenu()"><div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold" style="background:var(--brand-primary);color:var(--color-text-inverse);"><span id="navbar-user-avatar">A</span></div><span class="hidden sm:block text-sm font-medium" id="navbar-user-name" style="color:var(--color-text-primary);">管理员</span><i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--color-text-tertiary);"></i></div><div id="user-dropdown" class="hidden absolute right-4 top-14 w-48 rounded-lg py-1" style="background:var(--surface-card);border:var(--surface-card-border);box-shadow:var(--shadow-lg);z-index:var(--z-dropdown);"><div class="px-4 py-2 border-b" style="border-color:var(--color-border);"><p class="text-sm font-medium" style="color:var(--color-text-primary);" id="dropdown-name"></p><p style="font-size:var(--text-xs);color:var(--color-text-tertiary);" id="dropdown-role"></p></div><button onclick="handleLogout()" class="w-full text-left px-4 py-2 text-sm transition-colors flex items-center gap-2" style="color:var(--state-error);"><i data-lucide="log-out" style="width:15px;height:15px;"></i> 退出登录</button></div></div><button class="md:hidden p-2" onclick="toggleMobileMenu()" style="color:var(--color-text-secondary);"><i data-lucide="menu" style="width:22px;height:22px;"></i></button></div><div id="mobile-menu" class="hidden md:hidden border-t" style="background:var(--color-surface);border-color:var(--color-border);"><a href="space-management.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="space-management.html">空间管理</a><a href="user-management.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="user-management.html">用户管理</a><a href="blacklist.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="blacklist.html">黑名单管理</a><a href="reports.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="reports.html">数据报表</a><a href="dashboard.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="dashboard.html">大屏看板</a></div></nav>';
+
+        function execNavbarScript() {
+            var user = null;
+            var userKey = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
+            try { var raw = localStorage.getItem(userKey); if (raw) user = JSON.parse(raw); } catch (e) {}
+            if (user) {
+                var ae = document.getElementById('navbar-user-avatar');
+                var ne = document.getElementById('navbar-user-name');
+                var dn = document.getElementById('dropdown-name');
+                var dr = document.getElementById('dropdown-role');
+                var ch = (user.realName || user.username || 'U').charAt(0);
+                if (ae) ae.textContent = ch;
+                if (ne) ne.textContent = user.realName || user.username;
+                if (dn) dn.textContent = user.realName || user.username;
+                var rm = { STUDENT: '学生', ADMIN: '管理员', SUPER_ADMIN: '超级管理员' };
+                if (dr) dr.textContent = rm[user.role] || user.role;
+            }
+            var cp = window.location.pathname.split('/').pop() || 'user-management.html';
+            document.querySelectorAll('.nav-link').forEach(function (l) {
+                var dp = l.getAttribute('data-page');
+                if (dp === cp) { l.style.color = 'var(--brand-primary)'; l.style.background = 'var(--brand-primary-lighter)'; }
+                else { l.style.color = 'var(--color-text-secondary)'; l.style.background = 'transparent'; }
+                l.addEventListener('mouseenter', function () { if (dp !== cp) l.style.background = 'var(--color-bg-tertiary)'; });
+                l.addEventListener('mouseleave', function () { if (dp !== cp) l.style.background = 'transparent'; });
+            });
+            window.toggleUserMenu = function () { var d = document.getElementById('user-dropdown'); if (d) d.classList.toggle('hidden'); if (window.lucide) lucide.createIcons(); };
+            window.toggleMobileMenu = function () { var m = document.getElementById('mobile-menu'); if (m) m.classList.toggle('hidden'); };
+            window.handleLogout = function () {
+                var tk = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.token) || 'study_room_token';
+                var uk = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
+                var lu = (window.AppConfig && AppConfig.loginUrl) || (BasePath.public + '/login.html');
+                localStorage.removeItem(tk); localStorage.removeItem(uk);
+                window.location.href = lu;
+            };
+            document.addEventListener('click', function (e) {
+                var t = document.getElementById('user-menu-trigger');
+                var d = document.getElementById('user-dropdown');
+                if (d && t && !t.contains(e.target) && !d.contains(e.target)) d.classList.add('hidden');
+            });
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function loadNavbar() {
+            var placeholder = document.getElementById('navbar-placeholder');
+            var navbarUrl = BasePath.admin + '/partials/navbar.html';
+            fetch(navbarUrl).then(function (r) { return r.text(); }).then(function (html) {
+                placeholder.innerHTML = html;
+                setTimeout(execNavbarScript, 0);
+            }).catch(function () {
+                placeholder.innerHTML = NAVBAR_HTML;
+                setTimeout(execNavbarScript, 0);
+            });
+        }
+
+        var state = {
+            pageNum: 1, pageSize: 8,
+            keyword: '', role: '', status: '',
+            list: [], total: 0,
+            editing: null
+        };
+        var _resetPwdFor = null;
+
+        var applySearchDebounced = Utils.debounce(function () { applyFilters(); }, 400);
+
+        window.applyFilters = function () {
+            state.keyword = document.getElementById('kw-input').value.trim();
+            state.role = document.getElementById('role-select').value;
+            state.status = document.getElementById('status-select').value;
+            state.pageNum = 1;
+            loadUsers();
+        };
+        window.resetFilters = function () {
+            document.getElementById('kw-input').value = '';
+            document.getElementById('role-select').value = '';
+            document.getElementById('status-select').value = '';
+            state.keyword = ''; state.role = ''; state.status = ''; state.pageNum = 1;
+            loadUsers();
+        };
+
+        function loadUsers() {
+            var params = { pageNum: state.pageNum, pageSize: state.pageSize };
+            if (state.keyword) params.keyword = state.keyword;
+            if (state.role) params.role = state.role;
+            if (state.status !== '') params.status = state.status;
+            UserAPI.getUsers(params).then(function (data) {
+                state.list = data.list || [];
+                state.total = data.total || 0;
+                renderTable();
+                renderKPIs(state.list);
+                renderPagination();
+            }).catch(function (e) { Utils.showToast(e.message || '加载失败', 'error'); });
+        }
+
+        function renderKPIs(curList) {
+            var box = document.getElementById('kpi-row');
+            var total = state.total, active = 0, stu = 0, adm = 0;
+            curList.forEach(function (u) { if (u.status) active++; if (u.role === 'STUDENT') stu++; else adm++; });
+            function kpiCard(icon, label, val, gradFrom, gradTo, fg) {
+                return '<div class="rounded-xl p-4 flex items-center gap-4" style="background:var(--surface-card);border:var(--surface-card-border);box-shadow:var(--shadow-sm);"><div class="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink:0" style="background:linear-gradient(135deg,' + gradFrom + ',' + gradTo + ');"><i data-lucide="' + icon + '" style="width:22px;height:22px;color:white;"></i></div><div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);margin-bottom:2px;">' + label + '</div><div class="text-2xl font-bold" style="color:' + fg + ';">' + val + '</div></div></div>';
+            }
+            box.innerHTML =
+                kpiCard('users', '用户总数', total, '#0E7C6B', '#12A38D', 'var(--color-text-primary)') +
+                kpiCard('user-check', '当前页活跃', active, '#16A34A', '#22C55E', 'var(--state-success)') +
+                kpiCard('graduation-cap', '当前页学生', stu, '#2563EB', '#3B82F6', 'var(--state-info)') +
+                kpiCard('shield-check', '当前页管理员', adm, '#7C3AED', '#8B5CF6', 'var(--color-text-primary)');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderTable() {
+            var tb = document.getElementById('user-tbody');
+            if (!state.list.length) {
+                tb.innerHTML = '<tr><td colspan="7" class="px-5 py-16 text-center"><div class="inline-flex flex-col items-center gap-3"><div class="w-14 h-14 rounded-full flex items-center justify-center" style="background:var(--color-bg-tertiary);"><i data-lucide="inbox" style="width:28px;height:28px;color:var(--color-text-tertiary);"></i></div><p style="color:var(--color-text-tertiary);">暂无用户数据</p></div></td></tr>';
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+            var roleBadge = { STUDENT: ['学生', 'var(--state-info-bg)', 'var(--state-info)'], ADMIN: ['管理员', 'var(--state-warning-bg)', 'var(--state-warning)'], SUPER_ADMIN: ['超级管理员', 'var(--brand-primary-lighter)', 'var(--brand-primary-dark)'] };
+            var h = '';
+            state.list.forEach(function (u) {
+                var rb = roleBadge[u.role] || roleBadge.STUDENT;
+                var ab = document.createElement('a');
+                h += '<tr style="border-top:1px solid var(--color-border-light);" class="hover:bg-gray-50 transition-colors">';
+                h += '<td class="px-5 py-3.5"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold" style="background:var(--brand-primary);color:var(--color-text-inverse);">' + (u.realName || u.username || 'U').charAt(0) + '</div><div><div class="font-medium" style="color:var(--color-text-primary);">' + Utils.escapeHtml(u.realName || '—') + '</div></div></div></td>';
+                h += '<td class="px-5 py-3.5" style="color:var(--color-text-secondary);">' + Utils.escapeHtml(u.username || '—') + '</td>';
+                h += '<td class="px-5 py-3.5"><span class="inline-block px-2 py-0.5 rounded text-xs font-medium" style="background:' + rb[1] + ';color:' + rb[2] + ';">' + rb[0] + '</span></td>';
+                h += '<td class="px-5 py-3.5" style="color:var(--color-text-secondary);"><div>' + Utils.escapeHtml(u.phone || '—') + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">' + Utils.escapeHtml(u.email || '') + '</div></td>';
+                h += '<td class="px-5 py-3.5">' + (u.status ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium" style="background:var(--state-success-bg);color:var(--state-success);"><span style="width:6px;height:6px;background:var(--state-success);border-radius:50%;display:inline-block;"></span>启用</span>' : '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium" style="background:var(--state-error-bg);color:var(--state-error);"><span style="width:6px;height:6px;background:var(--state-error);border-radius:50%;display:inline-block;"></span>停用</span>') + '</td>';
+                h += '<td class="px-5 py-3.5" style="color:var(--color-text-secondary);">' + Utils.formatDate(u.createdAt, 'yyyy-MM-dd') + '</td>';
+                h += '<td class="px-5 py-3.5 text-right"><div class="flex items-center justify-end gap-1"><button onclick="toggleUserStatus(' + u.id + ',' + (u.status ? 0 : 1) + ')" class="p-1.5 rounded-lg transition-colors" title="' + (u.status ? '停用' : '启用') + '" style="color:var(--color-text-secondary);background:var(--color-bg-tertiary);"><i data-lucide="' + (u.status ? 'ban' : 'unlock') + '" style="width:14px;height:14px;"></i></button><button onclick="openResetPwd(' + u.id + ',\'' + Utils.escapeHtml(u.realName || u.username) + '\')" class="p-1.5 rounded-lg transition-colors" title="重置密码" style="color:var(--state-warning);background:var(--state-warning-bg);"><i data-lucide="key-round" style="width:14px;height:14px;"></i></button><button onclick="openUserModal(' + JSON.stringify(u).replace(/"/g, '&quot;') + ')" class="p-1.5 rounded-lg transition-colors" title="编辑" style="color:var(--brand-primary);background:var(--brand-primary-lightest);"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button><button onclick="deleteUser(' + u.id + ')" class="p-1.5 rounded-lg transition-colors" title="删除" style="color:var(--state-error);background:var(--state-error-bg);"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button></div></td>';
+                h += '</tr>';
+            });
+            tb.innerHTML = h;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderPagination() {
+            var el = document.getElementById('pagination-row');
+            var totalPages = Math.max(1, Math.ceil(state.total / state.pageSize));
+            var h = '<div class="text-sm" style="color:var(--color-text-tertiary);">共 <strong style="color:var(--color-text-primary);">' + state.total + '</strong> 条 · 第 <strong style="color:var(--color-text-primary);">' + state.pageNum + '</strong>/' + totalPages + ' 页</div>';
+            h += '<div class="flex items-center gap-1">';
+            h += btn(state.pageNum > 1 ? 'goPage(' + (state.pageNum - 1) + ')' : '', 'chevron-left', state.pageNum <= 1);
+            var start = Math.max(1, state.pageNum - 2), end = Math.min(totalPages, start + 4);
+            if (start > 1) { h += pgBtn(1); if (start > 2) h += '<span class="px-2 text-xs" style="color:var(--color-text-tertiary);">…</span>'; }
+            for (var i = start; i <= end; i++) h += pgBtn(i);
+            if (end < totalPages) { if (end < totalPages - 1) h += '<span class="px-2 text-xs" style="color:var(--color-text-tertiary);">…</span>'; h += pgBtn(totalPages); }
+            h += btn(state.pageNum < totalPages ? 'goPage(' + (state.pageNum + 1) + ')' : '', 'chevron-right', state.pageNum >= totalPages);
+            h += '</div>';
+            el.innerHTML = h;
+            if (window.lucide) lucide.createIcons();
+            function pgBtn(n) { return '<button onclick="goPage(' + n + ')" class="w-8 h-8 rounded-lg text-sm font-medium transition-colors" style="' + (n === state.pageNum ? 'background:var(--brand-primary);color:white;' : 'background:transparent;color:var(--color-text-secondary);') + ';">' + n + '</button>'; }
+            function btn(onclick, icon, disabled) { return '<button ' + (onclick ? 'onclick="' + onclick + '"' : 'disabled') + ' class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style="' + (disabled ? 'opacity:0.4;cursor:not-allowed;background:var(--color-bg-tertiary);' : 'background:var(--color-bg-tertiary);color:var(--color-text-secondary);') + ';"><i data-lucide="' + icon + '" style="width:15px;height:15px;"></i></button>'; }
+        }
+        window.goPage = function (n) { state.pageNum = n; loadUsers(); };
+
+        window.toggleUserStatus = function (id, status) {
+            Utils.confirm('确定要' + (status ? '启用' : '停用') + '该用户吗？').then(function (ok) {
+                if (!ok) return;
+                UserAPI.updateStatus(id, status).then(function () {
+                    Utils.showToast('状态更新成功', 'success'); loadUsers();
+                }).catch(function (e) { Utils.showToast(e.message || '操作失败', 'error'); });
+            });
+        };
+
+        window.deleteUser = function (id) {
+            Utils.confirm('确定要删除该用户吗？删除后无法恢复。').then(function (ok) {
+                if (!ok) return;
+                UserAPI.deleteUser(id).then(function () { Utils.showToast('删除成功', 'success'); loadUsers(); }).catch(function (e) { Utils.showToast(e.message || '删除失败', 'error'); });
+            });
+        };
+
+        window.openUserModal = function (edit) {
+            state.editing = edit || null;
+            document.getElementById('user-modal-title').textContent = edit ? '编辑用户' : '新增用户';
+            var f = document.getElementById('user-form');
+            edit = edit || {};
+            var isEdit = !!state.editing;
+            f.innerHTML =
+                fld('姓名', 'realName', edit.realName || '', '请输入姓名', true) +
+                fld('账号/学号', 'username', edit.username || '', '请输入账号/学号', true, !isEdit) +
+                (isEdit ? '' : '<label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">初始密码<span style="color:var(--state-error);">*</span></span><input type="text" name="password" value="password123" required class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);"><p class="mt-1 text-xs" style="color:var(--color-text-tertiary);">默认密码 password123，用户可登录后修改</p></label>') +
+                selField('角色', 'role', [['STUDENT', '学生'], ['ADMIN', '管理员'], ['SUPER_ADMIN', '超级管理员']], edit.role || 'STUDENT', true) +
+                fld('手机号', 'phone', edit.phone || '', '请输入手机号', false) +
+                fld('邮箱', 'email', edit.email || '', '请输入邮箱', false) +
+                '<div class="flex justify-end gap-2 pt-2"><button type="button" onclick="closeUserModal()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);">取消</button><button type="submit" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors hover:opacity-90" style="background:var(--brand-primary);color:white;">保存</button></div>';
+            document.getElementById('user-modal').classList.remove('hidden');
+        };
+        window.closeUserModal = function () { document.getElementById('user-modal').classList.add('hidden'); };
+        function fld(lbl, name, v, ph, req, enable) {
+            return '<label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">' + lbl + (req ? '<span style="color:var(--state-error);">*</span>' : '') + '</span><input type="text" name="' + name + '" value="' + Utils.escapeHtml(v || '') + '" placeholder="' + ph + '" ' + (req ? 'required' : '') + ' ' + (enable === false ? 'disabled style="background:var(--color-bg-secondary);color:var(--color-text-tertiary);cursor:not-allowed;"' : '') + ' class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);"></label>';
+        }
+        function selField(lbl, name, opts, val, req) {
+            var h = '<label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">' + lbl + (req ? '<span style="color:var(--state-error);">*</span>' : '') + '</span><select name="' + name + '" ' + (req ? 'required' : '') + ' class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">';
+            opts.forEach(function (o) { h += '<option value="' + o[0] + '" ' + (val === o[0] ? 'selected' : '') + '>' + o[1] + '</option>'; });
+            return h + '</select></label>';
+        }
+
+        window.handleUserSubmit = function (e) {
+            e.preventDefault();
+            var fd = new FormData(e.target); var obj = {};
+            fd.forEach(function (v, k) { obj[k] = v; });
+            var p;
+            if (state.editing) p = UserAPI.updateUser(state.editing.id, obj);
+            else { obj.status = 1; p = UserAPI.createUser(obj); }
+            p.then(function () { Utils.showToast(state.editing ? '更新成功' : '创建成功', 'success'); closeUserModal(); loadUsers(); })
+                .catch(function (err) { Utils.showToast(err.message || '保存失败', 'error'); });
+        };
+
+        window.openResetPwd = function (id, name) {
+            _resetPwdFor = id;
+            document.getElementById('pwd-user-name').textContent = '为用户：' + name + '（' + id + '）';
+            document.getElementById('new-pwd').value = '';
+            document.getElementById('new-pwd2').value = '';
+            document.getElementById('pwd-modal').classList.remove('hidden');
+        };
+        window.closePwdModal = function () { document.getElementById('pwd-modal').classList.add('hidden'); };
+        window.handlePwdSubmit = function (e) {
+            e.preventDefault();
+            var p1 = document.getElementById('new-pwd').value;
+            var p2 = document.getElementById('new-pwd2').value;
+            if (p1 !== p2) { Utils.showToast('两次输入的密码不一致', 'error'); return; }
+            UserAPI.updatePassword(_resetPwdFor, { newPassword: p1 }).then(function () {
+                Utils.showToast('密码重置成功', 'success'); closePwdModal();
+            }).catch(function (e) { Utils.showToast(e.message || '重置失败', 'error'); });
+        };
+
+        document.getElementById('kw-input').addEventListener('input', applySearchDebounced);
+        loadNavbar();
+        loadUsers();
+    })();
+    </script>
+</body>
+</html>

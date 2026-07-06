@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空间管理 - 智约自习</title>
+    <link rel="stylesheet" href="../../colors_and_type.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+      @theme inline { --color-primary: var(--brand-primary); }
+      @layer base { body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); } }
+    </style>
+    <style>
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+      .tree-item:hover { background: var(--color-bg-tertiary); }
+      .tree-item.active { background: var(--brand-primary-lighter); color: var(--brand-primary-dark); }
+      .seat-btn { transition: all 0.15s ease; cursor: pointer; }
+      .seat-btn:hover { transform: scale(1.05); z-index: 2; }
+      .modal-backdrop { animation: fadeIn 0.2s ease; }
+    </style>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="max-w-[1280px] mx-auto px-4 sm:px-6 py-6" style="max-width: var(--max-width);">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold mb-1" style="color: var(--color-text-primary);">空间管理</h1>
+            <p style="color: var(--color-text-secondary); font-size: var(--text-sm);">管理校区、楼栋、楼层、自习室及座位布局</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-4 xl:col-span-3">
+                <div class="rounded-xl p-4 sticky top-20" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-semibold text-base" style="color: var(--color-text-primary);">空间层级</h2>
+                        <button onclick="openEntityModal('campus')" class="p-1.5 rounded-lg transition-colors hover:opacity-80" style="background: var(--brand-primary); color: white;">
+                            <i data-lucide="plus" style="width:16px;height:16px;"></i>
+                        </button>
+                    </div>
+                    <div id="space-tree" class="space-y-1 text-sm overflow-y-auto" style="max-height: 70vh;"></div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 xl:col-span-9">
+                <div id="detail-panel">
+                    <div class="rounded-xl p-12 text-center" style="background: var(--surface-card); border: var(--surface-card-border);">
+                        <div class="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center" style="background: var(--color-bg-tertiary);">
+                            <i data-lucide="map-pin" style="width:32px;height:32px;color:var(--color-text-tertiary);"></i>
+                        </div>
+                        <p style="color: var(--color-text-secondary);">请从左侧选择空间节点查看详情</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="entity-modal" class="hidden fixed inset-0 z-[210] flex items-center justify-center p-4">
+        <div class="modal-backdrop absolute inset-0" style="background: rgba(15,23,42,0.45);" onclick="closeEntityModal()"></div>
+        <div class="relative w-full rounded-xl p-6 z-10" style="background: var(--surface-card); box-shadow: var(--shadow-lg); max-width: 480px;">
+            <div class="flex items-center justify-between mb-5">
+                <h3 id="modal-title" class="text-lg font-semibold" style="color: var(--color-text-primary);"></h3>
+                <button onclick="closeEntityModal()" class="p-1 rounded-lg transition-colors hover:bg-gray-100" style="color: var(--color-text-tertiary);">
+                    <i data-lucide="x" style="width:20px;height:20px;"></i>
+                </button>
+            </div>
+            <form id="entity-form" onsubmit="handleEntitySubmit(event)"></form>
+        </div>
+    </div>
+
+    <script src="../../public/js/config.js"></script>
+    <script src="../../public/js/utils.js"></script>
+    <script src="../../public/js/request.js"></script>
+    <script src="../../public/mock/space.js"></script>
+    <script src="../../public/api/space.js"></script>
+
+    <script>
+    (function () {
+        var NAVBAR_HTML = '<nav class="sticky top-0 z-50 border-b" style="height: var(--header-height); background: var(--color-surface); border-color: var(--color-border);"><div class="h-full max-w-[1280px] mx-auto px-4 sm:px-6 flex items-center justify-between" style="max-width: var(--max-width);"><div class="flex items-center gap-6"><a href="space-management.html" class="flex items-center gap-2 no-underline"><i data-lucide="book-open" style="width:22px;height:22px;color:var(--brand-primary);"></i><span style="font-size:var(--text-lg);font-weight:700;color:var(--color-text-primary);">智约自习</span><span class="px-2 py-0.5 rounded text-xs font-medium" style="background:var(--brand-primary-lighter);color:var(--brand-primary);">管理端</span></a><div class="hidden md:flex items-center gap-1" id="nav-links"><a href="space-management.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="space-management.html">空间管理</a><a href="user-management.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="user-management.html">用户管理</a><a href="blacklist.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="blacklist.html">黑名单管理</a><a href="reports.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="reports.html">数据报表</a><a href="dashboard.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="dashboard.html">大屏看板</a></div></div><div class="flex items-center gap-3"><div class="flex items-center gap-2 cursor-pointer relative" id="user-menu-trigger" onclick="toggleUserMenu()"><div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold" style="background:var(--brand-primary);color:var(--color-text-inverse);"><span id="navbar-user-avatar">A</span></div><span class="hidden sm:block text-sm font-medium" id="navbar-user-name" style="color:var(--color-text-primary);">管理员</span><i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--color-text-tertiary);"></i></div><div id="user-dropdown" class="hidden absolute right-4 top-14 w-48 rounded-lg py-1" style="background:var(--surface-card);border:var(--surface-card-border);box-shadow:var(--shadow-lg);z-index:var(--z-dropdown);"><div class="px-4 py-2 border-b" style="border-color:var(--color-border);"><p class="text-sm font-medium" style="color:var(--color-text-primary);" id="dropdown-name"></p><p style="font-size:var(--text-xs);color:var(--color-text-tertiary);" id="dropdown-role"></p></div><button onclick="handleLogout()" class="w-full text-left px-4 py-2 text-sm transition-colors flex items-center gap-2" style="color:var(--state-error);"><i data-lucide="log-out" style="width:15px;height:15px;"></i> 退出登录</button></div></div><button class="md:hidden p-2" onclick="toggleMobileMenu()" style="color:var(--color-text-secondary);"><i data-lucide="menu" style="width:22px;height:22px;"></i></button></div><div id="mobile-menu" class="hidden md:hidden border-t" style="background:var(--color-surface);border-color:var(--color-border);"><a href="space-management.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="space-management.html">空间管理</a><a href="user-management.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="user-management.html">用户管理</a><a href="blacklist.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="blacklist.html">黑名单管理</a><a href="reports.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="reports.html">数据报表</a><a href="dashboard.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="dashboard.html">大屏看板</a></div></nav>';
+
+        function execNavbarScript() {
+            var user = null;
+            var userKey = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
+            try { var raw = localStorage.getItem(userKey); if (raw) user = JSON.parse(raw); } catch (e) {}
+            if (user) {
+                var avatarEl = document.getElementById('navbar-user-avatar');
+                var nameEl = document.getElementById('navbar-user-name');
+                var dn = document.getElementById('dropdown-name');
+                var dr = document.getElementById('dropdown-role');
+                var ch = (user.realName || user.username || 'U').charAt(0);
+                if (avatarEl) avatarEl.textContent = ch;
+                if (nameEl) nameEl.textContent = user.realName || user.username;
+                if (dn) dn.textContent = user.realName || user.username;
+                var rm = { STUDENT: '学生', ADMIN: '管理员', SUPER_ADMIN: '超级管理员' };
+                if (dr) dr.textContent = rm[user.role] || user.role;
+            }
+            var cp = window.location.pathname.split('/').pop() || 'space-management.html';
+            document.querySelectorAll('.nav-link').forEach(function (l) {
+                var dp = l.getAttribute('data-page');
+                if (dp === cp) { l.style.color = 'var(--brand-primary)'; l.style.background = 'var(--brand-primary-lighter)'; }
+                else { l.style.color = 'var(--color-text-secondary)'; l.style.background = 'transparent'; }
+                l.addEventListener('mouseenter', function () { if (dp !== cp) l.style.background = 'var(--color-bg-tertiary)'; });
+                l.addEventListener('mouseleave', function () { if (dp !== cp) l.style.background = 'transparent'; });
+            });
+            window.toggleUserMenu = function () { var d = document.getElementById('user-dropdown'); if (d) d.classList.toggle('hidden'); if (window.lucide) lucide.createIcons(); };
+            window.toggleMobileMenu = function () { var m = document.getElementById('mobile-menu'); if (m) m.classList.toggle('hidden'); };
+            window.handleLogout = function () {
+                var tk = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.token) || 'study_room_token';
+                var uk = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
+                var lu = (window.AppConfig && AppConfig.loginUrl) || (BasePath.public + '/login.html');
+                localStorage.removeItem(tk); localStorage.removeItem(uk);
+                window.location.href = lu;
+            };
+            document.addEventListener('click', function (e) {
+                var t = document.getElementById('user-menu-trigger');
+                var d = document.getElementById('user-dropdown');
+                if (d && t && !t.contains(e.target) && !d.contains(e.target)) d.classList.add('hidden');
+            });
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function loadNavbar() {
+            var placeholder = document.getElementById('navbar-placeholder');
+            var navbarUrl = BasePath.admin + '/partials/navbar.html';
+            fetch(navbarUrl).then(function (r) { return r.text(); }).then(function (html) {
+                placeholder.innerHTML = html;
+                setTimeout(execNavbarScript, 0);
+            }).catch(function () {
+                placeholder.innerHTML = NAVBAR_HTML;
+                setTimeout(execNavbarScript, 0);
+            });
+        }
+
+        var state = {
+            selected: { type: null, id: null },
+            campuses: [], buildings: [], floors: [], rooms: []
+        };
+
+        window.openEntityModal = function (type, editData) {
+            var modal = document.getElementById('entity-modal');
+            var title = document.getElementById('modal-title');
+            var form = document.getElementById('entity-form');
+            window._editing = editData || null;
+            window._entityType = type;
+            var titles = { campus: '校区', building: '楼栋', floor: '楼层', room: '自习室' };
+            title.textContent = (editData ? '编辑' : '新建') + titles[type];
+            form.innerHTML = buildFormFields(type, editData);
+            modal.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.closeEntityModal = function () {
+            document.getElementById('entity-modal').classList.add('hidden');
+        };
+
+        function buildFormFields(type, data) {
+            data = data || {};
+            var h = '';
+            if (type === 'campus') {
+                h += field('校区名称', 'name', data.name || '', '请输入校区名称', true);
+                h += field('地址', 'address', data.address || '', '请输入地址', false);
+            } else if (type === 'building') {
+                h += selectField('所属校区', 'campusId', state.campuses, data.campusId || (state.selected.type === 'campus' ? state.selected.id : null), 'id', 'name', true);
+                h += field('楼栋名称', 'name', data.name || '', '请输入楼栋名称', true);
+                h += fieldNum('楼层数', 'floorCount', data.floorCount || 5, 1, 20, true);
+            } else if (type === 'floor') {
+                h += selectField('所属校区', 'campusId', state.campuses, data.campusId || state.campuses[0]?.id, 'id', 'name', true);
+                h += selectFieldBuilding('所属楼栋', 'buildingId', data.buildingId || (state.selected.type === 'building' ? state.selected.id : null), true);
+                h += fieldNum('楼层号', 'floorNumber', data.floorNumber || 1, 1, 30, true);
+            } else if (type === 'room') {
+                h += selectField('所属校区', 'campusId', state.campuses, data.campusId || state.campuses[0]?.id, 'id', 'name', true);
+                h += selectFieldBuilding('所属楼栋', 'buildingId', data.buildingId || null, true);
+                h += selectFieldFloor('所属楼层', 'floorId', data.floorId || (state.selected.type === 'floor' ? state.selected.id : null), true);
+                h += field('自习室名称', 'name', data.name || '', '如：图书馆101自习室', true);
+                var types = [['SELF_STUDY_ROOM', '自习室'], ['READING_ROOM', '阅览室'], ['COMPUTER_ROOM', '电子阅览室'], ['GROUP_ROOM', '研讨间']];
+                h += '<label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">教室类型</span><select name="roomType" required class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">';
+                types.forEach(function (t) { h += '<option value="' + t[0] + '" ' + (data.roomType === t[0] ? 'selected' : '') + '>' + t[1] + '</option>'; });
+                h += '</select></label>';
+                h += '<div class="grid grid-cols-2 gap-3 mb-4">';
+                h += fieldNum('座位行数', 'rowsCount', data.rowsCount || 6, 1, 30, true);
+                h += fieldNum('座位列数', 'colsCount', data.colsCount || 8, 1, 30, true);
+                h += '</div>';
+            }
+            h += '<div class="flex justify-end gap-2 pt-2">';
+            h += '<button type="button" onclick="closeEntityModal()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);">取消</button>';
+            h += '<button type="submit" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors hover:opacity-90" style="background:var(--brand-primary);color:white;">保存</button>';
+            h += '</div>';
+            return h;
+        }
+
+        function field(label, name, val, ph, req) {
+            return '<label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">' + label + (req ? '<span style="color:var(--state-error);">*</span>' : '') + '</span><input type="text" name="' + name + '" value="' + Utils.escapeHtml(val || '') + '" placeholder="' + ph + '" ' + (req ? 'required' : '') + ' class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);"></label>';
+        }
+        function fieldNum(label, name, val, min, max, req) {
+            return '<label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">' + label + (req ? '<span style="color:var(--state-error);">*</span>' : '') + '</span><input type="number" name="' + name + '" value="' + (val || '') + '" min="' + min + '" max="' + max + '" ' + (req ? 'required' : '') + ' class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);"></label>';
+        }
+        function selectField(label, name, list, val, vk, lk, req) {
+            var h = '<label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">' + label + (req ? '<span style="color:var(--state-error);">*</span>' : '') + '</span><select name="' + name + '" ' + (req ? 'required' : '') + ' onchange="' + (name === 'campusId' ? 'updateBuildingSelect(this.value)' : '') + '" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">';
+            h += '<option value="">请选择</option>';
+            (list || []).forEach(function (it) { h += '<option value="' + it[vk] + '" ' + (String(it[vk]) === String(val) ? 'selected' : '') + '>' + it[lk] + '</option>'; });
+            h += '</select></label>';
+            return h;
+        }
+        function selectFieldBuilding(label, name, val, req) {
+            return '<label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">' + label + (req ? '<span style="color:var(--state-error);">*</span>' : '') + '</span><select name="' + name + '" id="sel-' + name + '" ' + (req ? 'required' : '') + ' onchange="updateFloorSelect(this.value)" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);"><option value="">请先选校区</option></select></label>';
+        }
+        function selectFieldFloor(label, name, val, req) {
+            return '<label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">' + label + (req ? '<span style="color:var(--state-error);">*</span>' : '') + '</span><select name="' + name + '" id="sel-' + name + '" ' + (req ? 'required' : '') + ' class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);"><option value="">请先选楼栋</option></select></label>';
+        }
+
+        window.updateBuildingSelect = function (campusId) {
+            var sel = document.getElementById('sel-buildingId');
+            if (!sel) return;
+            var bList = state.buildings.filter(function (b) { return String(b.campusId) === String(campusId); });
+            sel.innerHTML = '<option value="">请选择楼栋</option>' + bList.map(function (b) { return '<option value="' + b.id + '">' + b.name + '</option>'; }).join('');
+            var selF = document.getElementById('sel-floorId');
+            if (selF) selF.innerHTML = '<option value="">请先选楼栋</option>';
+        };
+        window.updateFloorSelect = function (buildingId) {
+            var sel = document.getElementById('sel-floorId');
+            if (!sel) return;
+            var fList = state.floors.filter(function (f) { return String(f.buildingId) === String(buildingId); });
+            sel.innerHTML = '<option value="">请选择楼层</option>' + fList.map(function (f) { return '<option value="' + f.id + '">' + f.floorNumber + '层</option>'; }).join('');
+        };
+
+        setTimeout(function () {
+            var ci = document.querySelector('[name="campusId"]');
+            if (ci && ci.value) updateBuildingSelect(ci.value);
+        }, 100);
+
+        window.handleEntitySubmit = function (e) {
+            e.preventDefault();
+            var fd = new FormData(e.target);
+            var obj = {};
+            fd.forEach(function (v, k) { obj[k] = v; });
+            var type = window._entityType;
+            var edit = window._editing;
+            var p;
+            if (type === 'campus') {
+                p = edit ? SpaceAPI.updateCampus(edit.id, obj) : SpaceAPI.createCampus(obj);
+            } else if (type === 'building') {
+                obj.campusId = Number(obj.campusId);
+                p = edit ? SpaceAPI.updateBuilding(edit.id, obj) : SpaceAPI.createBuilding(obj);
+            } else if (type === 'floor') {
+                obj.buildingId = Number(obj.buildingId); obj.floorNumber = Number(obj.floorNumber);
+                p = edit ? SpaceAPI.updateFloor(edit.id, obj) : SpaceAPI.createFloor(obj);
+            } else if (type === 'room') {
+                obj.floorId = Number(obj.floorId); obj.rowsCount = Number(obj.rowsCount); obj.colsCount = Number(obj.colsCount);
+                p = edit ? SpaceAPI.updateRoom(edit.id, obj) : SpaceAPI.createRoom(obj);
+            }
+            p.then(function () {
+                Utils.showToast('保存成功', 'success');
+                closeEntityModal();
+                loadTree();
+            }).catch(function (err) { Utils.showToast(err.message || '保存失败', 'error'); });
+        };
+
+        function loadTree() {
+            Promise.all([SpaceAPI.getCampuses(), SpaceAPI.getBuildings({})]).then(function (res) {
+                state.campuses = res[0] || [];
+                state.buildings = res[1] || [];
+                renderTree();
+            });
+        }
+
+        function renderTree() {
+            var container = document.getElementById('space-tree');
+            var h = '';
+            state.campuses.forEach(function (c) {
+                var act = state.selected.type === 'campus' && state.selected.id === c.id;
+                h += '<div class="tree-item rounded-lg px-3 py-2.5 cursor-pointer flex items-center justify-between gap-2 ' + (act ? 'active' : '') + '" onclick="selectNode(\'campus\',' + c.id + ')">';
+                h += '<div class="flex items-center gap-2 min-w-0"><i data-lucide="building-2" style="width:16px;height:16px;flex-shrink:0;"></i><span class="truncate font-medium">' + Utils.escapeHtml(c.name) + '</span></div>';
+                h += '<div class="flex items-center gap-0.5"><button onclick="event.stopPropagation();openEntityModal(\'building\',null)" title="添加楼栋" class="p-1 rounded hover:bg-white/60"><i data-lucide="plus" style="width:13px;height:13px;"></i></button><button onclick="event.stopPropagation();openEntityModal(\'campus\',' + JSON.stringify(c).replace(/"/g, '&quot;') + ')" class="p-1 rounded hover:bg-white/60"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button><button onclick="event.stopPropagation();deleteEntity(\'campus\',' + c.id + ')" class="p-1 rounded hover:bg-white/60" style="color:var(--state-error);"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button></div>';
+                h += '</div>';
+                var bs = state.buildings.filter(function (b) { return b.campusId === c.id; });
+                bs.forEach(function (b) {
+                    var bact = state.selected.type === 'building' && state.selected.id === b.id;
+                    h += '<div class="tree-item rounded-lg px-3 py-2 ml-6 cursor-pointer flex items-center justify-between gap-2 ' + (bact ? 'active' : '') + '" onclick="selectNode(\'building\',' + b.id + ')">';
+                    h += '<div class="flex items-center gap-2 min-w-0"><i data-lucide="building" style="width:14px;height:14px;flex-shrink:0;color:var(--color-text-secondary);"></i><span class="truncate text-sm">' + Utils.escapeHtml(b.name) + '</span></div>';
+                    h += '<div class="flex items-center gap-0.5"><button onclick="event.stopPropagation();openEntityModal(\'floor\',null)" class="p-1 rounded hover:bg-white/60"><i data-lucide="plus" style="width:13px;height:13px;"></i></button><button onclick="event.stopPropagation();openEntityModal(\'building\',' + JSON.stringify(b).replace(/"/g, '&quot;') + ')" class="p-1 rounded hover:bg-white/60"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button><button onclick="event.stopPropagation();deleteEntity(\'building\',' + b.id + ')" class="p-1 rounded hover:bg-white/60" style="color:var(--state-error);"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button></div>';
+                    h += '</div>';
+                    (loadFloorsSync(b.id) || []).forEach(function (f) {
+                        var fact = state.selected.type === 'floor' && state.selected.id === f.id;
+                        h += '<div class="tree-item rounded-lg px-3 py-2 ml-12 cursor-pointer flex items-center justify-between gap-2 ' + (fact ? 'active' : '') + '" onclick="selectNode(\'floor\',' + f.id + ')">';
+                        h += '<div class="flex items-center gap-2 min-w-0"><i data-lucide="layers" style="width:13px;height:13px;flex-shrink:0;color:var(--color-text-tertiary);"></i><span class="truncate text-sm" style="color:var(--color-text-secondary);">' + f.floorNumber + '层</span></div>';
+                        h += '<div class="flex items-center gap-0.5"><button onclick="event.stopPropagation();openEntityModal(\'room\',null)" class="p-1 rounded hover:bg-white/60"><i data-lucide="plus" style="width:13px;height:13px;"></i></button><button onclick="event.stopPropagation();openEntityModal(\'floor\',' + JSON.stringify(f).replace(/"/g, '&quot;') + ')" class="p-1 rounded hover:bg-white/60"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button><button onclick="event.stopPropagation();deleteEntity(\'floor\',' + f.id + ')" class="p-1 rounded hover:bg-white/60" style="color:var(--state-error);"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button></div>';
+                        h += '</div>';
+                        (loadRoomsSync(f.id) || []).forEach(function (r) {
+                            var ract = state.selected.type === 'room' && state.selected.id === r.id;
+                            h += '<div class="tree-item rounded-lg px-3 py-2 ml-18 cursor-pointer flex items-center justify-between gap-2 ' + (ract ? 'active' : '') + '" style="padding-left:4.5rem;" onclick="selectNode(\'room\',' + r.id + ')">';
+                            h += '<div class="flex items-center gap-2 min-w-0"><i data-lucide="door-open" style="width:13px;height:13px;flex-shrink:0;color:var(--color-text-tertiary);"></i><span class="truncate text-xs">' + Utils.escapeHtml(r.name) + '</span></div>';
+                            h += '<div class="flex items-center gap-0.5"><button onclick="event.stopPropagation();openEntityModal(\'room\',' + JSON.stringify(r).replace(/"/g, '&quot;') + ')" class="p-1 rounded hover:bg-white/60"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button><button onclick="event.stopPropagation();deleteEntity(\'room\',' + r.id + ')" class="p-1 rounded hover:bg-white/60" style="color:var(--state-error);"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button></div>';
+                            h += '</div>';
+                        });
+                    });
+                });
+            });
+            container.innerHTML = h;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function loadFloorsSync(buildingId) {
+            return state.floors.filter(function (f) { return f.buildingId === buildingId; });
+        }
+        function loadRoomsSync(floorId) {
+            return state.rooms.filter(function (r) { return r.floorId === floorId; });
+        }
+
+        window.selectNode = function (type, id) {
+            state.selected = { type: type, id: id };
+            renderTree();
+            renderDetail(type, id);
+        };
+
+        window.deleteEntity = function (type, id) {
+            var nameMap = { campus: '校区', building: '楼栋', floor: '楼层', room: '自习室' };
+            Utils.confirm('确定要删除该' + nameMap[type] + '吗？删除后数据无法恢复。').then(function (ok) {
+                if (!ok) return;
+                var p;
+                if (type === 'campus') p = SpaceAPI.deleteCampus(id);
+                else if (type === 'building') p = SpaceAPI.deleteBuilding(id);
+                else if (type === 'floor') p = SpaceAPI.deleteFloor(id);
+                else p = SpaceAPI.deleteRoom(id);
+                p.then(function () {
+                    Utils.showToast('删除成功', 'success');
+                    if (state.selected.id === id) { state.selected = { type: null, id: null }; document.getElementById('detail-panel').innerHTML = '<div class="rounded-xl p-12 text-center" style="background:var(--surface-card);border:var(--surface-card-border);"><div class="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center" style="background:var(--color-bg-tertiary);"><i data-lucide="map-pin" style="width:32px;height:32px;color:var(--color-text-tertiary);"></i></div><p style="color:var(--color-text-secondary);">请从左侧选择空间节点查看详情</p></div>'; }
+                    loadAllData();
+                }).catch(function (e) { Utils.showToast(e.message || '删除失败', 'error'); });
+            });
+        };
+
+        function loadAllData() {
+            Promise.all([SpaceAPI.getCampuses(), SpaceAPI.getBuildings({})]).then(function (res) {
+                state.campuses = res[0] || [];
+                state.buildings = res[1] || [];
+                var fps = state.buildings.map(function (b) { return SpaceAPI.getFloors(b.id); });
+                return Promise.all(fps);
+            }).then(function (fRes) {
+                state.floors = [];
+                fRes.forEach(function (f) { state.floors = state.floors.concat(f || []); });
+                var rps = state.floors.map(function (f) { return SpaceAPI.getRooms({ floorId: f.id }); });
+                return Promise.all(rps);
+            }).then(function (rRes) {
+                state.rooms = [];
+                rRes.forEach(function (rp) { if (rp && rp.list) state.rooms = state.rooms.concat(rp.list); });
+                renderTree();
+            });
+        }
+
+        function renderDetail(type, id) {
+            var panel = document.getElementById('detail-panel');
+            if (type === 'campus') {
+                var c = state.campuses.find(function (x) { return x.id === id; });
+                var bCount = state.buildings.filter(function (b) { return b.campusId === id; }).length;
+                var rCount = state.rooms.filter(function (r) { return r.campusId === id; }).length;
+                panel.innerHTML = renderCard('校区', c.name, [
+                    { icon: 'map-pin', label: '地址', value: c.address || '—' },
+                    { icon: 'building', label: '楼栋数', value: String(bCount) },
+                    { icon: 'door-open', label: '自习室数', value: String(rCount) },
+                    { icon: 'calendar', label: '创建时间', value: c.createdAt ? Utils.formatDate(c.createdAt, 'yyyy-MM-dd') : '—' }
+                ], [
+                    { label: '添加楼栋', type: 'secondary', action: 'openEntityModal(\'building\')', icon: 'plus' },
+                    { label: '编辑校区', type: 'primary', action: 'openEntityModal(\'campus\',' + JSON.stringify(c).replace(/"/g, '&quot;') + ')', icon: 'pencil' }
+                ]);
+            } else if (type === 'building') {
+                var b = state.buildings.find(function (x) { return x.id === id; });
+                var cam = state.campuses.find(function (c) { return c.id === b.campusId; });
+                var fList = state.floors.filter(function (f) { return f.buildingId === id; });
+                var rmCount = state.rooms.filter(function (r) { return r.buildingId === id; }).length;
+                panel.innerHTML = renderCard('楼栋', b.name, [
+                    { icon: 'building-2', label: '所属校区', value: cam ? cam.name : '—' },
+                    { icon: 'layers', label: '楼层数', value: String(b.floorCount || fList.length) },
+                    { icon: 'door-open', label: '自习室数', value: String(rmCount) },
+                    { icon: 'activity', label: '状态', value: b.status ? '启用' : '停用', badge: !!b.status }
+                ], [
+                    { label: '添加楼层', type: 'secondary', action: 'openEntityModal(\'floor\')', icon: 'plus' },
+                    { label: '编辑楼栋', type: 'primary', action: 'openEntityModal(\'building\',' + JSON.stringify(b).replace(/"/g, '&quot;') + ')', icon: 'pencil' }
+                ]);
+            } else if (type === 'floor') {
+                var f = state.floors.find(function (x) { return x.id === id; });
+                var bd = state.buildings.find(function (x) { return x.id === f.buildingId; });
+                var cam2 = bd ? state.campuses.find(function (c) { return c.id === bd.campusId; }) : null;
+                var rList = state.rooms.filter(function (r) { return r.floorId === id; });
+                panel.innerHTML = renderCardList('楼层 - ' + f.floorNumber + '层', [
+                    { icon: 'building-2', label: '校区', value: cam2 ? cam2.name : '—' },
+                    { icon: 'building', label: '楼栋', value: bd ? bd.name : '—' },
+                    { icon: 'door-open', label: '自习室数', value: String(rList.length) }
+                ], [{ label: '添加自习室', type: 'primary', action: 'openEntityModal(\'room\')', icon: 'plus' }],
+                    renderRoomTable(rList));
+            } else if (type === 'room') {
+                var r = state.rooms.find(function (x) { return x.id === id; });
+                loadRoomDetail(r);
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderCard(type, name, fields, actions) {
+            var h = '<div class="rounded-xl p-6 mb-6" style="background:var(--surface-card);border:var(--surface-card-border);box-shadow:var(--shadow-sm);">';
+            h += '<div class="flex items-start justify-between mb-5"><div><div class="flex items-center gap-2 mb-1"><span class="px-2 py-0.5 rounded text-xs font-medium" style="background:var(--brand-primary-lighter);color:var(--brand-primary-dark);">' + type + '</span><h2 class="text-xl font-bold" style="color:var(--color-text-primary);">' + Utils.escapeHtml(name) + '</h2></div></div>';
+            h += '<div class="flex items-center gap-2">';
+            actions.forEach(function (a) {
+                h += '<button onclick="' + a.action + '" class="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90" style="' + (a.type === 'primary' ? 'background:var(--brand-primary);color:white;' : 'background:var(--color-bg-tertiary);color:var(--color-text-primary);') + '">';
+                h += '<i data-lucide="' + a.icon + '" style="width:15px;height:15px;"></i>' + a.label + '</button>';
+            });
+            h += '</div></div>';
+            h += '<div class="grid grid-cols-2 md:grid-cols-4 gap-4">';
+            fields.forEach(function (f) {
+                h += '<div class="rounded-lg p-4" style="background:var(--color-bg-secondary);"><div class="flex items-center gap-2 mb-2" style="color:var(--color-text-tertiary);"><i data-lucide="' + f.icon + '" style="width:14px;height:14px;"></i><span class="text-xs font-medium">' + f.label + '</span></div>';
+                if (f.badge !== undefined) h += (f.value ? '<span class="inline-block px-2 py-0.5 rounded text-xs font-medium" style="background:var(--state-success-bg);color:var(--state-success);">已启用</span>' : '<span class="inline-block px-2 py-0.5 rounded text-xs font-medium" style="background:var(--state-error-bg);color:var(--state-error);">已停用</span>');
+                else h += '<div class="font-semibold" style="color:var(--color-text-primary);">' + Utils.escapeHtml(String(f.value)) + '</div>';
+                h += '</div>';
+            });
+            h += '</div></div>';
+            return h;
+        }
+
+        function renderCardList(type, fields, actions, content) {
+            var h = '<div class="rounded-xl p-6 mb-6" style="background:var(--surface-card);border:var(--surface-card-border);box-shadow:var(--shadow-sm);">';
+            h += '<div class="flex items-start justify-between mb-5"><div><h2 class="text-xl font-bold" style="color:var(--color-text-primary);">' + type + '</h2></div>';
+            h += '<div class="flex items-center gap-2">';
+            actions.forEach(function (a) {
+                h += '<button onclick="' + a.action + '" class="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90" style="' + (a.type === 'primary' ? 'background:var(--brand-primary);color:white;' : 'background:var(--color-bg-tertiary);color:var(--color-text-primary);') + '">';
+                h += '<i data-lucide="' + a.icon + '" style="width:15px;height:15px;"></i>' + a.label + '</button>';
+            });
+            h += '</div></div>';
+            h += '<div class="grid grid-cols-3 gap-4 mb-5">';
+            fields.forEach(function (f) {
+                h += '<div class="rounded-lg p-4" style="background:var(--color-bg-secondary);"><div class="flex items-center gap-2 mb-2" style="color:var(--color-text-tertiary);"><i data-lucide="' + f.icon + '" style="width:14px;height:14px;"></i><span class="text-xs font-medium">' + f.label + '</span></div>';
+                h += '<div class="font-semibold" style="color:var(--color-text-primary);">' + Utils.escapeHtml(String(f.value)) + '</div></div>';
+            });
+            h += '</div>' + content + '</div>';
+            return h;
+        }
+
+        function renderRoomTable(list) {
+            var typeNames = { 'READING_ROOM': '阅览室', 'SELF_STUDY_ROOM': '自习室', 'COMPUTER_ROOM': '电子阅览室', 'GROUP_ROOM': '研讨间' };
+            var h = '<div class="rounded-lg overflow-hidden" style="border:1px solid var(--color-border);"><table class="w-full text-sm"><thead style="background:var(--color-bg-secondary);"><tr><th class="px-4 py-3 text-left font-semibold" style="color:var(--color-text-secondary);">自习室名称</th><th class="px-4 py-3 text-left font-semibold" style="color:var(--color-text-secondary);">类型</th><th class="px-4 py-3 text-left font-semibold" style="color:var(--color-text-secondary);">座位数</th><th class="px-4 py-3 text-left font-semibold" style="color:var(--color-text-secondary);">状态</th><th class="px-4 py-3 text-right font-semibold" style="color:var(--color-text-secondary);">操作</th></tr></thead><tbody>';
+            if (!list.length) h += '<tr><td colspan="5" class="px-4 py-8 text-center" style="color:var(--color-text-tertiary);">暂无自习室数据</td></tr>';
+            list.forEach(function (r) {
+                h += '<tr style="border-top:1px solid var(--color-border-light);" class="hover:bg-gray-50 transition-colors"><td class="px-4 py-3" style="color:var(--color-text-primary);"><div class="font-medium">' + Utils.escapeHtml(r.name) + '</div></td><td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs" style="background:var(--brand-primary-lightest);color:var(--brand-primary);">' + (typeNames[r.roomType] || r.roomType) + '</span></td><td class="px-4 py-3" style="color:var(--color-text-primary);">' + (r.totalSeats || (r.rowsCount * r.colsCount) || '-') + '</td><td class="px-4 py-3">' + (r.status ? '<span class="px-2 py-0.5 rounded text-xs" style="background:var(--state-success-bg);color:var(--state-success);">启用</span>' : '<span class="px-2 py-0.5 rounded text-xs" style="background:var(--state-error-bg);color:var(--state-error);">停用</span>') + '</td>';
+                h += '<td class="px-4 py-3 text-right"><div class="flex items-center justify-end gap-1"><button onclick="selectNode(\'room\',' + r.id + ')" class="p-1.5 rounded-lg transition-colors" style="color:var(--brand-primary);background:var(--brand-primary-lightest);" title="查看座位"><i data-lucide="layout-grid" style="width:14px;height:14px;"></i></button><button onclick="openEntityModal(\'room\',' + JSON.stringify(r).replace(/"/g, '&quot;') + ')" class="p-1.5 rounded-lg transition-colors" style="color:var(--color-text-secondary);background:var(--color-bg-tertiary);" title="编辑"><i data-lucide="pencil" style="width:14px;height:14px;"></i></button><button onclick="deleteEntity(\'room\',' + r.id + ')" class="p-1.5 rounded-lg transition-colors" style="color:var(--state-error);background:var(--state-error-bg);" title="删除"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button></div></td></tr>';
+            });
+            h += '</tbody></table></div>';
+            return h;
+        }
+
+        function loadRoomDetail(r) {
+            var panel = document.getElementById('detail-panel');
+            panel.innerHTML = '<div class="rounded-xl p-6 mb-6" style="background:var(--surface-card);border:var(--surface-card-border);box-shadow:var(--shadow-sm);"><div class="flex items-center gap-2 mb-1"><span class="px-2 py-0.5 rounded text-xs font-medium" style="background:var(--state-info-bg);color:var(--state-info);">座位视图</span><h2 class="text-xl font-bold" style="color:var(--color-text-primary);">' + Utils.escapeHtml(r.name) + '</h2></div><p style="color:var(--color-text-tertiary);font-size:var(--text-sm);" id="seat-stats">加载座位信息中...</p></div><div id="seat-grid-wrapper" class="rounded-xl p-6" style="background:var(--surface-card);border:var(--surface-card-border);"><div class="flex justify-center"><div style="width:70%;max-width:500px;padding:1.5rem 1rem 2rem;border-bottom:3px solid var(--color-border);border-radius:0 0 var(--radius-lg) var(--radius-lg);color:var(--color-text-tertiary);font-size:var(--text-sm);text-align:center;background:var(--color-bg-secondary);"><i data-lucide="monitor-play" style="width:16px;height:16px;display:inline;margin-right:4px;"></i>讲台 / 投影屏幕</div></div><div id="seat-grid" class="mt-8 flex justify-center"><div class="text-sm py-12" style="color:var(--color-text-tertiary);">加载中...</div></div></div>';
+            SpaceAPI.getSeatStatus(r.id).then(function (data) { renderSeatGrid(data); if (window.lucide) lucide.createIcons(); }).catch(function () {
+                document.getElementById('seat-stats').textContent = '座位信息加载失败';
+            });
+        }
+
+        function renderSeatGrid(data) {
+            document.getElementById('seat-stats').innerHTML = '共 <strong style="color:var(--color-text-primary);">' + data.totalSeats + '</strong> 座 · 空闲 <strong style="color:var(--seat-available);">' + data.availableSeats + '</strong> · 已预约 <strong style="color:var(--seat-reserved);">' + data.reservedSeats + '</strong> · 使用中 <strong style="color:var(--seat-occupied);">' + data.occupiedSeats + '</strong>';
+            var seats = data.seats || [];
+            var rows = {}, maxCol = 0;
+            seats.forEach(function (s) {
+                if (!rows[s.rowNumber]) rows[s.rowNumber] = {};
+                rows[s.rowNumber][s.colNumber] = s;
+                if (s.colNumber > maxCol) maxCol = s.colNumber;
+            });
+            var colorMap = {
+                'AVAILABLE': { bg: 'var(--seat-available-bg)', fg: 'var(--seat-available)', border: 'var(--seat-available)' },
+                'RESERVED': { bg: 'var(--seat-reserved-bg)', fg: 'var(--seat-reserved)', border: 'var(--seat-reserved)' },
+                'OCCUPIED': { bg: 'var(--seat-occupied-bg)', fg: 'var(--seat-occupied)', border: 'var(--seat-occupied)' },
+                'TEMPORARY_LEAVE': { bg: 'var(--seat-away-bg)', fg: 'var(--seat-away)', border: 'var(--seat-away)' },
+                'UNAVAILABLE': { bg: '#F1F5F9', fg: '#94A3B8', border: '#CBD5E1' }
+            };
+            var labels = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+            var h = '<div class="inline-block">';
+            Object.keys(rows).sort(function (a, b) { return Number(a) - Number(b); }).forEach(function (rn) {
+                var row = rows[rn];
+                h += '<div class="flex items-center gap-1.5 mb-1.5">';
+                h += '<div style="width:24px;color:var(--color-text-tertiary);font-size:var(--text-xs);font-weight:600;text-align:center;">' + (labels.charAt(Number(rn) - 1) || rn) + '</div>';
+                for (var c = 1; c <= maxCol; c++) {
+                    var s = row[c];
+                    if (!s) { h += '<div style="width:40px;height:40px;"></div>'; continue; }
+                    var cm = colorMap[s.status] || colorMap['AVAILABLE'];
+                    h += '<div class="seat-btn rounded-md flex items-center justify-center text-xs font-semibold" title="' + s.seatCode + ' · ' + Utils.getStatusLabel(s.status, 'seat') + '" style="width:40px;height:40px;background:' + cm.bg + ';color:' + cm.fg + ';border:1.5px solid ' + cm.border + ';">' + String(c).padStart(2, '0') + '</div>';
+                }
+                h += '</div>';
+            });
+            h += '</div><div class="flex flex-wrap items-center justify-center gap-4 mt-8 pt-5 text-xs" style="border-top:1px solid var(--color-border-light);">';
+            h += '<span class="flex items-center gap-1.5" style="color:var(--color-text-secondary);"><span style="width:12px;height:12px;background:var(--seat-available-bg);border:1.5px solid var(--seat-available);border-radius:3px;"></span>空闲</span>';
+            h += '<span class="flex items-center gap-1.5" style="color:var(--color-text-secondary);"><span style="width:12px;height:12px;background:var(--seat-reserved-bg);border:1.5px solid var(--seat-reserved);border-radius:3px;"></span>已预约</span>';
+            h += '<span class="flex items-center gap-1.5" style="color:var(--color-text-secondary);"><span style="width:12px;height:12px;background:var(--seat-occupied-bg);border:1.5px solid var(--seat-occupied);border-radius:3px;"></span>使用中</span>';
+            h += '<span class="flex items-center gap-1.5" style="color:var(--color-text-secondary);"><span style="width:12px;height:12px;background:var(--seat-away-bg);border:1.5px solid var(--seat-away);border-radius:3px;"></span>暂离</span>';
+            h += '<span class="flex items-center gap-1.5" style="color:var(--color-text-secondary);"><span style="width:12px;height:12px;background:#F1F5F9;border:1.5px solid #CBD5E1;border-radius:3px;"></span>不可用</span>';
+            h += '</div>';
+            document.getElementById('seat-grid').innerHTML = h;
+        }
+
+        loadNavbar();
+        loadAllData();
+    })();
+    </script>
+</body>
+</html>
