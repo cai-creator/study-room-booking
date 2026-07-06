@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.studyroom.booking.modules.space.mapper.StudyRoomMapper">
+
+    <resultMap id="StudyRoomResultMap" type="com.studyroom.booking.modules.space.entity.StudyRoom">
+        <id column="id" property="id"/>
+        <result column="floor_id" property="floorId"/>
+        <result column="name" property="name"/>
+        <result column="room_type" property="roomType"/>
+        <result column="total_seats" property="totalSeats"/>
+        <result column="rows_count" property="rowsCount"/>
+        <result column="cols_count" property="colsCount"/>
+        <result column="open_time" property="openTime"/>
+        <result column="close_time" property="closeTime"/>
+        <result column="status" property="status"/>
+        <result column="description" property="description"/>
+        <result column="deleted" property="deleted"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!--
+        分页查询自习室（支持多条件筛选）
+
+        筛选条件：
+        - campusId: 通过 floor → building 关联到校区
+        - buildingId: 通过 floor 关联到楼栋
+        - floorId: 直接筛选
+        - roomType: 自习室类型
+        - status: 自习室状态
+        - hasAvailableSeats: 仅显示有空位的自习室
+        - keyword: 名称模糊搜索
+    -->
+    <select id="selectPageWithFilters" resultMap="StudyRoomResultMap">
+        SELECT sr.*
+        FROM study_room sr
+        INNER JOIN floor f ON sr.floor_id = f.id AND f.deleted = 0
+        INNER JOIN building b ON f.building_id = b.id AND b.deleted = 0
+        INNER JOIN campus c ON b.campus_id = c.id AND c.deleted = 0
+        <where>
+            sr.deleted = 0
+
+            <if test="query.campusId != null">
+                AND b.campus_id = #{query.campusId}
+            </if>
+
+            <if test="query.buildingId != null">
+                AND f.building_id = #{query.buildingId}
+            </if>
+
+            <if test="query.floorId != null">
+                AND sr.floor_id = #{query.floorId}
+            </if>
+
+            <if test="query.roomType != null and query.roomType != ''">
+                AND sr.room_type = #{query.roomType}
+            </if>
+
+            <if test="query.status != null">
+                AND sr.status = #{query.status}
+            </if>
+
+            <if test="query.keyword != null and query.keyword != ''">
+                AND sr.name LIKE CONCAT('%', #{query.keyword}, '%')
+            </if>
+
+            <!--
+                仅显示有空位的自习室：
+                total_seats > 当天有效预约数（未被取消/爽约/完成的预约）
+            -->
+            <if test="query.hasAvailableSeats != null and query.hasAvailableSeats == true">
+                AND sr.total_seats > COALESCE(
+                    (SELECT COUNT(*)
+                     FROM seat s
+                     INNER JOIN reservation r ON s.id = r.seat_id
+                     WHERE s.room_id = sr.id
+                       AND s.deleted = 0
+                       AND r.deleted = 0
+                       AND r.status NOT IN ('CANCELLED', 'NO_SHOW', 'COMPLETED')
+                    ), 0
+                )
+            </if>
+        </where>
+
+        <choose>
+            <when test="query.sortField != null and query.sortField != ''">
+                <choose>
+                    <when test="query.sortField == 'name'">
+                        ORDER BY sr.name ${query.sortOrder == 'desc' ? 'DESC' : 'ASC'}
+                    </when>
+                    <when test="query.sortField == 'totalSeats'">
+                        ORDER BY sr.total_seats ${query.sortOrder == 'desc' ? 'DESC' : 'ASC'}
+                    </when>
+                    <when test="query.sortField == 'status'">
+                        ORDER BY sr.status ${query.sortOrder == 'desc' ? 'DESC' : 'ASC'}
+                    </when>
+                    <when test="query.sortField == 'updatedAt'">
+                        ORDER BY sr.updated_at ${query.sortOrder == 'desc' ? 'DESC' : 'ASC'}
+                    </when>
+                    <otherwise>
+                        ORDER BY b.sort_order ASC, f.floor_number ASC, sr.id ASC
+                    </otherwise>
+                </choose>
+            </when>
+            <otherwise>
+                ORDER BY b.sort_order ASC, f.floor_number ASC, sr.id ASC
+            </otherwise>
+        </choose>
+    </select>
+
+</mapper>
