@@ -7,10 +7,10 @@ import com.studyroom.booking.common.exception.BusinessException;
 import com.studyroom.booking.modules.seat.dto.NoShowRecordVO;
 import com.studyroom.booking.modules.seat.entity.NoShowRecord;
 import com.studyroom.booking.modules.seat.entity.Reservation;
-import com.studyroom.booking.modules.seat.entity.Seat;
+import com.studyroom.booking.modules.seat.entity.SeatControl;
 import com.studyroom.booking.modules.seat.mapper.NoShowRecordMapper;
 import com.studyroom.booking.modules.seat.mapper.ReservationMapper;
-import com.studyroom.booking.modules.seat.mapper.SeatMapper;
+import com.studyroom.booking.modules.seat.mapper.SeatControlMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,7 +33,7 @@ public class NoShowRecordService {
 
     private final NoShowRecordMapper noShowRecordMapper;
     private final ReservationMapper reservationMapper;
-    private final SeatMapper seatMapper;
+    private final SeatControlMapper seatMapper;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -133,7 +133,7 @@ public class NoShowRecordService {
         try {
             Reservation reservation = reservationMapper.selectById(record.getReservationId());
             if (reservation != null) {
-                Seat seat = seatMapper.selectById(reservation.getSeatId());
+                SeatControl seat = seatMapper.selectById(reservation.getSeatId());
                 if (seat != null) {
                     vo.setSeatCode(seat.getSeatCode());
                 }

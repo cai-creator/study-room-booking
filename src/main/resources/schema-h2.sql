@@ -189,3 +189,31 @@ INSERT INTO floor (building_id, floor_number, name, sort_order, status) VALUES
 INSERT INTO study_room (floor_id, name, room_type, total_seats, rows_count, cols_count, open_time, close_time, status, description) VALUES
 (1, '图书馆101自习室', 'LIBRARY', 60, 6, 10, '08:00:00', '22:00:00', 1, '安静自习区'),
 (2, '图书馆201自习室', 'LIBRARY', 80, 8, 10, '08:00:00', '22:30:00', 1, '考研专区');
+
+-- 测试座位数据（自习室1: 6行×10列，这里插入前3行的座位用于测试）
+INSERT INTO seat (room_id, seat_code, row_number, col_number, tags, status, deleted, created_at, updated_at) VALUES
+(1, 'A-01', 1, 1, 'WINDOW', 1, 0, NOW(), NOW()),
+(1, 'A-02', 1, 2, 'WINDOW', 1, 0, NOW(), NOW()),
+(1, 'A-03', 1, 3, null, 1, 0, NOW(), NOW()),
+(1, 'A-04', 1, 4, null, 1, 0, NOW(), NOW()),
+(1, 'A-05', 1, 5, 'POWER', 1, 0, NOW(), NOW()),
+(1, 'A-06', 1, 6, null, 1, 0, NOW(), NOW()),
+(1, 'A-07', 1, 7, null, 1, 0, NOW(), NOW()),
+(1, 'A-08', 1, 8, null, 1, 0, NOW(), NOW()),
+(1, 'A-09', 1, 9, 'POWER', 1, 0, NOW(), NOW()),
+(1, 'A-10', 1, 10, 'WINDOW', 1, 0, NOW(), NOW()),
+(1, 'B-01', 2, 1, 'WINDOW', 1, 0, NOW(), NOW()),
+(1, 'B-02', 2, 2, null, 1, 0, NOW(), NOW()),
+(1, 'B-03', 2, 3, null, 1, 0, NOW(), NOW()),
+(1, 'B-04', 2, 4, 'POWER', 1, 0, NOW(), NOW()),
+(1, 'B-05', 2, 5, null, 1, 0, NOW(), NOW()),
+(1, 'B-06', 2, 6, null, 1, 0, NOW(), NOW()),
+(1, 'B-07', 2, 7, 'ACCESSIBLE', 1, 0, NOW(), NOW()),
+(1, 'B-08', 2, 8, null, 0, 0, NOW(), NOW()),
+(1, 'B-09', 2, 9, null, 1, 0, NOW(), NOW()),
+(1, 'B-10', 2, 10, 'WINDOW', 1, 0, NOW(), NOW()),
+(1, 'C-01', 3, 1, 'WINDOW', 1, 0, NOW(), NOW()),
+(1, 'C-02', 3, 2, null, 1, 0, NOW(), NOW()),
+(1, 'C-03', 3, 3, null, 1, 0, NOW(), NOW()),
+(1, 'C-04', 3, 4, null, 1, 0, NOW(), NOW()),
+(1, 'C-05', 3, 5, 'POWER', 1, 0, NOW(), NOW());
