@@ -22,8 +22,31 @@ public class JwtInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        // 从请求头获取token
+        // 调试：打印所有请求头
+        System.out.println("=== JWT INTERCEPTOR DEBUG ===");
+        System.out.println("Request URI: " + request.getRequestURI());
+        System.out.println("Request Method: " + request.getMethod());
+        System.out.println("Authorization Header: " + request.getHeader("Authorization"));
+        System.out.println("Authorization (lowercase): " + request.getHeader("authorization"));
+        System.out.println("bearerAuth Header: " + request.getHeader("bearerAuth"));
+        System.out.println("Content-Type: " + request.getContentType());
+        // 打印所有请求头名称
+        System.out.println("All Header Names:");
+        java.util.Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String name = headerNames.nextElement();
+            System.out.println("  " + name + ": " + request.getHeader(name));
+        }
+        System.out.println("==============================");
+
+        // 从请求头获取token（兼容Knife4j的bearerauth头）
         String token = request.getHeader("Authorization");
+        if (token == null || token.isEmpty()) {
+            token = request.getHeader("bearerAuth");
+        }
+        if (token == null || token.isEmpty()) {
+            token = request.getHeader("bearerauth");
+        }
 
         if (token == null || !token.startsWith("Bearer ")) {
             throw new BusinessException(ResultCode.UNAUTHORIZED);
