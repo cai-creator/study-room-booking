@@ -236,9 +236,12 @@ INSERT INTO sys_config (config_key, config_value, config_desc) VALUES
 ('booking.blacklist_threshold', '3', '黑名单爽约阈值（7天内）'),
 ('booking.blacklist_days', '7', '黑名单持续天数');
 
--- 超级管理员账号（密码: admin123，实际请修改）
+-- 默认管理员账号（密码使用BCrypt加密）
+-- root / root123 -> SUPER_ADMIN（超级管理员，最高权限）
+-- admin / admin123 -> ADMIN（普通管理员）
 INSERT INTO sys_user (username, password, real_name, role, status) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iX7iAt6Z', '超级管理员', 'SUPER_ADMIN', 1);
+('root', '$2a$10$M7aaPNfiOje5WN.ZaLaQReSOl9jocfB83Gmgpw1YaH5fpFTfRaSje', '超级管理员', 'SUPER_ADMIN', 1),
+('admin', '$2a$10$zJ55msMPcCuLSVWk39pLFOGMF96SEr/PD9FGfW/1v9TaC3U3OiTpC', '普通管理员', 'ADMIN', 1);
 
 -- 示例数据：校区 -> 楼栋 -> 楼层 -> 自习室 -> 座位
 INSERT INTO campus (name, address, sort_order, status) VALUES

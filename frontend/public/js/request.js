@@ -46,7 +46,13 @@
       options.body = data;
       delete options.headers['Content-Type']; // 让浏览器自动设置 multipart
     } else if (data) {
-      options.body = JSON.stringify(data);
+      // 认证接口使用表单格式
+      if (url.startsWith('/auth/login') || url.startsWith('/auth/register')) {
+        options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        options.body = buildQuery(data);
+      } else {
+        options.body = JSON.stringify(data);
+      }
     }
 
     return new Promise(function (resolve, reject) {

@@ -3,7 +3,10 @@ package com.studyroom.booking.modules.user.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.studyroom.booking.common.Result;
 import com.studyroom.booking.common.annotation.RequireRole;
-import com.studyroom.booking.modules.user.dto.*;
+import com.studyroom.booking.modules.user.dto.CreateUserRequest;
+import com.studyroom.booking.modules.user.dto.UpdateUserRequest;
+import com.studyroom.booking.modules.user.dto.ChangePasswordRequest;
+import com.studyroom.booking.modules.user.dto.UserVO;
 import com.studyroom.booking.modules.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,29 +36,28 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "用户详情", description = "获取用户详情")
+    @Operation(summary = "用户详情", description = "获取用户详情（管理员或本人可查看）")
     public Result<UserVO> getUserById(
             @Parameter(description = "用户ID") @PathVariable Long id,
-            @RequestAttribute(value = "userId", required = false) Long currentUserId,
-            @RequestAttribute(value = "role", required = false) String currentRole) {
-        // 管理员或本人可查看
-        return Result.success(userService.getUserById(id));
+            @Parameter(hidden = true) @RequestAttribute("userId") Long currentUserId,
+            @Parameter(hidden = true) @RequestAttribute("role") String currentRole) {
+        return Result.success(userService.getUserById(id, currentUserId, currentRole));
     }
 
     @PostMapping
     @RequireRole("SUPER_ADMIN")
-    @Operation(summary = "新增用户", description = "管理员新增用户")
-    public Result<UserVO> createUser(@Valid @RequestBody RegisterRequest request) {
-        return Result.success("创建成功", userService.register(request));
+    @Operation(summary = "新增用户", description = "超级管理员新增用户（可指定角色）")
+    public Result<UserVO> createUser(@Valid @RequestBody CreateUserRequest request) {
+        return Result.success("创建成功", userService.createUser(request));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "更新用户", description = "更新用户信息")
+    @Operation(summary = "更新用户", description = "更新用户信息（管理员或本人可更新）")
     public Result<UserVO> updateUser(
             @Parameter(description = "用户ID") @PathVariable Long id,
             @Valid @RequestBody UpdateUserRequest request,
-            @RequestAttribute("userId") Long currentUserId,
-            @RequestAttribute("role") String currentRole) {
+            @Parameter(hidden = true) @RequestAttribute("userId") Long currentUserId,
+            @Parameter(hidden = true) @RequestAttribute("role") String currentRole) {
         return Result.success("更新成功", userService.updateUser(id, request, currentUserId, currentRole));
     }
 
@@ -68,11 +70,13 @@ public class UserController {
     }
 
     @PutMapping("/{id}/password")
-    @Operation(summary = "修改密码", description = "修改用户密码")
+    @Operation(summary = "修改密码", description = "修改用户密码（本人需验证旧密码，超级管理员可直接重置）")
     public Result<Void> changePassword(
             @Parameter(description = "用户ID") @PathVariable Long id,
-            @Valid @RequestBody ChangePasswordRequest request) {
-        userService.changePassword(id, request);
+            @Valid @RequestBody ChangePasswordRequest request,
+            @Parameter(hidden = true) @RequestAttribute("userId") Long currentUserId,
+            @Parameter(hidden = true) @RequestAttribute("role") String currentRole) {
+        userService.changePassword(id, request, currentUserId, currentRole);
         return Result.success("密码修改成功", null);
     }
 

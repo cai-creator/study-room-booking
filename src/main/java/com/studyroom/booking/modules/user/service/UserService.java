@@ -5,7 +5,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.studyroom.booking.common.ResultCode;
 import com.studyroom.booking.common.exception.BusinessException;
-import com.studyroom.booking.modules.user.dto.*;
+import com.studyroom.booking.modules.user.dto.CreateUserRequest;
+import com.studyroom.booking.modules.user.dto.LoginRequest;
+import com.studyroom.booking.modules.user.dto.LoginVO;
+import com.studyroom.booking.modules.user.dto.RegisterRequest;
+import com.studyroom.booking.modules.user.dto.UpdateUserRequest;
+import com.studyroom.booking.modules.user.dto.ChangePasswordRequest;
+import com.studyroom.booking.modules.user.dto.UserVO;
 import com.studyroom.booking.modules.user.entity.User;
 import com.studyroom.booking.modules.user.mapper.UserMapper;
 import com.studyroom.booking.utils.JwtUtils;
@@ -63,10 +69,44 @@ public class UserService {
     }
 
     /**
-     * 用户注册
+     * 用户注册（公开注册，默认STUDENT角色）
      */
     @Transactional
     public UserVO register(RegisterRequest request) {
+        // 检查用户名是否已存在
+        User existingUser = userMapper.selectOne(
+                new LambdaQueryWrapper<User>()
+                        .eq(User::getUsername, request.getUsername())
+                        .eq(User::getDeleted, 0)
+        );
+
+        if (existingUser != null) {
+            throw new BusinessException(ResultCode.USER_ALREADY_EXISTS);
+        }
+
+        // 创建用户
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(BCrypt.hashpw(request.getPassword()));
+        user.setRealName(request.getRealName());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+        user.setRole("STUDENT");
+        user.setStatus(1);
+        user.setDeleted(0);
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userMapper.insert(user);
+
+        return convertToVO(user);
+    }
+
+    /**
+     * 创建用户（超级管理员专用，可指定角色）
+     */
+    @Transactional
+    public UserVO createUser(CreateUserRequest request) {
         // 检查用户名是否已存在
         User existingUser = userMapper.selectOne(
                 new LambdaQueryWrapper<User>()
@@ -149,11 +189,16 @@ public class UserService {
     /**
      * 获取用户详情
      */
-    public UserVO getUserById(Long id) {
+    public UserVO getUserById(Long id, Long currentUserId, String currentRole) {
         User user = userMapper.selectById(id);
         if (user == null || user.getDeleted() == 1) {
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
         }
+
+        if (!"SUPER_ADMIN".equals(currentRole) && !"ADMIN".equals(currentRole) && !currentUserId.equals(id)) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+
         return convertToVO(user);
     }
 
@@ -167,12 +212,18 @@ public class UserService {
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
         }
 
-        // 权限检查：只有管理员或本人可以修改
         if (!"SUPER_ADMIN".equals(operatorRole) && !"ADMIN".equals(operatorRole) && !operatorId.equals(id)) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
 
-        // 更新字段
+        if ("ADMIN".equals(operatorRole) && "ADMIN".equals(user.getRole()) && !operatorId.equals(id)) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+
+        if ("ADMIN".equals(operatorRole) && "SUPER_ADMIN".equals(user.getRole())) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+
         if (request.getRealName() != null) {
             user.setRealName(request.getRealName());
         }
@@ -186,13 +237,16 @@ public class UserService {
             user.setAvatar(request.getAvatar());
         }
 
-        // 只有管理员可以修改状态和角色
-        if ("SUPER_ADMIN".equals(operatorRole) || "ADMIN".equals(operatorRole)) {
+        if ("SUPER_ADMIN".equals(operatorRole)) {
             if (request.getStatus() != null) {
                 user.setStatus(request.getStatus());
             }
             if (request.getRole() != null) {
                 user.setRole(request.getRole());
+            }
+        } else if ("ADMIN".equals(operatorRole)) {
+            if (request.getStatus() != null && !"ADMIN".equals(user.getRole()) && !"SUPER_ADMIN".equals(user.getRole())) {
+                user.setStatus(request.getStatus());
             }
         }
 
@@ -206,21 +260,26 @@ public class UserService {
      * 修改密码
      */
     @Transactional
-    public void changePassword(Long id, ChangePasswordRequest request) {
+    public void changePassword(Long id, ChangePasswordRequest request, Long currentUserId, String currentRole) {
         User user = userMapper.selectById(id);
         if (user == null || user.getDeleted() == 1) {
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
         }
 
-        // 验证旧密码
-        if (!BCrypt.checkpw(request.getOldPassword(), user.getPassword())) {
-            throw new BusinessException(ResultCode.USER_PASSWORD_ERROR);
+        if ("SUPER_ADMIN".equals(currentRole)) {
+            user.setPassword(BCrypt.hashpw(request.getNewPassword()));
+            user.setUpdatedAt(LocalDateTime.now());
+            userMapper.updateById(user);
+        } else if (currentUserId.equals(id)) {
+            if (!BCrypt.checkpw(request.getOldPassword(), user.getPassword())) {
+                throw new BusinessException(ResultCode.USER_PASSWORD_ERROR);
+            }
+            user.setPassword(BCrypt.hashpw(request.getNewPassword()));
+            user.setUpdatedAt(LocalDateTime.now());
+            userMapper.updateById(user);
+        } else {
+            throw new BusinessException(ResultCode.FORBIDDEN);
         }
-
-        // 设置新密码
-        user.setPassword(BCrypt.hashpw(request.getNewPassword()));
-        user.setUpdatedAt(LocalDateTime.now());
-        userMapper.updateById(user);
     }
 
     /**

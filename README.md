@@ -351,13 +351,13 @@ Authorization: Bearer {token}
 
 | 接口 | 方法 | 路径 | 说明 | 权限 | 状态 |
 |------|------|------|------|------|------|
-| 用户列表 | GET | `/api/users` | 分页查询用户列表 | 管理员 | 已实现 |
-| 用户详情 | GET | `/api/users/{id}` | 获取用户详情 | 管理员/本人 | 已实现 |
-| 新增用户 | POST | `/api/users` | 新增用户 | 超级管理员 | 已实现 |
-| 更新用户 | PUT | `/api/users/{id}` | 更新用户信息 | 管理员/本人 | 已实现 |
-| 删除用户 | DELETE | `/api/users/{id}` | 删除用户 | 超级管理员 | 已实现 |
-| 修改密码 | PUT | `/api/users/{id}/password` | 修改密码 | 本人 | 已实现 |
-| 修改状态 | PATCH | `/api/users/{id}/status` | 启用/禁用用户 | 超级管理员 | 已实现 |
+| 用户列表 | GET | `/api/users` | 分页查询用户列表 | ADMIN/SUPER_ADMIN | 已实现 |
+| 用户详情 | GET | `/api/users/{id}` | 获取用户详情 | ADMIN/SUPER_ADMIN/本人 | 已实现 |
+| 新增用户 | POST | `/api/users` | 新增用户（可指定角色） | SUPER_ADMIN | 已实现 |
+| 更新用户 | PUT | `/api/users/{id}` | 更新用户信息（ADMIN不可修改ADMIN/SUPER_ADMIN） | ADMIN/SUPER_ADMIN/本人 | 已实现 |
+| 删除用户 | DELETE | `/api/users/{id}` | 删除用户（逻辑删除） | SUPER_ADMIN | 已实现 |
+| 修改密码 | PUT | `/api/users/{id}/password` | 修改密码（本人需验证旧密码，超级管理员可直接重置） | SUPER_ADMIN/本人 | 已实现 |
+| 修改状态 | PATCH | `/api/users/{id}/status` | 启用/禁用用户 | SUPER_ADMIN | 已实现 |
 
 **用户列表查询参数:**
 
