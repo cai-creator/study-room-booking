@@ -46,6 +46,16 @@ public class JwtInterceptor implements HandlerInterceptor {
         request.setAttribute("username", username);
         request.setAttribute("role", role);
 
+        // 同步到 UserContext ThreadLocal，供 Service 层使用
+        com.studyroom.booking.common.context.UserContext.setRequest(request);
+
         return true;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
+            Object handler, Exception ex) throws Exception {
+        // 清理 ThreadLocal，防止内存泄漏
+        com.studyroom.booking.common.context.UserContext.clear();
     }
 }

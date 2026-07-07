@@ -1,7 +1,7 @@
 package com.studyroom.booking.modules.seat.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.studyroom.booking.modules.seat.entity.Seat;
+import com.studyroom.booking.modules.seat.entity.SeatControl;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -10,5 +10,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @author 邓祺然
  */
 @Mapper
-public interface SeatMapper extends BaseMapper<Seat> {
+public interface SeatControlMapper extends BaseMapper<SeatControl> {
 }

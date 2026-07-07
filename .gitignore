@@ -69,3 +69,4 @@ application-local.properties
 
 # Local test docs (not for git)
 测试指南-*.md
+plan.md

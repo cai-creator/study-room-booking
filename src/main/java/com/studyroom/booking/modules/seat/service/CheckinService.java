@@ -6,9 +6,9 @@ import com.studyroom.booking.common.context.UserContext;
 import com.studyroom.booking.common.exception.BusinessException;
 import com.studyroom.booking.modules.seat.dto.CheckinVO;
 import com.studyroom.booking.modules.seat.entity.Reservation;
-import com.studyroom.booking.modules.seat.entity.Seat;
+import com.studyroom.booking.modules.seat.entity.SeatControl;
 import com.studyroom.booking.modules.seat.mapper.ReservationMapper;
-import com.studyroom.booking.modules.seat.mapper.SeatMapper;
+import com.studyroom.booking.modules.seat.mapper.SeatControlMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +29,7 @@ import java.time.format.DateTimeFormatter;
 public class CheckinService {
 
     private final ReservationMapper reservationMapper;
-    private final SeatMapper seatMapper;
+    private final SeatControlMapper seatMapper;
 
     /** 签到宽限时间（分钟），默认15分钟 */
     @Value("${booking.rules.checkin-grace-minutes:15}")
@@ -58,11 +58,11 @@ public class CheckinService {
         Long userId = UserContext.getUserId();
 
         // 1. 查找座位
-        Seat seat = seatMapper.selectOne(
-                new LambdaQueryWrapper<Seat>()
-                        .eq(Seat::getSeatCode, seatCode)
-                        .eq(Seat::getRoomId, roomId)
-                        .eq(Seat::getStatus, 1)
+        SeatControl seat = seatMapper.selectOne(
+                new LambdaQueryWrapper<SeatControl>()
+                        .eq(SeatControl::getSeatCode, seatCode)
+                        .eq(SeatControl::getRoomId, roomId)
+                        .eq(SeatControl::getStatus, 1)
         );
         if (seat == null) {
             throw new BusinessException(ResultCode.SEAT_NOT_FOUND);
@@ -224,11 +224,11 @@ public class CheckinService {
      */
     private Reservation getActiveReservation(Long userId, String seatCode, Long roomId) {
         // 先找座位
-        Seat seat = seatMapper.selectOne(
-                new LambdaQueryWrapper<Seat>()
-                        .eq(Seat::getSeatCode, seatCode)
-                        .eq(Seat::getRoomId, roomId)
-                        .eq(Seat::getStatus, 1)
+        SeatControl seat = seatMapper.selectOne(
+                new LambdaQueryWrapper<SeatControl>()
+                        .eq(SeatControl::getSeatCode, seatCode)
+                        .eq(SeatControl::getRoomId, roomId)
+                        .eq(SeatControl::getStatus, 1)
         );
         if (seat == null) {
             throw new BusinessException(ResultCode.SEAT_NOT_FOUND);
@@ -254,7 +254,7 @@ public class CheckinService {
     /**
      * 构建返回VO
      */
-    private CheckinVO buildCheckinVO(Reservation reservation, Seat seat) {
+    private CheckinVO buildCheckinVO(Reservation reservation, SeatControl seat) {
         CheckinVO vo = new CheckinVO();
         vo.setReservationId(reservation.getId());
         vo.setRoomId(reservation.getRoomId());

@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @TableName("seat")
-public class Seat implements Serializable {
+public class SeatControl implements Serializable {
 
     @TableId(type = IdType.AUTO)
     private Long id;
