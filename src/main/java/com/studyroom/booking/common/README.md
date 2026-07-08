@@ -60,6 +60,16 @@ common/
 2. `JwtInterceptor` 解析 token，将 userId/role 存入 request attribute
 3. `RoleInterceptor` 校验当前用户角色是否满足注解要求
 
+### JwtInterceptor 特性
+- 多请求头兼容：依次尝试 `Authorization` → `bearerAuth` → `bearerauth`
+- 重复前缀防护：循环去除 `Bearer ` 前缀（兼容 Knife4j 重复添加的情况）
+- 调试日志：未认证请求会打印完整请求头列表，方便排查
+
+### Knife4j 认证配置注意
+- SecurityScheme 使用 **APIKEY 类型**（非 HTTP Bearer），确保全局安全配置对所有分组生效
+- 需要在每个需要认证的 Controller 方法上添加 `@SecurityRequirement(name = "BearerAuth")` 注解（类级别注解在 Knife4j 中不生效）
+- 使用 Knife4j 测试时，Authorize 弹窗中输入 `Bearer <token>` 格式
+
 ## 其他成员使用指南
 
 - 业务异常请抛出 `BusinessException(ResultCode.XXX)`

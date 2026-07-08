@@ -154,7 +154,8 @@ study-room-booking/
 
 | 问题现象 | 可能原因 | 排查方式 |
 |---------|---------|---------|
-| 接口返回401 | token过期或未携带 | 检查请求头Authorization，重新登录获取新token |
+| 接口返回401 | token过期或未携带 | Knife4j测试：点击Authorize输入`Bearer <token>`；前端/Postman：Header添加`Authorization: Bearer <token>` |
+| 接口返回401(部分接口) | Controller缺少@SecurityRequirement | 在Controller方法上添加`@SecurityRequirement(name = "BearerAuth")` |
 | 接口返回403 | 角色权限不足 | 确认当前用户角色是否有接口访问权限 |
 | 跨域错误 | CORS配置问题 | 检查后端CORS配置，或使用前端代理 |
 | 字段值为null | 字段名不匹配 | 核对接口文档，确认字段名和数据类型 |
@@ -352,7 +353,7 @@ Authorization: Bearer {token}
 | 接口 | 方法 | 路径 | 说明 | 权限 | 状态 |
 |------|------|------|------|------|------|
 | 用户列表 | GET | `/api/users` | 分页查询用户列表 | ADMIN/SUPER_ADMIN | 已实现 |
-| 用户详情 | GET | `/api/users/{id}` | 获取用户详情 | ADMIN/SUPER_ADMIN/本人 | 已实现 |
+| 用户详情 | GET | `/api/users/{id}` | 获取用户详情（ADMIN不可查看SUPER_ADMIN/其他ADMIN） | SUPER_ADMIN/ADMIN(限STUDENT)/本人 | 已实现 |
 | 新增用户 | POST | `/api/users` | 新增用户（可指定角色） | SUPER_ADMIN | 已实现 |
 | 更新用户 | PUT | `/api/users/{id}` | 更新用户信息（ADMIN不可修改ADMIN/SUPER_ADMIN） | ADMIN/SUPER_ADMIN/本人 | 已实现 |
 | 删除用户 | DELETE | `/api/users/{id}` | 删除用户（逻辑删除） | SUPER_ADMIN | 已实现 |

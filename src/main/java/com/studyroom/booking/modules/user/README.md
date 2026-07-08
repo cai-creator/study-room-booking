@@ -38,7 +38,7 @@ user/
 | 登出 | POST | `/api/auth/logout` | 登录用户 | JWT无状态，客户端清除token |
 | 获取当前用户 | GET | `/api/auth/me` | 登录用户 | 获取当前登录用户信息 |
 | 用户列表 | GET | `/api/users` | ADMIN/SUPER_ADMIN | 分页查询，支持关键词/角色/状态筛选 |
-| 用户详情 | GET | `/api/users/{id}` | ADMIN/SUPER_ADMIN/本人 | 管理员或本人可查看 |
+| 用户详情 | GET | `/api/users/{id}` | SUPER_ADMIN/ADMIN(仅STUDENT)/本人 | ADMIN不可查看SUPER_ADMIN和其他ADMIN |
 | 新增用户 | POST | `/api/users` | SUPER_ADMIN | 超级管理员创建用户（可指定角色） |
 | 更新用户 | PUT | `/api/users/{id}` | ADMIN/SUPER_ADMIN/本人 | 管理员或本人可更新，ADMIN不可修改ADMIN/SUPER_ADMIN |
 | 删除用户 | DELETE | `/api/users/{id}` | SUPER_ADMIN | 逻辑删除 |
@@ -50,7 +50,7 @@ user/
 | 角色 | 说明 | 权限范围 |
 |------|------|----------|
 | STUDENT | 学生（默认角色） | 预约座位、查看个人信息、修改个人资料和密码 |
-| ADMIN | 管理员 | 管理学生用户、查看用户列表、修改学生状态 |
+| ADMIN | 管理员 | 管理学生用户、查看用户列表（含所有角色）、查看学生详情。不可查看/修改 ADMIN 和 SUPER_ADMIN |
 | SUPER_ADMIN | 超级管理员 | 完整权限，可管理所有用户（包括管理员）、创建/删除管理员 |
 
 ### 角色层级
