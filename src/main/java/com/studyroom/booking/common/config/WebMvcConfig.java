@@ -33,7 +33,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // JWT认证拦截器
         registry.addInterceptor(jwtInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns(
@@ -49,9 +48,19 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 )
                 .order(1);
 
-        // 权限拦截器
         registry.addInterceptor(roleInterceptor)
                 .addPathPatterns("/**")
+                .excludePathPatterns(
+                        "/auth/login",
+                        "/auth/register",
+                        "/doc.html",
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/webjars/**",
+                        "/swagger-resources/**",
+                        "/error"
+                )
                 .order(2);
     }
 }

@@ -188,6 +188,11 @@ public class UserService {
 
     /**
      * 获取用户详情
+     *
+     * 权限规则：
+     * - SUPER_ADMIN：可查看所有用户
+     * - ADMIN：可查看 STUDENT 和本人，不可查看其他 ADMIN 和 SUPER_ADMIN
+     * - STUDENT：仅可查看本人
      */
     public UserVO getUserById(Long id, Long currentUserId, String currentRole) {
         User user = userMapper.selectById(id);
@@ -195,11 +200,33 @@ public class UserService {
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
         }
 
-        if (!"SUPER_ADMIN".equals(currentRole) && !"ADMIN".equals(currentRole) && !currentUserId.equals(id)) {
+        // 本人可查看自己的详情
+        if (currentUserId.equals(id)) {
+            return convertToVO(user);
+        }
+
+        // SUPER_ADMIN 可查看所有人
+        if ("SUPER_ADMIN".equals(currentRole)) {
+            return convertToVO(user);
+        }
+
+        // ADMIN 不能查看 SUPER_ADMIN
+        if ("ADMIN".equals(currentRole) && "SUPER_ADMIN".equals(user.getRole())) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
 
-        return convertToVO(user);
+        // ADMIN 不能查看其他 ADMIN
+        if ("ADMIN".equals(currentRole) && "ADMIN".equals(user.getRole())) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+
+        // ADMIN 可查看 STUDENT
+        if ("ADMIN".equals(currentRole)) {
+            return convertToVO(user);
+        }
+
+        // STUDENT 只能查看自己（已在上面通过 currentUserId.equals(id) 处理）
+        throw new BusinessException(ResultCode.FORBIDDEN);
     }
 
     /**
