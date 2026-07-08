@@ -26,10 +26,10 @@
     return Request.post('/auth/login', { username: username, password: password }).then(function (data) { handleLoginSuccess(data); return data; });
   };
 
-  /** CAS 统一认证登录 */
-  AuthAPI.casLogin = function (ticket) {
-    if (AppConfig.useMock) return MockAuth.casLogin(ticket).then(function (res) { handleLoginSuccess(res.data); return res; });
-    return Request.post('/auth/cas', { ticket: ticket }).then(function (data) { handleLoginSuccess(data); return data; });
+  /** 用户注册 */
+  AuthAPI.register = function (data) {
+    if (AppConfig.useMock) return MockAuth.register ? MockAuth.register(data).then(function (res) { return res.data; }) : Promise.resolve();
+    return Request.post('/auth/register', data);
   };
 
   /** 登出 */

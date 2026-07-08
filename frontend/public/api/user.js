@@ -15,7 +15,7 @@
   UserAPI.updateUser = function (id, data) { return AppConfig.useMock ? MockUser.updateUser(id, data).then(ok) : Request.put('/users/' + id, data); };
   UserAPI.deleteUser = function (id) { return AppConfig.useMock ? MockUser.deleteUser(id).then(ok) : Request.del('/users/' + id); };
   UserAPI.updatePassword = function (id, data) { return AppConfig.useMock ? MockUser.updatePassword(id, data).then(ok) : Request.put('/users/' + id + '/password', data); };
-  UserAPI.updateStatus = function (id, status) { return AppConfig.useMock ? MockUser.updateStatus(id, status).then(ok) : Request.patch('/users/' + id + '/status', { status: status }); };
+  UserAPI.updateStatus = function (id, status) { return AppConfig.useMock ? MockUser.updateStatus(id, status).then(ok) : Request.patch('/users/' + id + '/status?status=' + status); };
 
   window.UserAPI = UserAPI;
 })();

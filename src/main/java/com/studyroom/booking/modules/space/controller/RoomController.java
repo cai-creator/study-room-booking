@@ -24,7 +24,7 @@ import java.util.Map;
  * @author 陈梦涵
  */
 @RestController
-@RequestMapping("/api/rooms")
+@RequestMapping("/rooms")
 @Tag(name = "自习室管理", description = "自习室的增删改查、批量导入、状态管理")
 @RequiredArgsConstructor
 public class RoomController {

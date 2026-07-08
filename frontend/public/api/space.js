@@ -34,7 +34,7 @@
   SpaceAPI.createRoom = function (data) { return AppConfig.useMock ? MockSpace.createRoom(data).then(ok) : Request.post('/rooms', data); };
   SpaceAPI.updateRoom = function (id, data) { return AppConfig.useMock ? MockSpace.updateRoom(id, data).then(ok) : Request.put('/rooms/' + id, data); };
   SpaceAPI.deleteRoom = function (id) { return AppConfig.useMock ? MockSpace.deleteRoom(id).then(ok) : Request.del('/rooms/' + id); };
-  SpaceAPI.updateRoomStatus = function (id, status) { return AppConfig.useMock && MockSpace.updateRoomStatus ? MockSpace.updateRoomStatus(id, status).then(ok) : Request.patch('/rooms/' + id + '/status', { status: status }); };
+  SpaceAPI.updateRoomStatus = function (id, status) { return AppConfig.useMock && MockSpace.updateRoomStatus ? MockSpace.updateRoomStatus(id, status).then(ok) : Request.patch('/rooms/' + id + '/status?status=' + status); };
   SpaceAPI.importRooms = function (formData) { return Request.upload('/rooms/import', formData); };
 
   // ===== 座位 =====

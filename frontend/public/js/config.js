@@ -15,11 +15,7 @@
     /** 是否启用 Mock 数据（可通过 URL 参数 ?mock=false 连接真实后端） */
     useMock: params.get('mock') !== 'false',
 
-    /** 是否启用 CAS 统一认证（后端未实现，暂关闭） */
-    casEnabled: false,
 
-    /** CAS 认证服务地址 */
-    casLoginUrl: 'https://cas.example.edu.cn/login',
 
     /** 登录页路径 */
     loginUrl: '/public/login.html',

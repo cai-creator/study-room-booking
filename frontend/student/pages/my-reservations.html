@@ -120,16 +120,18 @@
             el.style.cssText = 'background:var(--surface-card);border:var(--surface-card-border);';
 
             var actions = '';
+            var rid = r.roomId || '';
+            var sc = r.seatCode || '';
             if (r.status === 'RESERVED') {
               actions =
                 '<button onclick="doCancel(' + r.id + ')" class="px-3 py-1.5 rounded-md text-xs font-medium" style="background:var(--state-error-bg);color:var(--state-error);border:none;cursor:pointer;">取消预约</button>' +
-                '<button onclick="doCheckin(' + r.id + ',\'' + r.seatCode + '\')" class="px-3 py-1.5 rounded-md text-xs font-medium text-white" style="background:var(--brand-primary);border:none;cursor:pointer;">签到</button>';
+                '<button onclick="doCheckin(' + rid + ',\'' + sc + '\')" class="px-3 py-1.5 rounded-md text-xs font-medium text-white" style="background:var(--brand-primary);border:none;cursor:pointer;">签到</button>';
             } else if (r.status === 'CHECKED_IN') {
               actions =
-                '<button onclick="doTempLeave(' + r.id + ')" class="px-3 py-1.5 rounded-md text-xs font-medium" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);border:1px solid var(--color-border);cursor:pointer;">暂离</button>' +
-                '<button onclick="doCheckout(' + r.id + ')" class="px-3 py-1.5 rounded-md text-xs font-medium" style="background:var(--state-info-bg);color:var(--state-info);border:none;cursor:pointer;">签退</button>';
+                '<button onclick="doTempLeave(' + rid + ',\'' + sc + '\')" class="px-3 py-1.5 rounded-md text-xs font-medium" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);border:1px solid var(--color-border);cursor:pointer;">暂离</button>' +
+                '<button onclick="doCheckout(' + rid + ',\'' + sc + '\')" class="px-3 py-1.5 rounded-md text-xs font-medium" style="background:var(--state-info-bg);color:var(--state-info);border:none;cursor:pointer;">签退</button>';
             } else if (r.status === 'TEMPORARY_LEAVE') {
-              actions = '<button onclick="doReturn(' + r.id + ')" class="px-3 py-1.5 rounded-md text-xs font-medium text-white" style="background:var(--brand-primary);border:none;cursor:pointer;">返回座位</button>';
+              actions = '<button onclick="doReturn(' + rid + ',\'' + sc + '\')" class="px-3 py-1.5 rounded-md text-xs font-medium text-white" style="background:var(--brand-primary);border:none;cursor:pointer;">返回座位</button>';
             }
 
             el.innerHTML =
@@ -184,8 +186,12 @@
         });
       };
 
-      window.doCheckin = function(id, seatCode) {
-        SeatAPI.checkin({ reservationId: id, seatCode: seatCode }).then(function() {
+      window.doCheckin = function(roomId, seatCode) {
+        if (!roomId || !seatCode) {
+          Utils.showToast('缺少自习室或座位信息', 'error');
+          return;
+        }
+        SeatAPI.checkin({ roomId: roomId, seatCode: seatCode }).then(function() {
           Utils.showToast('签到成功', 'success');
           loadReservations(currentPage);
         }).catch(function(err) {
@@ -193,8 +199,12 @@
         });
       };
 
-      window.doCheckout = function(id) {
-        SeatAPI.checkout({ reservationId: id }).then(function() {
+      window.doCheckout = function(roomId, seatCode) {
+        if (!roomId || !seatCode) {
+          Utils.showToast('缺少自习室或座位信息', 'error');
+          return;
+        }
+        SeatAPI.checkout({ roomId: roomId, seatCode: seatCode }).then(function() {
           Utils.showToast('签退成功', 'success');
           loadReservations(currentPage);
         }).catch(function(err) {
@@ -202,8 +212,12 @@
         });
       };
 
-      window.doTempLeave = function(id) {
-        SeatAPI.temporaryLeave({ reservationId: id }).then(function() {
+      window.doTempLeave = function(roomId, seatCode) {
+        if (!roomId || !seatCode) {
+          Utils.showToast('缺少自习室或座位信息', 'error');
+          return;
+        }
+        SeatAPI.temporaryLeave({ roomId: roomId, seatCode: seatCode }).then(function() {
           Utils.showToast('已暂离', 'success');
           loadReservations(currentPage);
         }).catch(function(err) {
@@ -211,8 +225,12 @@
         });
       };
 
-      window.doReturn = function(id) {
-        SeatAPI.returnSeat({ reservationId: id }).then(function() {
+      window.doReturn = function(roomId, seatCode) {
+        if (!roomId || !seatCode) {
+          Utils.showToast('缺少自习室或座位信息', 'error');
+          return;
+        }
+        SeatAPI.returnSeat({ roomId: roomId, seatCode: seatCode }).then(function() {
           Utils.showToast('已返回座位', 'success');
           loadReservations(currentPage);
         }).catch(function(err) {

@@ -28,8 +28,8 @@
       },
     };
 
-    // 注入 Token（登录接口不需要）
-    if (!url.startsWith('/auth/login') && !url.startsWith('/auth/cas')) {
+    // 注入 Token（登录/注册接口不需要）
+    if (!url.startsWith('/auth/login') && !url.startsWith('/auth/register')) {
       var token = Utils.getToken();
       if (token) {
         options.headers['Authorization'] = 'Bearer ' + token;

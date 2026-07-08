@@ -10,7 +10,7 @@
   function ok(res) { return res.data; }
 
   DashboardAPI.getCampusOverview = function () { return AppConfig.useMock ? MockDashboard.getCampusOverview().then(ok) : Request.get('/dashboard/campus-overview'); };
-  DashboardAPI.getBuildingOverview = function () { return AppConfig.useMock ? MockDashboard.getBuildingOverview().then(ok) : Request.get('/dashboard/building-overview'); };
+  DashboardAPI.getBuildingOverview = function (campusId) { return AppConfig.useMock ? MockDashboard.getBuildingOverview().then(ok) : Request.get('/dashboard/building-overview', campusId ? { campusId: campusId } : null); };
   DashboardAPI.getRoomDetail = function (roomId) { return AppConfig.useMock ? MockDashboard.getRoomDetail(roomId).then(ok) : Request.get('/dashboard/room-detail/' + roomId); };
 
   window.DashboardAPI = DashboardAPI;

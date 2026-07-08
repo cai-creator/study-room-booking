@@ -247,32 +247,52 @@
         function buildMonthLabel(d) { return d.month ? d.month.slice(2) : ''; }
         function buildDateShort(d) { var s = (d.date || '').split('-'); return s.length === 3 ? (s[1] + '/' + s[2]) : (d.date || ''); }
 
+        function getDateRange() {
+            var days = parseInt(document.getElementById('range-select').value || '30', 10);
+            var end = new Date();
+            var start = new Date();
+            start.setDate(end.getDate() - days + 1);
+            function pad(n) { return n < 10 ? '0' + n : '' + n; }
+            var fmt = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+            return { startDate: fmt(start), endDate: fmt(end), days: days };
+        }
+
         function loadUsage() {
-            ReportAPI.getUsageRate().then(function (d) {
-                var list = (d && d.list) || [];
+            var range = getDateRange();
+            ReportAPI.getUsageRate(range).then(function (d) {
+                var list = (d && d.list) || (Array.isArray(d) ? d : []);
                 var avg = (d && d.averageRate) || 0;
+                if (!list.length && Array.isArray(d)) {
+                    var total = 0;
+                    d.forEach(function (x) { total += Number(x.usageRate) || 0; });
+                    avg = d.length ? Math.round(total / d.length) : 0;
+                }
                 document.getElementById('avg-rate-badge').textContent = '平均 ' + avg + '%';
                 document.getElementById('usage-chart').innerHTML = lineChartSvg(list, 'date', 'usageRate', 260, 0, 100, '#0E7C6B', '#0E7C6B', function (d) { return buildDateShort(d); });
             }).catch(function (e) { Utils.showToast(e.message || '使用率加载失败', 'error'); });
         }
         function loadTimeDist() {
-            ReportAPI.getTimeDistribution().then(function (d) {
-                var list = (d || []).map(function (x) { return { hour: x.label, usageRate: x.usageRate }; });
+            var range = getDateRange();
+            ReportAPI.getTimeDistribution(range).then(function (d) {
+                var list = (d || []).map(function (x) { return { hour: x.label || x.hour, usageRate: x.usageRate }; });
                 document.getElementById('time-chart').innerHTML = barChartSvg(list, 'hour', 'usageRate', 260, 100, '#0E7C6B');
             }).catch(function (e) { Utils.showToast(e.message || '时段分布加载失败', 'error'); });
         }
         function loadHotPeriods() {
-            ReportAPI.getHotPeriods().then(function (d) { renderHotPeriods(d || []); }).catch(function (e) { Utils.showToast(e.message || '热门时段加载失败', 'error'); });
+            var range = getDateRange();
+            ReportAPI.getHotPeriods(range).then(function (d) { renderHotPeriods(d || []); }).catch(function (e) { Utils.showToast(e.message || '热门时段加载失败', 'error'); });
         }
         function loadNoShow() {
-            ReportAPI.getNoShowRate().then(function (d) {
+            var range = getDateRange();
+            ReportAPI.getNoShowRate(range).then(function (d) {
                 var trend = (d && d.trend) || [];
                 document.getElementById('noshow-chart').innerHTML = lineChartSvg(trend, 'month', 'rate', 240, 0, 5, '#DC2626', '#DC2626', function (m) { return buildMonthLabel(m); });
                 return d;
             });
         }
         function loadConversion() {
-            ReportAPI.getConversionRate().then(function (d) {
+            var range = getDateRange();
+            ReportAPI.getConversionRate(range).then(function (d) {
                 var trend = (d && d.trend) || [];
                 document.getElementById('conversion-chart').innerHTML = lineChartSvg(trend, 'month', 'rate', 240, 70, 100, '#16A34A', '#16A34A', function (m) { return buildMonthLabel(m); });
                 return d;
@@ -280,7 +300,8 @@
         }
 
         window.refreshAll = function () {
-            Promise.all([ReportAPI.getUsageRate(), ReportAPI.getNoShowRate(), ReportAPI.getConversionRate()]).then(function (r) {
+            var range = getDateRange();
+            Promise.all([ReportAPI.getUsageRate(range), ReportAPI.getNoShowRate(range), ReportAPI.getConversionRate(range)]).then(function (r) {
                 renderKPIs(r[0], r[1], r[2]);
             });
             loadUsage();
@@ -292,7 +313,8 @@
         };
 
         window.exportReport = function () {
-            ReportAPI.exportReport().then(function (r) {
+            var range = getDateRange();
+            ReportAPI.exportReport(range).then(function (r) {
                 Utils.showToast((r && r.message) || '导出请求已提交', 'info');
             }).catch(function (e) { Utils.showToast(e.message || '导出失败', 'error'); });
         };
@@ -300,7 +322,8 @@
         document.getElementById('range-select').addEventListener('change', refreshAll);
 
         loadNavbar();
-        Promise.all([ReportAPI.getUsageRate(), ReportAPI.getNoShowRate(), ReportAPI.getConversionRate()]).then(function (r) {
+        var initRange = getDateRange();
+        Promise.all([ReportAPI.getUsageRate(initRange), ReportAPI.getNoShowRate(initRange), ReportAPI.getConversionRate(initRange)]).then(function (r) {
             renderKPIs(r[0], r[1], r[2]);
         });
         loadUsage();

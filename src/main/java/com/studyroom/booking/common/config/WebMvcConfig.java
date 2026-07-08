@@ -30,6 +30,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     /**
      * 配置拦截器
+     * <p>注意：公共查询接口（如空间列表）不放行在 excludePathPatterns 中，
+     * 而是统一进入 JwtInterceptor，由其按「GET 方法 + 路径前缀」的细粒度规则放行，
+     * 这样可避免 POST/PUT/DELETE 等写操作因通配符匹配而绕过权限校验。
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -38,13 +41,15 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/auth/login",
                         "/auth/register",
+                        "/auth/logout",
                         "/doc.html",
                         "/swagger-ui.html",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/webjars/**",
                         "/swagger-resources/**",
-                        "/error"
+                        "/error",
+                        "/favicon.ico"
                 )
                 .order(1);
 
@@ -53,13 +58,15 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/auth/login",
                         "/auth/register",
+                        "/auth/logout",
                         "/doc.html",
                         "/swagger-ui.html",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/webjars/**",
                         "/swagger-resources/**",
-                        "/error"
+                        "/error",
+                        "/favicon.ico"
                 )
                 .order(2);
     }

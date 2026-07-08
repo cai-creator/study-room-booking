@@ -22,9 +22,28 @@ public class JwtInterceptor implements HandlerInterceptor {
     private static final List<String> WHITE_LIST = Arrays.asList(
             "/auth/login",
             "/auth/register",
+            "/auth/logout",
             "/doc.html",
             "/swagger-ui.html",
             "/favicon.ico"
+    );
+
+    /**
+     * 公共查询接口的路径前缀（仅 GET 方法时放行）
+     * <p>用于：实时看板、空间（校区/楼栋/楼层/自习室/座位）的查询。
+     * <p>注意：写操作（POST/PUT/DELETE/PATCH）即使命中这些前缀，仍需 token 校验。
+     */
+    private static final List<String> PUBLIC_GET_PREFIXES = Arrays.asList(
+            "/swagger-ui/",
+            "/v3/api-docs/",
+            "/webjars/",
+            "/swagger-resources/",
+            "/dashboard/",
+            "/campuses",
+            "/buildings",
+            "/floors",
+            "/rooms",
+            "/seats"
     );
 
     @Override
@@ -34,20 +53,25 @@ public class JwtInterceptor implements HandlerInterceptor {
         }
 
         String servletPath = request.getServletPath();
-        System.out.println("=== JWT INTERCEPTOR ===");
-        System.out.println("Servlet Path: " + servletPath);
-        System.out.println("Request URI: " + request.getRequestURI());
+        String httpMethod = request.getMethod();
 
         if (WHITE_LIST.contains(servletPath)) {
-            System.out.println("White list matched, skipping JWT validation");
             return true;
         }
 
-        if (servletPath.startsWith("/swagger-ui/") ||
-            servletPath.startsWith("/v3/api-docs/") ||
-            servletPath.startsWith("/webjars/") ||
-            servletPath.startsWith("/swagger-resources/")) {
-            return true;
+        // 文档相关 & 公共 GET 查询接口按前缀放行
+        for (String prefix : PUBLIC_GET_PREFIXES) {
+            if (servletPath.startsWith(prefix)) {
+                // /swagger-ui/ 等文档路径不限方法；空间/看板接口仅放行 GET
+                boolean isDoc = prefix.startsWith("/swagger-ui")
+                        || prefix.startsWith("/v3/api-docs")
+                        || prefix.startsWith("/webjars")
+                        || prefix.startsWith("/swagger-resources");
+                if (isDoc || "GET".equalsIgnoreCase(httpMethod)) {
+                    return true;
+                }
+                break;
+            }
         }
 
         // ========== 调试：打印所有请求头 ==========

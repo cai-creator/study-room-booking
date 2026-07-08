@@ -384,13 +384,18 @@
         window.closeAddModal = function () { document.getElementById('add-modal').classList.add('hidden'); };
         window.handleAddSubmit = function (e) {
             e.preventDefault();
-            SeatAPI.addToBlacklist({
-                username: document.getElementById('in-username').value.trim(),
-                reason: document.getElementById('in-reason').value,
-                startTime: document.getElementById('in-start').value + ' 00:00:00',
-                endTime: document.getElementById('in-end').value + ' 23:59:59',
-            }).then(function () { Utils.showToast('已加入黑名单', 'success'); closeAddModal(); loadBlacklist(); })
-                .catch(function (e) { Utils.showToast(e.message || '操作失败', 'error'); });
+            var username = document.getElementById('in-username').value.trim();
+            var reason = document.getElementById('in-reason').value;
+            var endTime = document.getElementById('in-end').value + ' 23:59:59';
+            if (!username) { Utils.showToast('请输入学号/账号', 'error'); return; }
+            UserAPI.getUsers({ keyword: username, pageNum: 1, pageSize: 50 }).then(function (res) {
+                var list = res.list || [];
+                var user = list.find(function (u) { return u.username === username; });
+                if (!user) throw { message: '未找到该用户，请检查学号/账号是否正确' };
+                return SeatAPI.addToBlacklist({ userId: user.id, reason: reason, endTime: endTime });
+            }).then(function () {
+                Utils.showToast('已加入黑名单', 'success'); closeAddModal(); loadBlacklist();
+            }).catch(function (e) { Utils.showToast(e.message || '操作失败', 'error'); });
         };
 
         loadNavbar();

@@ -20,7 +20,7 @@ import java.util.List;
  * @author 陈梦涵
  */
 @RestController
-@RequestMapping("/api/buildings")
+@RequestMapping("/buildings")
 @Tag(name = "楼栋管理", description = "楼栋的增删改查")
 @RequiredArgsConstructor
 public class BuildingController {

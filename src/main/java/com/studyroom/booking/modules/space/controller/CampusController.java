@@ -19,7 +19,7 @@ import java.util.List;
  * @author 陈梦涵
  */
 @RestController
-@RequestMapping("/api/campuses")
+@RequestMapping("/campuses")
 @Tag(name = "校区管理", description = "校区的增删改查")
 @RequiredArgsConstructor
 public class CampusController {

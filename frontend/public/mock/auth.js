@@ -61,16 +61,35 @@
     });
   };
 
-  /** CAS 登录 */
-  MockAuth.casLogin = function (ticket) {
+  // 模拟已注册用户表，用来校验用户名重复
+  var registeredUsernames = {
+    '2024001001': true,
+    'admin': true,
+    'superadmin': true,
+  };
+
+  /** 注册 */
+  MockAuth.register = function (data) {
     return delay().then(function () {
-      if (!ticket) return fail(400, '缺少CAS认证票据');
-      // 模拟默认返回学生身份
-      return ok({
-        token: 'mock-jwt-cas-student-xxxxx',
-        expireAt: Date.now() + 86400000,
-        user: TEST_USERS.student,
-      }, 'CAS认证成功');
+      if (!data) return fail(400, '参数不能为空');
+      if (!data.username) return fail(400, '用户名不能为空');
+      if (data.username.length < 3) return fail(400, '用户名至少需要3个字符');
+      if (!data.realName) return fail(400, '真实姓名不能为空');
+      if (!data.password) return fail(400, '密码不能为空');
+      if (data.password.length < 6) return fail(400, '密码至少需要6位');
+      if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) return fail(400, '邮箱格式不正确');
+      if (data.phone && !/^1\d{10}$/.test(data.phone)) return fail(400, '手机号格式不正确');
+      if (registeredUsernames[data.username]) return fail(409, '该用户名/学号已被注册，请直接登录或更换账号');
+      registeredUsernames[data.username] = true;
+      var newUser = {
+        id: Date.now(),
+        username: data.username,
+        realName: data.realName || data.username,
+        role: 'STUDENT',
+        email: data.email || null,
+        phone: data.phone || null,
+      };
+      return ok(newUser, '注册成功');
     });
   };
 

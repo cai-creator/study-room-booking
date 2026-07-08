@@ -23,7 +23,7 @@ import java.util.List;
  * @author 陈梦涵
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("")
 @Tag(name = "座位管理", description = "座位的批量生成、管理、实时状态查询")
 @RequiredArgsConstructor
 public class SeatController {
