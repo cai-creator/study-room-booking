@@ -49,11 +49,13 @@ public class UserController {
     }
 
     @PostMapping
-    @RequireRole("SUPER_ADMIN")
-    @Operation(summary = "新增用户", description = "超级管理员新增用户（可指定角色）")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
+    @Operation(summary = "新增用户", description = "管理员可新增学生，超级管理员可新增任意角色用户")
     @SecurityRequirement(name = "BearerAuth")
-    public Result<UserVO> createUser(@Valid @RequestBody CreateUserRequest request) {
-        return Result.success("创建成功", userService.createUser(request));
+    public Result<UserVO> createUser(
+            @Valid @RequestBody CreateUserRequest request,
+            @Parameter(hidden = true) @RequestAttribute("role") String currentRole) {
+        return Result.success("创建成功", userService.createUser(request, currentRole));
     }
 
     @PutMapping("/{id}")
@@ -68,16 +70,19 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @RequireRole("SUPER_ADMIN")
-    @Operation(summary = "删除用户", description = "删除用户（逻辑删除）")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
+    @Operation(summary = "删除用户", description = "管理员可删除学生，超级管理员可删除任意用户（逻辑删除）")
     @SecurityRequirement(name = "BearerAuth")
-    public Result<Void> deleteUser(@Parameter(description = "用户ID") @PathVariable Long id) {
-        userService.deleteUser(id);
+    public Result<Void> deleteUser(
+            @Parameter(description = "用户ID") @PathVariable Long id,
+            @Parameter(hidden = true) @RequestAttribute("userId") Long currentUserId,
+            @Parameter(hidden = true) @RequestAttribute("role") String currentRole) {
+        userService.deleteUser(id, currentUserId, currentRole);
         return Result.success("删除成功", null);
     }
 
     @PutMapping("/{id}/password")
-    @Operation(summary = "修改密码", description = "修改用户密码（本人需验证旧密码，超级管理员可直接重置）")
+    @Operation(summary = "修改密码", description = "修改用户密码（本人需验证旧密码，管理员可直接重置学生密码，超级管理员可重置任意用户密码）")
     @SecurityRequirement(name = "BearerAuth")
     public Result<Void> changePassword(
             @Parameter(description = "用户ID") @PathVariable Long id,
@@ -89,13 +94,15 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/status")
-    @RequireRole("SUPER_ADMIN")
-    @Operation(summary = "修改状态", description = "启用/禁用用户")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
+    @Operation(summary = "修改状态", description = "管理员可启用/禁用学生，超级管理员可修改任意用户状态")
     @SecurityRequirement(name = "BearerAuth")
     public Result<Void> updateStatus(
             @Parameter(description = "用户ID") @PathVariable Long id,
-            @Parameter(description = "状态") @RequestParam Integer status) {
-        userService.updateStatus(id, status);
+            @Parameter(description = "状态") @RequestParam Integer status,
+            @Parameter(hidden = true) @RequestAttribute("userId") Long currentUserId,
+            @Parameter(hidden = true) @RequestAttribute("role") String currentRole) {
+        userService.updateStatus(id, status, currentUserId, currentRole);
         return Result.success("状态修改成功", null);
     }
 }

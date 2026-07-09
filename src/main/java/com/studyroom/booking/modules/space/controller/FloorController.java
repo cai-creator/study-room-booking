@@ -42,21 +42,21 @@ public class FloorController {
     }
 
     @PostMapping
-    @RequireRole("SUPER_ADMIN")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
     @Operation(summary = "新增楼层")
     public Result<Floor> create(@Valid @RequestBody FloorRequest request) {
         return Result.success(floorService.create(request));
     }
 
     @PutMapping("/{id}")
-    @RequireRole("SUPER_ADMIN")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
     @Operation(summary = "更新楼层")
     public Result<Floor> update(@PathVariable Long id, @Valid @RequestBody FloorRequest request) {
         return Result.success(floorService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @RequireRole("SUPER_ADMIN")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
     @Operation(summary = "删除楼层")
     public Result<Void> delete(@PathVariable Long id) {
         floorService.delete(id);

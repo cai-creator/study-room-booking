@@ -39,21 +39,21 @@ public class CampusController {
     }
 
     @PostMapping
-    @RequireRole("SUPER_ADMIN")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
     @Operation(summary = "新增校区")
     public Result<Campus> create(@Valid @RequestBody CampusRequest request) {
         return Result.success(campusService.create(request));
     }
 
     @PutMapping("/{id}")
-    @RequireRole("SUPER_ADMIN")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
     @Operation(summary = "更新校区")
     public Result<Campus> update(@PathVariable Long id, @Valid @RequestBody CampusRequest request) {
         return Result.success(campusService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @RequireRole("SUPER_ADMIN")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
     @Operation(summary = "删除校区")
     public Result<Void> delete(@PathVariable Long id) {
         campusService.delete(id);

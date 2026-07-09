@@ -162,7 +162,8 @@ CREATE TABLE IF NOT EXISTS operation_log (
 
 -- 初始化管理员账号（密码: admin123，使用BCrypt加密）
 INSERT INTO sys_user (username, password, real_name, role, status) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z', '超级管理员', 'SUPER_ADMIN', 1);
+('root', '$2a$10$M7aaPNfiOje5WN.ZaLaQReSOl9jocfB83Gmgpw1YaH5fpFTfRaSje', '超级管理员', 'SUPER_ADMIN', 1),
+('admin', '$2a$10$zJ55msMPcCuLSVWk39pLFOGMF96SEr/PD9FGfW/1v9TaC3U3OiTpC', '普通管理员', 'ADMIN', 1);
 
 -- 初始化系统配置
 INSERT INTO sys_config (config_key, config_value, config_desc) VALUES

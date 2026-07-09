@@ -58,7 +58,7 @@ public class RoomController {
     }
 
     @DeleteMapping("/{id}")
-    @RequireRole("SUPER_ADMIN")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
     @Operation(summary = "删除自习室")
     public Result<Void> delete(@PathVariable Long id) {
         studyRoomService.delete(id);

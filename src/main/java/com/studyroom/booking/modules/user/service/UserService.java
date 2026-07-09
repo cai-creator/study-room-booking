@@ -104,9 +104,10 @@ public class UserService {
 
     /**
      * 创建用户（超级管理员专用，可指定角色）
+     * ADMIN 只能创建 STUDENT 角色用户，SUPER_ADMIN 可创建任意角色
      */
     @Transactional
-    public UserVO createUser(CreateUserRequest request) {
+    public UserVO createUser(CreateUserRequest request, String currentRole) {
         // 检查用户名是否已存在
         User existingUser = userMapper.selectOne(
                 new LambdaQueryWrapper<User>()
@@ -118,6 +119,12 @@ public class UserService {
             throw new BusinessException(ResultCode.USER_ALREADY_EXISTS);
         }
 
+        // ADMIN 只能创建 STUDENT 角色
+        String targetRole = request.getRole() != null ? request.getRole() : "STUDENT";
+        if ("ADMIN".equals(currentRole) && !"STUDENT".equals(targetRole)) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+
         // 创建用户
         User user = new User();
         user.setUsername(request.getUsername());
@@ -125,7 +132,7 @@ public class UserService {
         user.setRealName(request.getRealName());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
-        user.setRole(request.getRole() != null ? request.getRole() : "STUDENT");
+        user.setRole(targetRole);
         user.setStatus(1);
         user.setDeleted(0);
         user.setCreatedAt(LocalDateTime.now());
@@ -285,6 +292,9 @@ public class UserService {
 
     /**
      * 修改密码
+     * SUPER_ADMIN 可直接重置任意用户密码
+     * ADMIN 可重置 STUDENT 的密码，但不能重置 ADMIN/SUPER_ADMIN 的密码
+     * 本人修改自己密码需要验证旧密码
      */
     @Transactional
     public void changePassword(Long id, ChangePasswordRequest request, Long currentUserId, String currentRole) {
@@ -294,10 +304,20 @@ public class UserService {
         }
 
         if ("SUPER_ADMIN".equals(currentRole)) {
+            // 超级管理员直接重置任意用户密码
+            user.setPassword(BCrypt.hashpw(request.getNewPassword()));
+            user.setUpdatedAt(LocalDateTime.now());
+            userMapper.updateById(user);
+        } else if ("ADMIN".equals(currentRole)) {
+            // 管理员可重置学生密码，不能重置管理员/超级管理员密码
+            if ("ADMIN".equals(user.getRole()) || "SUPER_ADMIN".equals(user.getRole())) {
+                throw new BusinessException(ResultCode.FORBIDDEN);
+            }
             user.setPassword(BCrypt.hashpw(request.getNewPassword()));
             user.setUpdatedAt(LocalDateTime.now());
             userMapper.updateById(user);
         } else if (currentUserId.equals(id)) {
+            // 本人修改自己密码需要验证旧密码
             if (!BCrypt.checkpw(request.getOldPassword(), user.getPassword())) {
                 throw new BusinessException(ResultCode.USER_PASSWORD_ERROR);
             }
@@ -311,12 +331,25 @@ public class UserService {
 
     /**
      * 删除用户（逻辑删除）
+     * ADMIN 只能删除 STUDENT，SUPER_ADMIN 可删除任意用户
      */
     @Transactional
-    public void deleteUser(Long id) {
+    public void deleteUser(Long id, Long currentUserId, String currentRole) {
         User user = userMapper.selectById(id);
         if (user == null) {
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        }
+
+        // 不能删除自己
+        if (currentUserId.equals(id)) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+
+        // ADMIN 只能删除 STUDENT
+        if ("ADMIN".equals(currentRole)) {
+            if ("ADMIN".equals(user.getRole()) || "SUPER_ADMIN".equals(user.getRole())) {
+                throw new BusinessException(ResultCode.FORBIDDEN);
+            }
         }
 
         user.setDeleted(1);
@@ -326,12 +359,20 @@ public class UserService {
 
     /**
      * 修改用户状态
+     * ADMIN 只能修改 STUDENT 状态，SUPER_ADMIN 可修改任意用户状态
      */
     @Transactional
-    public void updateStatus(Long id, Integer status) {
+    public void updateStatus(Long id, Integer status, Long currentUserId, String currentRole) {
         User user = userMapper.selectById(id);
         if (user == null || user.getDeleted() == 1) {
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        }
+
+        // ADMIN 只能修改 STUDENT 的状态
+        if ("ADMIN".equals(currentRole)) {
+            if ("ADMIN".equals(user.getRole()) || "SUPER_ADMIN".equals(user.getRole())) {
+                throw new BusinessException(ResultCode.FORBIDDEN);
+            }
         }
 
         user.setStatus(status);

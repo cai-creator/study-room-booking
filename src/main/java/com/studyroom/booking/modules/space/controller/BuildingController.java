@@ -41,21 +41,21 @@ public class BuildingController {
     }
 
     @PostMapping
-    @RequireRole("SUPER_ADMIN")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
     @Operation(summary = "新增楼栋")
     public Result<Building> create(@Valid @RequestBody BuildingRequest request) {
         return Result.success(buildingService.create(request));
     }
 
     @PutMapping("/{id}")
-    @RequireRole("SUPER_ADMIN")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
     @Operation(summary = "更新楼栋")
     public Result<Building> update(@PathVariable Long id, @Valid @RequestBody BuildingRequest request) {
         return Result.success(buildingService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @RequireRole("SUPER_ADMIN")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
     @Operation(summary = "删除楼栋")
     public Result<Void> delete(@PathVariable Long id) {
         buildingService.delete(id);
