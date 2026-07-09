@@ -287,20 +287,21 @@
 
         function loadAllData() {
             Promise.all([
-                SpaceAPI.getCampuses().catch(function () { return []; }),
-                SpaceAPI.getBuildings({}).catch(function () { return []; })
+                SpaceAPI.getCampuses().catch(function (e) { Utils.showToast('校区加载失败: ' + (e.message || '未知错误'), 'error'); return []; }),
+                SpaceAPI.getBuildings({}).catch(function (e) { Utils.showToast('楼栋加载失败: ' + (e.message || '未知错误'), 'error'); return []; })
             ]).then(function (res) {
                 state.campuses = res[0] || [];
                 state.buildings = res[1] || [];
                 renderTree();
-                var fps = state.buildings.map(function (b) { return SpaceAPI.getFloors(b.id).catch(function () { return []; }); });
+                var fps = state.buildings.map(function (b) { return SpaceAPI.getFloors(b.id).catch(function (e) { console.error('[space] floors['+b.id+'] fail:', e); return []; }); });
                 return Promise.all(fps);
             }).then(function (fRes) {
                 state.floors = [];
                 fRes.forEach(function (f) { state.floors = state.floors.concat(f || []); });
                 renderTree();
+                var roomErrs = [];
                 var rps = state.floors.map(function (f) {
-                    return SpaceAPI.getRooms({ floorId: f.id })
+                    return SpaceAPI.getRooms({ floorId: f.id, pageNum: 1, pageSize: 500 })
                         .then(function (rp) {
                             if (rp) {
                                 var arr = rp.records || rp.list || [];
@@ -309,14 +310,26 @@
                             }
                             return [];
                         })
-                        .catch(function () { return []; });
+                        .catch(function (e) {
+                            roomErrs.push('楼层' + (f.floorNumber || f.id) + '层: ' + (e.message || '未知错误'));
+                            console.error('[space] rooms[' + f.id + '] fail:', e);
+                            return [];
+                        });
                 });
-                return Promise.all(rps);
+                return Promise.all(rps).then(function (results) {
+                    if (roomErrs.length) {
+                        Utils.showToast('自习室数据加载部分失败(' + roomErrs.length + '个楼层): ' + roomErrs[0], 'error');
+                    }
+                    return results;
+                });
             }).then(function (rRes) {
                 state.rooms = [];
                 rRes.forEach(function (arr) { state.rooms = state.rooms.concat(arr || []); });
                 renderTree();
-            }).catch(function () {
+                if (state.selected.type && state.selected.id) renderDetail(state.selected.type, state.selected.id);
+            }).catch(function (e) {
+                console.error('[space] loadAllData fail:', e);
+                Utils.showToast('空间数据加载失败: ' + (e.message || '未知错误'), 'error');
                 renderTree();
             });
         }

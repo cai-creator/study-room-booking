@@ -43,8 +43,7 @@ public class StudyRoomService extends ServiceImpl<StudyRoomMapper, StudyRoom> {
      * 分页查询自习室列表（支持多条件筛选）
      */
     public Page<StudyRoom> listWithFilters(RoomQueryRequest query) {
-        // 限制最大分页大小
-        if (query.getPageSize() > 100) {
+        if (query.getPageSize() == null || query.getPageSize() > 100) {
             query.setPageSize(100);
         }
         if (query.getPageNum() == null || query.getPageNum() < 1) {
@@ -52,7 +51,58 @@ public class StudyRoomService extends ServiceImpl<StudyRoomMapper, StudyRoom> {
         }
 
         Page<StudyRoom> page = new Page<>(query.getPageNum(), query.getPageSize());
-        return baseMapper.selectPageWithFilters(page, query);
+        LambdaQueryWrapper<StudyRoom> wrapper = new LambdaQueryWrapper<>();
+
+        Set<Long> floorIdSet = new HashSet<>();
+        if (query.getCampusId() != null) {
+            List<Long> campusBuildingIds = buildingMapper.selectList(
+                    new LambdaQueryWrapper<Building>()
+                            .eq(Building::getCampusId, query.getCampusId())
+            ).stream().map(Building::getId).toList();
+            if (!campusBuildingIds.isEmpty()) {
+                floorMapper.selectList(
+                        new LambdaQueryWrapper<Floor>().in(Floor::getBuildingId, campusBuildingIds)
+                ).forEach(f -> floorIdSet.add(f.getId()));
+            }
+        }
+        if (query.getBuildingId() != null) {
+            floorMapper.selectList(
+                    new LambdaQueryWrapper<Floor>().eq(Floor::getBuildingId, query.getBuildingId())
+            ).forEach(f -> floorIdSet.add(f.getId()));
+        }
+        if (query.getFloorId() != null) {
+            floorIdSet.add(query.getFloorId());
+        }
+        if (!floorIdSet.isEmpty()) {
+            wrapper.in(StudyRoom::getFloorId, floorIdSet);
+        }
+
+        if (StrUtil.isNotBlank(query.getRoomType())) {
+            wrapper.eq(StudyRoom::getRoomType, query.getRoomType());
+        }
+        if (query.getStatus() != null) {
+            wrapper.eq(StudyRoom::getStatus, query.getStatus());
+        }
+        if (StrUtil.isNotBlank(query.getKeyword())) {
+            wrapper.like(StudyRoom::getName, query.getKeyword());
+        }
+
+        String sortField = query.getSortField();
+        String sortOrder = query.getSortOrder();
+        boolean desc = "desc".equalsIgnoreCase(sortOrder);
+        if ("name".equals(sortField)) {
+            wrapper.last("ORDER BY name " + (desc ? "DESC" : "ASC") + ", id ASC");
+        } else if ("totalSeats".equals(sortField)) {
+            wrapper.last("ORDER BY total_seats " + (desc ? "DESC" : "ASC") + ", id ASC");
+        } else if ("status".equals(sortField)) {
+            wrapper.last("ORDER BY status " + (desc ? "DESC" : "ASC") + ", id ASC");
+        } else if ("updatedAt".equals(sortField)) {
+            wrapper.last("ORDER BY updated_at " + (desc ? "DESC" : "ASC") + ", id ASC");
+        } else {
+            wrapper.orderByAsc(StudyRoom::getFloorId).orderByAsc(StudyRoom::getId);
+        }
+
+        return this.page(page, wrapper);
     }
 
     /**
