@@ -70,3 +70,6 @@ application-local.properties
 # Local test docs (not for git)
 测试指南-*.md
 plan.md
+
+# Repair report (local only, not for git)
+repair-report.md

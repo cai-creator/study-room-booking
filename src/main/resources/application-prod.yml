@@ -1,7 +1,7 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc://localhost:3306/study_room_booking?useUnicode=true&characterEncoding=utf8&useSSL=true&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/study_room_booking?useUnicode=true&characterEncoding=utf8&useSSL=true&serverTimezone=Asia/Shanghai
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
@@ -10,6 +10,17 @@ jwt:
   expire: 86400000
   header: Authorization
   prefix: Bearer
+
+booking:
+  rules:
+    max-daily-reservations: 3
+    max-duration-hours: 8
+    advance-booking-hours: 24
+    min-advance-minutes: 15
+    checkin-grace-minutes: 15
+    temporary-absence-minutes: 30
+    blacklist-threshold: 3
+    blacklist-days: 7
 
 mybatis-plus:
   configuration:

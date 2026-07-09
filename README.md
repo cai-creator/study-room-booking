@@ -34,7 +34,7 @@ study-room-booking/
 │   │   │   │   ├── space/                          # 空间管理（成员B）
 │   │   │   │   ├── reservation/                    # 预约核心（成员C）
 │   │   │   │   ├── seat/                           # 座位管控（成员D）
-│   │   │   │   └── report/                         # 数据报表
+│   │   │   │   └── dashboard/                      # 仪表盘（成员C）
 │   │   │   └── utils/                              # 工具类
 │   │   └── resources/
 │   │       ├── mapper/                             # MyBatis Mapper XML
@@ -58,7 +58,7 @@ study-room-booking/
 | `modules/space/` | 空间管理 | 陈梦涵 | 校区/楼栋/楼层/自习室/座位的CRUD、批量导入、座位排布 |
 | `modules/reservation/` | 预约核心 | 郭学威 | 预约创建/取消/查询、规则引擎、并发控制、实时状态 |
 | `modules/seat/` | 座位管控 | 邓祺然 | 签到/签退/暂离、定时任务、黑名单、消息通知 |
-| `modules/report/` | 数据报表 | 郭学威 + 邓祺然 | C提供使用率/时段分布接口，D提供爽约率/转化率接口 |
+| `modules/dashboard/` | 仪表盘 | 郭学威 | 校园/楼栋/自习室三级使用率实时概览 |
 | `common/` | 公共组件 | 蔡俊晨 | 统一响应、异常处理、配置类、自定义注解等公共基础设施 |
 | `utils/` | 工具类 | 蔡俊晨（可由各成员补充） | 通用工具方法，各模块开发中遇到可往里补充 |
 
