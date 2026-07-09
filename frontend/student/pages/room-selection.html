@@ -78,8 +78,8 @@
   <script src="../../public/js/config.js"></script>
   <script src="../../public/js/utils.js"></script>
   <script src="../../public/js/request.js"></script>
-  <script src="../../public/mock/space.js"></script>
   <script src="../../public/api/space.js"></script>
+  <script src="../../public/js/student-navbar.js"></script>
 
   <script>
     (function() {
@@ -89,6 +89,7 @@
         .then(r => r.text())
         .then(html => {
           document.getElementById('navbar-placeholder').innerHTML = html;
+          if (window.initStudentNavbarUI) initStudentNavbarUI();
           lucide.createIcons();
         });
 
@@ -157,7 +158,7 @@
         if (buildingId) params.buildingId = buildingId;
         if (floorId) params.floorId = floorId;
         if (roomType) params.roomType = roomType;
-        if (hasAvailable) params.hasAvailableSeats = 'true';
+        if (hasAvailable) params.hasAvailableSeats = true;
         if (keyword) params.keyword = keyword;
 
         document.getElementById('rooms-loading').classList.remove('hidden');
@@ -167,7 +168,7 @@
 
         SpaceAPI.getRooms(params).then(function(result) {
           document.getElementById('rooms-loading').classList.add('hidden');
-          var list = result.list || [];
+          var list = result.records || result.list || [];
           if (list.length === 0) {
             document.getElementById('rooms-empty').classList.remove('hidden');
             lucide.createIcons();
@@ -180,14 +181,15 @@
             var el = document.createElement('div');
             el.className = 'rounded-xl p-5 transition-all hover:shadow-lg';
             el.style.cssText = 'background:var(--surface-card);border:var(--surface-card-border);';
-            var statusBadge = room.hasAvailable
+            var availableCount = room.availableSeats != null ? room.availableSeats : (room.totalSeats ? Math.floor(room.totalSeats * 0.4) : 0);
+            var statusBadge = (room.hasAvailable || availableCount > 0)
               ? '<span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--state-success-bg);color:var(--state-success);">有空座</span>'
               : '<span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--seat-occupied-bg);color:var(--seat-occupied);">已满</span>';
             el.innerHTML =
               '<div class="flex items-start justify-between mb-3">' +
                 '<div>' +
                   '<h3 class="font-semibold text-sm mb-1">' + Utils.escapeHtml(room.name) + '</h3>' +
-                  '<p class="text-xs" style="color:var(--color-text-tertiary);">' + Utils.escapeHtml(room.campusName) + ' · ' + Utils.escapeHtml(room.buildingName) + ' · ' + room.floorNumber + '层</p>' +
+                  '<p class="text-xs" style="color:var(--color-text-tertiary);">' + Utils.escapeHtml(room.campusName || '') + ' · ' + Utils.escapeHtml(room.buildingName || '') + ' · ' + (room.floorNumber || '') + '层</p>' +
                 '</div>' +
                 statusBadge +
               '</div>' +
@@ -200,7 +202,7 @@
                  'style="background:var(--brand-primary);color:var(--color-text-inverse);text-decoration:none;">进入选座</a>';
             container.appendChild(el);
           });
-          renderPagination(result.total, result.pageNum, result.pageSize);
+          renderPagination(result.total || 0, result.current || result.pageNum || 1, result.size || result.pageSize || 9);
           lucide.createIcons();
         }).catch(function() {
           document.getElementById('rooms-loading').textContent = '加载失败，请重试';

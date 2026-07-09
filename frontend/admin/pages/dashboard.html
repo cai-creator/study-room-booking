@@ -106,10 +106,9 @@
     <script src="../../public/js/config.js"></script>
     <script src="../../public/js/utils.js"></script>
     <script src="../../public/js/request.js"></script>
-    <script src="../../public/mock/dashboard.js"></script>
-    <script src="../../public/mock/space.js"></script>
     <script src="../../public/api/dashboard.js"></script>
     <script src="../../public/api/space.js"></script>
+    <script src="../../public/js/admin-navbar.js"></script>
 
     <script>
     (function () {
@@ -161,9 +160,11 @@
             var navbarUrl = BasePath.admin + '/partials/navbar.html';
             fetch(navbarUrl).then(function (r) { return r.text(); }).then(function (html) {
                 placeholder.innerHTML = html;
+                if (window.initAdminNavbarUI) initAdminNavbarUI();
                 setTimeout(execNavbarScript, 0);
             }).catch(function () {
                 placeholder.innerHTML = NAVBAR_HTML;
+                if (window.initAdminNavbarUI) initAdminNavbarUI();
                 setTimeout(execNavbarScript, 0);
             });
         }
@@ -254,11 +255,17 @@
             }).then(function (fRes) {
                 state.spaceFloors = [];
                 fRes.forEach(function (f) { state.spaceFloors = state.spaceFloors.concat(f || []); });
-                var rps = state.spaceFloors.map(function (f) { return SpaceAPI.getRooms({ floorId: f.id }).catch(function () { return { list: [] }; }); });
+                var rps = state.spaceFloors.map(function (f) { return SpaceAPI.getRooms({ floorId: f.id }).catch(function () { return { records: [] }; }); });
                 return Promise.all(rps);
             }).then(function (rRes) {
                 state.spaceRooms = [];
-                rRes.forEach(function (rp) { if (rp && rp.list) state.spaceRooms = state.spaceRooms.concat(rp.list); else if (Array.isArray(rp)) state.spaceRooms = state.spaceRooms.concat(rp); });
+                rRes.forEach(function (rp) {
+                    if (rp) {
+                        var arr = rp.records || rp.list || [];
+                        if (Array.isArray(rp)) arr = rp;
+                        state.spaceRooms = state.spaceRooms.concat(arr);
+                    }
+                });
             }).catch(function () {});
         }
 

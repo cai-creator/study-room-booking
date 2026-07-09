@@ -162,12 +162,10 @@
     <script src="../../public/js/config.js"></script>
     <script src="../../public/js/utils.js"></script>
     <script src="../../public/js/request.js"></script>
-    <script src="../../public/mock/seat.js"></script>
-    <script src="../../public/mock/user.js"></script>
-    <script src="../../public/mock/auth.js"></script>
     <script src="../../public/api/seat.js"></script>
     <script src="../../public/api/user.js"></script>
     <script src="../../public/api/auth.js"></script>
+    <script src="../../public/js/admin-navbar.js"></script>
 
     <script>
     (function () {
@@ -219,9 +217,11 @@
             var navbarUrl = BasePath.admin + '/partials/navbar.html';
             fetch(navbarUrl).then(function (r) { return r.text(); }).then(function (html) {
                 placeholder.innerHTML = html;
+                if (window.initAdminNavbarUI) initAdminNavbarUI();
                 setTimeout(execNavbarScript, 0);
             }).catch(function () {
                 placeholder.innerHTML = NAVBAR_HTML;
+                if (window.initAdminNavbarUI) initAdminNavbarUI();
                 setTimeout(execNavbarScript, 0);
             });
         }
@@ -273,7 +273,7 @@
             if (kw) params.keyword = kw;
             if (st !== '') params.status = st;
             SeatAPI.getBlacklist(params).then(function (d) {
-                state.b.list = d.list || [];
+                state.b.list = d.records || d.list || [];
                 state.b.total = d.total || 0;
                 document.getElementById('count-blacklist').textContent = state.b.total;
                 renderKPI_B();
@@ -313,7 +313,7 @@
             var kw = document.getElementById('n-kw').value.trim();
             if (kw) params.keyword = kw;
             SeatAPI.getNoShowRecords(params).then(function (d) {
-                state.n.list = d.list || [];
+                state.n.list = d.records || d.list || [];
                 state.n.total = d.total || 0;
                 document.getElementById('count-noshow').textContent = state.n.total;
                 renderNoShowTbl();
@@ -389,7 +389,7 @@
             var endTime = document.getElementById('in-end').value + ' 23:59:59';
             if (!username) { Utils.showToast('请输入学号/账号', 'error'); return; }
             UserAPI.getUsers({ keyword: username, pageNum: 1, pageSize: 50 }).then(function (res) {
-                var list = res.list || [];
+                var list = res.records || res.list || [];
                 var user = list.find(function (u) { return u.username === username; });
                 if (!user) throw { message: '未找到该用户，请检查学号/账号是否正确' };
                 return SeatAPI.addToBlacklist({ userId: user.id, reason: reason, endTime: endTime });

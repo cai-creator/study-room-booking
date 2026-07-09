@@ -63,83 +63,9 @@
   </div>
 </nav>
 
-<script>
-  (function () {
-    // 初始化用户信息（优先读 AppConfig.storageKeys，降级兼容硬编码 key）
-    var user = null;
-    var userKey = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
-    try {
-      var raw = localStorage.getItem(userKey);
-      if (raw) user = JSON.parse(raw);
-    } catch (e) {}
-
-    if (user) {
-      var avatarEl = document.getElementById('navbar-user-avatar');
-      var nameEl = document.getElementById('navbar-user-name');
-      var dropdownName = document.getElementById('dropdown-name');
-      var dropdownRole = document.getElementById('dropdown-role');
-
-      if (avatarEl) avatarEl.textContent = (user.realName || user.username).charAt(0);
-      if (nameEl) nameEl.textContent = user.realName || user.username;
-      if (dropdownName) dropdownName.textContent = user.realName || user.username;
-
-      var roleMap = { STUDENT: '学生', ADMIN: '管理员', SUPER_ADMIN: '超级管理员' };
-      if (dropdownRole) dropdownRole.textContent = roleMap[user.role] || user.role;
-    }
-
-    // 高亮当前页
-    var currentPage = window.location.pathname.split('/').pop();
-    var links = document.querySelectorAll('.nav-link');
-    links.forEach(function (link) {
-      if (link.getAttribute('data-page') === currentPage) {
-        link.style.color = 'var(--brand-primary)';
-        link.style.background = 'var(--brand-primary-lighter)';
-      } else {
-        link.style.color = 'var(--color-text-secondary)';
-        link.style.background = 'transparent';
-      }
-      link.addEventListener('mouseenter', function () {
-        if (link.getAttribute('data-page') !== currentPage) {
-          link.style.background = 'var(--color-bg-tertiary)';
-        }
-      });
-      link.addEventListener('mouseleave', function () {
-        if (link.getAttribute('data-page') !== currentPage) {
-          link.style.background = 'transparent';
-        }
-      });
-    });
-  })();
-
-  window.toggleUserMenu = function () {
-    var dd = document.getElementById('user-dropdown');
-    dd.classList.toggle('hidden');
-    if (window.lucide) lucide.createIcons();
-  };
-
-  window.toggleMobileMenu = function () {
-    var menu = document.getElementById('mobile-menu');
-    menu.classList.toggle('hidden');
-  };
-
-  window.handleLogout = function () {
-    if (window.AuthAPI && AuthAPI.logout) {
-      AuthAPI.logout();
-    } else {
-      var tokenKey = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.token) || 'study_room_token';
-      var userKey = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
-      var loginUrl = (window.AppConfig && AppConfig.loginUrl) || '/public/login.html';
-      localStorage.removeItem(tokenKey);
-      localStorage.removeItem(userKey);
-      window.location.href = loginUrl;
-    }
-  };
-
-  document.addEventListener('click', function (e) {
-    var trigger = document.getElementById('user-menu-trigger');
-    var dd = document.getElementById('user-dropdown');
-    if (dd && trigger && !trigger.contains(e.target) && !dd.contains(e.target)) {
-      dd.classList.add('hidden');
-    }
-  });
-</script>
+<!--
+  脚本已抽取到 ../../public/js/admin-navbar.js（单独文件确保被正常执行）
+  管理端页面步骤：
+  1) <script src="../../public/js/admin-navbar.js"></script>  引入脚本（全局注册 toggleUserMenu / handleLogout）
+  2) fetch('../partials/navbar.html') 填充 innerHTML 后调用 initAdminNavbarUI() 填充用户信息+高亮菜单
+-->

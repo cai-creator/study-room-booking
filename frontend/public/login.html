@@ -200,7 +200,6 @@
 <script src="./js/config.js"></script>
 <script src="./js/utils.js"></script>
 <script src="./js/request.js"></script>
-<script src="./mock/auth.js"></script>
 <script src="./api/auth.js"></script>
 
 <script>
@@ -352,18 +351,10 @@
 
     setLoginLoading(true);
 
-    AuthAPI.login(username, password)
+    var expectedRole = currentTab === 'student' ? 'STUDENT' : 'ADMIN';
+    AuthAPI.login(username, password, expectedRole)
       .then(function (data) {
         setLoginLoading(false);
-        var user = (data && data.user) || Utils.getUser();
-        if (user) {
-          var role = user.role;
-          if (currentTab === 'student' && role !== 'STUDENT') {
-            Utils.showToast('当前账号为管理员，将进入管理后台', 'info');
-          } else if (currentTab === 'admin' && role === 'STUDENT') {
-            Utils.showToast('当前账号为学生身份，将进入学生端', 'info');
-          }
-        }
       })
       .catch(function (err) {
         setLoginLoading(false);

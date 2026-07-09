@@ -117,14 +117,11 @@
   <script src="../../public/js/config.js"></script>
   <script src="../../public/js/utils.js"></script>
   <script src="../../public/js/request.js"></script>
-  <script src="../../public/mock/auth.js"></script>
-  <script src="../../public/mock/space.js"></script>
-  <script src="../../public/mock/dashboard.js"></script>
-  <script src="../../public/mock/reservation.js"></script>
   <script src="../../public/api/auth.js"></script>
   <script src="../../public/api/space.js"></script>
   <script src="../../public/api/dashboard.js"></script>
   <script src="../../public/api/reservation.js"></script>
+  <script src="../../public/js/student-navbar.js"></script>
 
   <script>
     (function() {
@@ -135,6 +132,7 @@
         .then(r => r.text())
         .then(html => {
           document.getElementById('navbar-placeholder').innerHTML = html;
+          if (window.initStudentNavbarUI) initStudentNavbarUI();
           lucide.createIcons();
         });
 
@@ -182,14 +180,15 @@
       ReservationAPI.getMyReservations({ date: today, pageSize: 5 })
         .then(function(result) {
           document.getElementById('today-loading').classList.add('hidden');
-          if (!result.list || result.list.length === 0) {
+          var list = result.records || result.list || [];
+          if (list.length === 0) {
             document.getElementById('today-empty').classList.remove('hidden');
             lucide.createIcons();
             return;
           }
           var container = document.getElementById('today-list');
           container.classList.remove('hidden');
-          result.list.forEach(function(r) {
+          list.forEach(function(r) {
             var statusColor = r.status === 'CHECKED_IN' ? 'var(--state-success)' : r.status === 'RESERVED' ? 'var(--state-warning)' : 'var(--color-text-tertiary)';
             var statusBg = r.status === 'CHECKED_IN' ? 'var(--state-success-bg)' : r.status === 'RESERVED' ? 'var(--state-warning-bg)' : 'var(--color-bg-tertiary)';
             var el = document.createElement('div');
@@ -217,7 +216,8 @@
           var container = document.getElementById('rooms-list');
           container.classList.remove('hidden');
           var typeNames = { 'READING_ROOM': '阅览室', 'SELF_STUDY_ROOM': '自习室', 'COMPUTER_ROOM': '电子阅览室', 'GROUP_ROOM': '研讨间' };
-          result.list.forEach(function(room) {
+          var list = result.records || result.list || [];
+          list.forEach(function(room) {
             var el = document.createElement('a');
             el.href = 'seat-selection.html?roomId=' + room.id;
             el.className = 'rounded-lg p-4 transition-all hover:shadow-md';

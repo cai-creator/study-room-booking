@@ -90,10 +90,9 @@
   <script src="../../public/js/config.js"></script>
   <script src="../../public/js/utils.js"></script>
   <script src="../../public/js/request.js"></script>
-  <script src="../../public/mock/space.js"></script>
-  <script src="../../public/mock/reservation.js"></script>
   <script src="../../public/api/space.js"></script>
   <script src="../../public/api/reservation.js"></script>
+  <script src="../../public/js/student-navbar.js"></script>
 
   <script>
     (function() {
@@ -103,6 +102,7 @@
         .then(r => r.text())
         .then(html => {
           document.getElementById('navbar-placeholder').innerHTML = html;
+          if (window.initStudentNavbarUI) initStudentNavbarUI();
           lucide.createIcons();
         });
 
@@ -132,7 +132,8 @@
         document.getElementById('seat-loading').classList.add('hidden');
         SpaceAPI.getRooms({ pageSize: 100 }).then(function(result) {
           var sel = document.getElementById('room-select');
-          (result.list || []).forEach(function(r) {
+          var list = result.records || result.list || [];
+          list.forEach(function(r) {
             var opt = document.createElement('option');
             opt.value = r.id; opt.textContent = r.name;
             sel.appendChild(opt);

@@ -131,10 +131,9 @@
     <script src="../../public/js/config.js"></script>
     <script src="../../public/js/utils.js"></script>
     <script src="../../public/js/request.js"></script>
-    <script src="../../public/mock/user.js"></script>
-    <script src="../../public/mock/auth.js"></script>
     <script src="../../public/api/user.js"></script>
     <script src="../../public/api/auth.js"></script>
+    <script src="../../public/js/admin-navbar.js"></script>
 
     <script>
     (function () {
@@ -186,9 +185,11 @@
             var navbarUrl = BasePath.admin + '/partials/navbar.html';
             fetch(navbarUrl).then(function (r) { return r.text(); }).then(function (html) {
                 placeholder.innerHTML = html;
+                if (window.initAdminNavbarUI) initAdminNavbarUI();
                 setTimeout(execNavbarScript, 0);
             }).catch(function () {
                 placeholder.innerHTML = NAVBAR_HTML;
+                if (window.initAdminNavbarUI) initAdminNavbarUI();
                 setTimeout(execNavbarScript, 0);
             });
         }
@@ -224,7 +225,7 @@
             if (state.role) params.role = state.role;
             if (state.status !== '') params.status = state.status;
             UserAPI.getUsers(params).then(function (data) {
-                state.list = data.list || [];
+                state.list = data.records || data.list || [];
                 state.total = data.total || 0;
                 renderTable();
                 renderKPIs(state.list);

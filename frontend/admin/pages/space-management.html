@@ -71,8 +71,8 @@
     <script src="../../public/js/config.js"></script>
     <script src="../../public/js/utils.js"></script>
     <script src="../../public/js/request.js"></script>
-    <script src="../../public/mock/space.js"></script>
     <script src="../../public/api/space.js"></script>
+    <script src="../../public/js/admin-navbar.js"></script>
 
     <script>
     (function () {
@@ -124,9 +124,11 @@
             var navbarUrl = BasePath.admin + '/partials/navbar.html';
             fetch(navbarUrl).then(function (r) { return r.text(); }).then(function (html) {
                 placeholder.innerHTML = html;
+                if (window.initAdminNavbarUI) initAdminNavbarUI();
                 setTimeout(execNavbarScript, 0);
             }).catch(function () {
                 placeholder.innerHTML = NAVBAR_HTML;
+                if (window.initAdminNavbarUI) initAdminNavbarUI();
                 setTimeout(execNavbarScript, 0);
             });
         }
@@ -342,7 +344,13 @@
                 return Promise.all(rps);
             }).then(function (rRes) {
                 state.rooms = [];
-                rRes.forEach(function (rp) { if (rp && rp.list) state.rooms = state.rooms.concat(rp.list); });
+                rRes.forEach(function (rp) {
+                    if (rp) {
+                        var arr = rp.records || rp.list || [];
+                        if (Array.isArray(rp)) arr = rp;
+                        state.rooms = state.rooms.concat(arr);
+                    }
+                });
                 renderTree();
             });
         }
@@ -352,7 +360,11 @@
             if (type === 'campus') {
                 var c = state.campuses.find(function (x) { return x.id === id; });
                 var bCount = state.buildings.filter(function (b) { return b.campusId === id; }).length;
-                var rCount = state.rooms.filter(function (r) { return r.campusId === id; }).length;
+                var campusFloorIds = state.floors.filter(function (f) {
+                    var bd = state.buildings.find(function (b) { return b.id === f.buildingId; });
+                    return bd && bd.campusId === id;
+                }).map(function (f) { return f.id; });
+                var rCount = state.rooms.filter(function (r) { return campusFloorIds.indexOf(r.floorId) >= 0; }).length;
                 panel.innerHTML = renderCard('校区', c.name, [
                     { icon: 'map-pin', label: '地址', value: c.address || '—' },
                     { icon: 'building', label: '楼栋数', value: String(bCount) },
@@ -366,7 +378,8 @@
                 var b = state.buildings.find(function (x) { return x.id === id; });
                 var cam = state.campuses.find(function (c) { return c.id === b.campusId; });
                 var fList = state.floors.filter(function (f) { return f.buildingId === id; });
-                var rmCount = state.rooms.filter(function (r) { return r.buildingId === id; }).length;
+                var buildingFloorIds = fList.map(function (f) { return f.id; });
+                var rmCount = state.rooms.filter(function (r) { return buildingFloorIds.indexOf(r.floorId) >= 0; }).length;
                 panel.innerHTML = renderCard('楼栋', b.name, [
                     { icon: 'building-2', label: '所属校区', value: cam ? cam.name : '—' },
                     { icon: 'layers', label: '楼层数', value: String(b.floorCount || fList.length) },

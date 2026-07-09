@@ -5,15 +5,15 @@
 (function () {
   'use strict';
 
-  // 检测 URL 参数，支持 ?mock=true 切换 Mock 模式
-  var params = new URLSearchParams(window.location.search);
+  // 已禁用 Mock 模式（禁止使用任何本地模拟数据，所有请求必须走真实后端）
+  // 历史说明：旧版本曾支持 params.get('mock') === 'true' 开启 Mock，现彻底下线
 
   window.AppConfig = {
     /** 后端 API 基地址 */
     apiBaseUrl: 'http://localhost:8081/api',
 
-    /** 是否启用 Mock 数据（可通过 URL 参数 ?mock=true 启用 Mock 模式） */
-    useMock: params.get('mock') === 'true',
+    /** 是否启用 Mock 数据（已强制禁用，请勿修改） */
+    useMock: false,
 
 
 

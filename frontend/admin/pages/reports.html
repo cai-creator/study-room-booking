@@ -92,10 +92,9 @@
     <script src="../../public/js/config.js"></script>
     <script src="../../public/js/utils.js"></script>
     <script src="../../public/js/request.js"></script>
-    <script src="../../public/mock/report.js"></script>
-    <script src="../../public/mock/auth.js"></script>
     <script src="../../public/api/report.js"></script>
     <script src="../../public/api/auth.js"></script>
+    <script src="../../public/js/admin-navbar.js"></script>
 
     <script>
     (function () {
@@ -147,9 +146,11 @@
             var navbarUrl = BasePath.admin + '/partials/navbar.html';
             fetch(navbarUrl).then(function (r) { return r.text(); }).then(function (html) {
                 placeholder.innerHTML = html;
+                if (window.initAdminNavbarUI) initAdminNavbarUI();
                 setTimeout(execNavbarScript, 0);
             }).catch(function () {
                 placeholder.innerHTML = NAVBAR_HTML;
+                if (window.initAdminNavbarUI) initAdminNavbarUI();
                 setTimeout(execNavbarScript, 0);
             });
         }
@@ -160,10 +161,16 @@
 
         function renderKPIs(usage, noshow, conv) {
             var box = document.getElementById('kpi-grid');
+            var list = Array.isArray(usage) ? usage : ((usage && usage.list) || []);
             var avgRate = (usage && usage.averageRate) || 0;
+            if (!avgRate && list.length) {
+                var total = 0;
+                list.forEach(function (x) { total += Number(x.usageRate) || 0; });
+                avgRate = list.length ? Math.round(total / list.length) : 0;
+            }
             var totalRes = (noshow && noshow.totalReservations) || (conv && conv.totalReservations) || 0;
-            var nsRate = (noshow && noshow.noShowRate) || 0;
-            var cRate = (conv && conv.conversionRate) || 0;
+            var nsRate = (noshow && noshow.rate != null) ? noshow.rate : ((noshow && noshow.noShowRate) || 0);
+            var cRate = (conv && conv.completionRate != null) ? conv.completionRate : ((conv && conv.conversionRate) || 0);
             box.innerHTML =
                 kpiCard('calendar-check-2', '预约总量', String(totalRes).replace(/\B(?=(\d{3})+(?!\d))/g, ','), '统计周期内所有预约', '#0E7C6B', '#12A38D') +
                 kpiCard('trending-up', '平均使用率', avgRate + '%', '最近 7 天平均', '#2563EB', '#3B82F6') +
@@ -230,15 +237,16 @@
         function renderHotPeriods(list) {
             var box = document.getElementById('hot-periods');
             if (!list || !list.length) { box.innerHTML = '<p style="color:var(--color-text-tertiary);font-size:var(--text-sm);" class="py-8 text-center">暂无数据</p>'; return; }
-            var maxRate = list.reduce(function (m, x) { return Math.max(m, x.avgUsageRate || 0); }, 1);
+            var maxCount = list.reduce(function (m, x) { return Math.max(m, x.count || 0); }, 1);
             var h = '';
             var medals = ['#F59E0B', '#94A3B8', '#B45309', '#64748B', '#64748B'];
             var medalBg = ['#FEF3C7', '#F1F5F9', '#FEF3C7', '#F8FAFC', '#F8FAFC'];
             list.forEach(function (p, i) {
-                var pct = Math.min(100, Math.round((p.avgUsageRate || 0) / maxRate * 100));
-                h += '<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0" style="background:' + medalBg[i] + ';color:' + medals[i] + ';">' + p.rank + '</div>';
-                h += '<div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-1.5"><div class="text-sm font-medium truncate" style="color:var(--color-text-primary);">' + p.period + '</div><div class="text-sm font-bold flex items-center gap-1" style="color:var(--brand-primary);">' + p.avgUsageRate + '%</div></div>';
-                h += '<div class="w-full h-2 rounded-full overflow-hidden" style="background:var(--color-bg-tertiary);"><div style="width:' + pct + '%;height:100%;background:linear-gradient(90deg,var(--brand-primary-light),var(--brand-primary));border-radius:9999px;"></div></div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);margin-top:4px;">' + (p.totalReservations || 0).toLocaleString() + ' 次预约</div>';
+                var pct = Math.min(100, Math.round(((p.count || 0) / maxCount) * 100));
+                var rankNum = (p.rank != null) ? p.rank : (i + 1);
+                h += '<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0" style="background:' + medalBg[i] + ';color:' + medals[i] + ';">' + rankNum + '</div>';
+                h += '<div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-1.5"><div class="text-sm font-medium truncate" style="color:var(--color-text-primary);">' + (p.period || '') + '</div><div class="text-sm font-bold flex items-center gap-1" style="color:var(--brand-primary);">' + (p.count || 0).toLocaleString() + ' 次</div></div>';
+                h += '<div class="w-full h-2 rounded-full overflow-hidden" style="background:var(--color-bg-tertiary);"><div style="width:' + pct + '%;height:100%;background:linear-gradient(90deg,var(--brand-primary-light),var(--brand-primary));border-radius:9999px;"></div></div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);margin-top:4px;">预约热度排行第 ' + rankNum + ' 名</div>';
                 h += '</div></div>';
             });
             box.innerHTML = h;
@@ -260,22 +268,26 @@
         function loadUsage() {
             var range = getDateRange();
             ReportAPI.getUsageRate(range).then(function (d) {
-                var list = (d && d.list) || (Array.isArray(d) ? d : []);
+                var list = Array.isArray(d) ? d : ((d && d.list) || (d && d.records) || []);
                 var avg = (d && d.averageRate) || 0;
-                if (!list.length && Array.isArray(d)) {
+                if (!avg && list.length) {
                     var total = 0;
-                    d.forEach(function (x) { total += Number(x.usageRate) || 0; });
-                    avg = d.length ? Math.round(total / d.length) : 0;
+                    list.forEach(function (x) { total += Number(x.usageRate) || 0; });
+                    avg = list.length ? Math.round(total / list.length) : 0;
                 }
                 document.getElementById('avg-rate-badge').textContent = '平均 ' + avg + '%';
-                document.getElementById('usage-chart').innerHTML = lineChartSvg(list, 'date', 'usageRate', 260, 0, 100, '#0E7C6B', '#0E7C6B', function (d) { return buildDateShort(d); });
+                document.getElementById('usage-chart').innerHTML = lineChartSvg(list, 'date', 'usageRate', 260, 0, 100, '#0E7C6B', '#0E7C6B', function (dd) { return buildDateShort(dd); });
             }).catch(function (e) { Utils.showToast(e.message || '使用率加载失败', 'error'); });
         }
         function loadTimeDist() {
             var range = getDateRange();
             ReportAPI.getTimeDistribution(range).then(function (d) {
-                var list = (d || []).map(function (x) { return { hour: x.label || x.hour, usageRate: x.usageRate }; });
-                document.getElementById('time-chart').innerHTML = barChartSvg(list, 'hour', 'usageRate', 260, 100, '#0E7C6B');
+                var list = (Array.isArray(d) ? d : []).map(function (x) {
+                    return { hour: x.label || x.hour, count: (x.count != null) ? x.count : (x.usageRate || 0) };
+                });
+                var maxCount = list.reduce(function (m, x) { return Math.max(m, x.count || 0); }, 10);
+                maxCount = Math.max(10, Math.ceil(maxCount / 10) * 10);
+                document.getElementById('time-chart').innerHTML = barChartSvg(list, 'hour', 'count', 260, maxCount, '#0E7C6B');
             }).catch(function (e) { Utils.showToast(e.message || '时段分布加载失败', 'error'); });
         }
         function loadHotPeriods() {
@@ -285,7 +297,7 @@
         function loadNoShow() {
             var range = getDateRange();
             ReportAPI.getNoShowRate(range).then(function (d) {
-                var trend = (d && d.trend) || [];
+                var trend = (d && d.trendItems) || (d && d.trend) || [];
                 document.getElementById('noshow-chart').innerHTML = lineChartSvg(trend, 'month', 'rate', 240, 0, 5, '#DC2626', '#DC2626', function (m) { return buildMonthLabel(m); });
                 return d;
             });
@@ -293,7 +305,7 @@
         function loadConversion() {
             var range = getDateRange();
             ReportAPI.getConversionRate(range).then(function (d) {
-                var trend = (d && d.trend) || [];
+                var trend = (d && d.trendItems) || (d && d.trend) || [];
                 document.getElementById('conversion-chart').innerHTML = lineChartSvg(trend, 'month', 'rate', 240, 70, 100, '#16A34A', '#16A34A', function (m) { return buildMonthLabel(m); });
                 return d;
             });
