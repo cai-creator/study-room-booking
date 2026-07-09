@@ -78,8 +78,12 @@
           <p class="text-sm" style="color:var(--color-text-tertiary);" id="detail-tags">--</p>
         </div>
         <div id="reservation-section">
+          <label class="text-sm font-medium mb-2 block">预约日期</label>
+          <input type="date" id="date-picker" class="px-3 py-2 rounded-md text-sm outline-none w-full md:w-48 mb-3"
+                 style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);">
           <label class="text-sm font-medium mb-2 block">选择时段</label>
           <div id="slot-list" class="flex flex-wrap gap-2 mb-3"></div>
+          <div id="slot-empty" class="hidden text-xs mb-3" style="color:var(--color-text-tertiary);">该日期暂无可用时段，请选择其他日期</div>
           <button onclick="makeReservation()" id="btn-reserve" class="px-5 py-2 rounded-md text-sm font-medium text-white"
                   style="background:var(--brand-primary);">确认预约</button>
         </div>
@@ -205,21 +209,16 @@
         });
       }
 
-      function selectSeat(seat) {
-        selectedSeat = seat;
+      function loadSlotsForDate(seat, dateStr) {
         selectedSlot = null;
-        document.getElementById('seat-detail').classList.remove('hidden');
-        document.getElementById('detail-code').textContent = seat.seatCode;
-        var st = statusColors[seat.status] || statusColors['UNAVAILABLE'];
-        document.getElementById('detail-status').innerHTML = '<span style="color:' + st.bg + ';font-weight:600;">' + seatStatusMap[seat.status] + '</span>';
-        var tagText = (seat.tags || []).join('、') || '无特殊标签';
-        document.getElementById('detail-tags').textContent = '标签：' + tagText;
-
-        // 加载可用时段
-        var today = new Date().toISOString().slice(0,10);
-        ReservationAPI.getAvailableSlots(seat.seatId, today).then(function(slots) {
+        document.getElementById('slot-empty').classList.add('hidden');
+        ReservationAPI.getAvailableSlots(seat.seatId, dateStr).then(function(slots) {
           var container = document.getElementById('slot-list');
           container.innerHTML = '';
+          if (!slots || slots.length === 0) {
+            document.getElementById('slot-empty').classList.remove('hidden');
+            return;
+          }
           slots.forEach(function(slot) {
             var btn = document.createElement('button');
             btn.className = 'px-3 py-1.5 rounded-md text-xs font-medium transition-all';
@@ -234,7 +233,37 @@
             };
             container.appendChild(btn);
           });
+        }).catch(function() {
+          document.getElementById('slot-empty').classList.remove('hidden');
         });
+      }
+
+      function selectSeat(seat) {
+        selectedSeat = seat;
+        selectedSlot = null;
+        document.getElementById('seat-detail').classList.remove('hidden');
+        document.getElementById('detail-code').textContent = seat.seatCode;
+        var st = statusColors[seat.status] || statusColors['UNAVAILABLE'];
+        document.getElementById('detail-status').innerHTML = '<span style="color:' + st.bg + ';font-weight:600;">' + seatStatusMap[seat.status] + '</span>';
+        var tagText = (seat.tags || []).join('、') || '无特殊标签';
+        document.getElementById('detail-tags').textContent = '标签：' + tagText;
+
+        // 初始化日期选择器（默认明天）
+        var datePicker = document.getElementById('date-picker');
+        var tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        datePicker.value = tomorrow.toISOString().slice(0, 10);
+        datePicker.min = new Date().toISOString().slice(0, 10);
+
+        // 监听日期变化
+        datePicker.onchange = function() {
+          if (this.value) {
+            loadSlotsForDate(selectedSeat, this.value);
+          }
+        };
+
+        // 加载默认日期的时段
+        loadSlotsForDate(seat, datePicker.value);
       }
 
       window.makeReservation = function() {

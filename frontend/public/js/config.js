@@ -12,7 +12,7 @@
     /** 后端 API 基地址 */
     apiBaseUrl: 'http://localhost:8081/api',
 
-    /** 是否启用 Mock 数据（已强制禁用，请勿修改） */
+    /** 是否启用 Mock 数据 */
     useMock: false,
 
 
