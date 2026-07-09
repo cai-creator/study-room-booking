@@ -22,7 +22,11 @@
 
   /** 用户名密码登录 */
   AuthAPI.login = function (username, password) {
-    if (AppConfig.useMock) return MockAuth.login(username, password).then(function (res) { handleLoginSuccess(res.data); return res; });
+    if (AppConfig.useMock) return MockAuth.login(username, password).then(function (res) {
+      if (res.code !== 200) throw res;
+      handleLoginSuccess(res.data);
+      return res.data;
+    });
     return Request.post('/auth/login', { username: username, password: password }).then(function (data) { handleLoginSuccess(data); return data; });
   };
 

@@ -12,8 +12,8 @@
     /** 后端 API 基地址 */
     apiBaseUrl: 'http://localhost:8081/api',
 
-    /** 是否启用 Mock 数据（可通过 URL 参数 ?mock=false 连接真实后端） */
-    useMock: params.get('mock') !== 'false',
+    /** 是否启用 Mock 数据（可通过 URL 参数 ?mock=true 启用 Mock 模式） */
+    useMock: params.get('mock') === 'true',
 
 
 
