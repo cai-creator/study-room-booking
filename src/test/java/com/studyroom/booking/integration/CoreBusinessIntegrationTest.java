@@ -4,9 +4,12 @@ import com.studyroom.booking.common.Result;
 import com.studyroom.booking.modules.reservation.dto.BookingVO;
 import com.studyroom.booking.modules.reservation.dto.CreateBookingRequest;
 import com.studyroom.booking.modules.reservation.service.BookingService;
+import com.studyroom.booking.modules.user.dto.ChangePasswordRequest;
+import com.studyroom.booking.modules.user.dto.CreateUserRequest;
 import com.studyroom.booking.modules.user.dto.LoginRequest;
 import com.studyroom.booking.modules.user.dto.LoginVO;
 import com.studyroom.booking.modules.user.dto.RegisterRequest;
+import com.studyroom.booking.modules.user.dto.UpdateUserRequest;
 import com.studyroom.booking.modules.user.dto.UserVO;
 import com.studyroom.booking.modules.user.service.UserService;
 import com.studyroom.booking.common.context.UserContext;
@@ -166,9 +169,9 @@ class CoreBusinessIntegrationTest {
         @Test
         @DisplayName("获取当前用户信息")
         void getCurrentUser() {
-            UserVO user = userService.getCurrentUser(1L); // admin id=1
+            UserVO user = userService.getCurrentUser(1L); // root, SUPER_ADMIN
             assertNotNull(user);
-            assertEquals("admin", user.getUsername());
+            assertEquals("root", user.getUsername());
             assertEquals("SUPER_ADMIN", user.getRole());
         }
 
@@ -431,8 +434,8 @@ class CoreBusinessIntegrationTest {
         }
 
         @Test
-        @DisplayName("删除用户（逻辑删除）")
-        void deleteUser() {
+        @DisplayName("SUPER_ADMIN 删除普通用户")
+        void deleteUser_AsSuperAdmin() {
             RegisterRequest regReq = new RegisterRequest();
             regReq.setUsername("to_delete_user");
             regReq.setPassword("pass123");
@@ -440,38 +443,31 @@ class CoreBusinessIntegrationTest {
             UserVO created = userService.register(regReq);
             assertNotNull(created);
 
-            // 确认可登录
-            LoginRequest loginReq = new LoginRequest();
-            loginReq.setUsername("to_delete_user");
-            loginReq.setPassword("pass123");
-            LoginVO loginBefore = userService.login(loginReq);
-            assertNotNull(loginBefore.getToken());
+            // SUPER_ADMIN 删除该用户
+            userService.deleteUser(created.getId(), 1L, "SUPER_ADMIN");
 
-            // 逻辑删除（注意: @TableLogic 可能导致 updateById 不更新 deleted 字段，
-            // 这是已知行为——正确做法应使用 userMapper.deleteById()）
-            userService.deleteUser(created.getId());
-
-            // 验证删除操作不抛异常即可（deleteUser 本身应该成功）
-            // 由于 @TableLogic 机制，通过 updateById 设置 deleted=1 可能不生效
-            // 该问题需要在 UserService.deleteUser 中改用 deleteById 修复
+            // 确认已逻辑删除（查询不到）
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> userService.getCurrentUser(created.getId()));
+            assertEquals(ResultCode.USER_NOT_FOUND.getCode(), ex.getCode());
         }
 
         @Test
-        @DisplayName("修改用户状态")
-        void updateStatus() {
+        @DisplayName("SUPER_ADMIN 修改用户状态")
+        void updateStatus_AsSuperAdmin() {
             RegisterRequest regReq = new RegisterRequest();
             regReq.setUsername("status_test");
             regReq.setPassword("pass123");
             regReq.setRealName("状态测试");
             UserVO created = userService.register(regReq);
 
-            // 禁用
-            userService.updateStatus(created.getId(), 0);
+            // SUPER_ADMIN 禁用
+            userService.updateStatus(created.getId(), 0, 1L, "SUPER_ADMIN");
             UserVO disabled = userService.getCurrentUser(created.getId());
             assertEquals(0, disabled.getStatus());
 
-            // 启用
-            userService.updateStatus(created.getId(), 1);
+            // SUPER_ADMIN 启用
+            userService.updateStatus(created.getId(), 1, 1L, "SUPER_ADMIN");
             UserVO enabled = userService.getCurrentUser(created.getId());
             assertEquals(1, enabled.getStatus());
         }
@@ -485,7 +481,7 @@ class CoreBusinessIntegrationTest {
             regReq.setRealName("禁用登录测试");
             UserVO created = userService.register(regReq);
 
-            userService.updateStatus(created.getId(), 0);
+            userService.updateStatus(created.getId(), 0, 1L, "SUPER_ADMIN");
 
             LoginRequest loginReq = new LoginRequest();
             loginReq.setUsername("disabled_login_test");
@@ -494,6 +490,286 @@ class CoreBusinessIntegrationTest {
             BusinessException ex = assertThrows(BusinessException.class,
                     () -> userService.login(loginReq));
             assertEquals(ResultCode.USER_DISABLED.getCode(), ex.getCode());
+        }
+    }
+
+    // ==================== ADMIN 权限边界测试 ====================
+
+    @Nested
+    @DisplayName("ADMIN 权限边界")
+    class AdminPermissionTests {
+
+        private Long studentId;
+
+        @BeforeEach
+        void setUp() {
+            // 注册一个学生，供所有测试使用
+            RegisterRequest regReq = new RegisterRequest();
+            regReq.setUsername("perm_test_student");
+            regReq.setPassword("student123");
+            regReq.setRealName("权限测试学生");
+            UserVO created = userService.register(regReq);
+            studentId = created.getId();
+        }
+
+        // ---- createUser 权限 ----
+
+        @Test
+        @DisplayName("ADMIN 创建 STUDENT → 成功")
+        void createUser_AdminCreatesStudent() {
+            CreateUserRequest req = new CreateUserRequest();
+            req.setUsername("new_student_01");
+            req.setPassword("pass123456");
+            req.setRealName("新学生");
+            req.setRole("STUDENT");
+
+            UserVO result = userService.createUser(req, "ADMIN");
+            assertNotNull(result);
+            assertEquals("STUDENT", result.getRole());
+        }
+
+        @Test
+        @DisplayName("ADMIN 创建 ADMIN → FORBIDDEN")
+        void createUser_AdminCreatesAdmin_Forbidden() {
+            CreateUserRequest req = new CreateUserRequest();
+            req.setUsername("new_admin_evil");
+            req.setPassword("pass123456");
+            req.setRealName("越权管理员");
+            req.setRole("ADMIN");
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> userService.createUser(req, "ADMIN"));
+            assertEquals(ResultCode.FORBIDDEN.getCode(), ex.getCode());
+        }
+
+        @Test
+        @DisplayName("SUPER_ADMIN 创建 ADMIN → 成功")
+        void createUser_SuperAdminCreatesAdmin() {
+            CreateUserRequest req = new CreateUserRequest();
+            req.setUsername("new_admin_02");
+            req.setPassword("pass123456");
+            req.setRealName("新管理员");
+            req.setRole("ADMIN");
+
+            UserVO result = userService.createUser(req, "SUPER_ADMIN");
+            assertNotNull(result);
+            assertEquals("ADMIN", result.getRole());
+        }
+
+        // ---- deleteUser 权限 ----
+
+        @Test
+        @DisplayName("ADMIN 删除 STUDENT → 成功")
+        void deleteUser_AdminDeletesStudent() {
+            userService.deleteUser(studentId, 2L, "ADMIN");
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> userService.getCurrentUser(studentId));
+            assertEquals(ResultCode.USER_NOT_FOUND.getCode(), ex.getCode());
+        }
+
+        @Test
+        @DisplayName("ADMIN 删除 ADMIN → FORBIDDEN")
+        void deleteUser_AdminDeletesAdmin_Forbidden() {
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> userService.deleteUser(2L, 2L, "ADMIN"));
+            assertEquals(ResultCode.FORBIDDEN.getCode(), ex.getCode());
+        }
+
+        @Test
+        @DisplayName("删除自己 → FORBIDDEN")
+        void deleteUser_SelfDelete_Forbidden() {
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> userService.deleteUser(1L, 1L, "SUPER_ADMIN"));
+            assertEquals(ResultCode.FORBIDDEN.getCode(), ex.getCode());
+        }
+
+        // ---- updateStatus 权限 ----
+
+        @Test
+        @DisplayName("ADMIN 禁用 STUDENT → 成功")
+        void updateStatus_AdminDisablesStudent() {
+            userService.updateStatus(studentId, 0, 2L, "ADMIN");
+            UserVO result = userService.getCurrentUser(studentId);
+            assertEquals(0, result.getStatus());
+        }
+
+        @Test
+        @DisplayName("ADMIN 禁用 ADMIN → FORBIDDEN")
+        void updateStatus_AdminDisablesAdmin_Forbidden() {
+            // root(id=1) 是 SUPER_ADMIN，admin(id=2) 是 ADMIN
+            // ADMIN 不能修改 ADMIN 或 SUPER_ADMIN 的状态
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> userService.updateStatus(1L, 0, 2L, "ADMIN"));
+            assertEquals(ResultCode.FORBIDDEN.getCode(), ex.getCode());
+        }
+
+        // ---- changePassword 权限 ----
+
+        @Test
+        @DisplayName("本人修改密码（正确旧密码）→ 成功")
+        void changePassword_SelfCorrectOldPwd() {
+            // 先注册一个用户并记录密码
+            RegisterRequest regReq = new RegisterRequest();
+            regReq.setUsername("pwd_self_test");
+            regReq.setPassword("old_password");
+            regReq.setRealName("密码测试");
+            UserVO created = userService.register(regReq);
+
+            ChangePasswordRequest req = new ChangePasswordRequest();
+            req.setOldPassword("old_password");
+            req.setNewPassword("new_password");
+
+            assertDoesNotThrow(() ->
+                    userService.changePassword(created.getId(), req, created.getId(), "STUDENT"));
+
+            // 验证新密码可登录
+            LoginRequest loginReq = new LoginRequest();
+            loginReq.setUsername("pwd_self_test");
+            loginReq.setPassword("new_password");
+            LoginVO result = userService.login(loginReq);
+            assertNotNull(result.getToken());
+        }
+
+        @Test
+        @DisplayName("本人修改密码（错误旧密码）→ USER_PASSWORD_ERROR")
+        void changePassword_SelfWrongOldPwd() {
+            RegisterRequest regReq = new RegisterRequest();
+            regReq.setUsername("pwd_wrong_test");
+            regReq.setPassword("correct_pass");
+            regReq.setRealName("密码错误测试");
+            UserVO created = userService.register(regReq);
+
+            ChangePasswordRequest req = new ChangePasswordRequest();
+            req.setOldPassword("wrong_old_pass");
+            req.setNewPassword("new_password");
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> userService.changePassword(created.getId(), req, created.getId(), "STUDENT"));
+            assertEquals(ResultCode.USER_PASSWORD_ERROR.getCode(), ex.getCode());
+        }
+
+        @Test
+        @DisplayName("ADMIN 重置 STUDENT 密码 → 成功")
+        void changePassword_AdminResetsStudent() {
+            ChangePasswordRequest req = new ChangePasswordRequest();
+            req.setNewPassword("reset_by_admin");
+
+            assertDoesNotThrow(() ->
+                    userService.changePassword(studentId, req, 2L, "ADMIN"));
+
+            // 验证新密码可登录
+            LoginRequest loginReq = new LoginRequest();
+            loginReq.setUsername("perm_test_student");
+            loginReq.setPassword("reset_by_admin");
+            LoginVO result = userService.login(loginReq);
+            assertNotNull(result.getToken());
+        }
+
+        @Test
+        @DisplayName("ADMIN 重置 ADMIN 密码 → FORBIDDEN")
+        void changePassword_AdminResetsAdmin_Forbidden() {
+            ChangePasswordRequest req = new ChangePasswordRequest();
+            req.setNewPassword("hacked");
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> userService.changePassword(1L, req, 2L, "ADMIN"));
+            assertEquals(ResultCode.FORBIDDEN.getCode(), ex.getCode());
+        }
+
+        @Test
+        @DisplayName("SUPER_ADMIN 重置任意密码 → 成功")
+        void changePassword_SuperAdminResetsAny() {
+            ChangePasswordRequest req = new ChangePasswordRequest();
+            req.setNewPassword("reset_by_super");
+
+            assertDoesNotThrow(() ->
+                    userService.changePassword(studentId, req, 1L, "SUPER_ADMIN"));
+
+            LoginRequest loginReq = new LoginRequest();
+            loginReq.setUsername("perm_test_student");
+            loginReq.setPassword("reset_by_super");
+            LoginVO result = userService.login(loginReq);
+            assertNotNull(result.getToken());
+        }
+
+        // ---- getUserById 权限 ----
+
+        @Test
+        @DisplayName("ADMIN 查看 STUDENT → 成功")
+        void getUserById_AdminViewsStudent() {
+            UserVO result = userService.getUserById(studentId, 2L, "ADMIN");
+            assertNotNull(result);
+            assertEquals("perm_test_student", result.getUsername());
+        }
+
+        @Test
+        @DisplayName("ADMIN 查看 SUPER_ADMIN → FORBIDDEN")
+        void getUserById_AdminViewsSuperAdmin_Forbidden() {
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> userService.getUserById(1L, 2L, "ADMIN"));
+            assertEquals(ResultCode.FORBIDDEN.getCode(), ex.getCode());
+        }
+
+        @Test
+        @DisplayName("STUDENT 查看其他用户 → FORBIDDEN")
+        void getUserById_StudentViewsOther_Forbidden() {
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> userService.getUserById(1L, studentId, "STUDENT"));
+            assertEquals(ResultCode.FORBIDDEN.getCode(), ex.getCode());
+        }
+
+        // ---- updateUser 权限 ----
+
+        @Test
+        @DisplayName("ADMIN 更新 STUDENT 信息 → 成功")
+        void updateUser_AdminUpdatesStudent() {
+            UpdateUserRequest req = new UpdateUserRequest();
+            req.setRealName("修改后的姓名");
+            req.setEmail("newemail@test.com");
+
+            UserVO result = userService.updateUser(studentId, req, 2L, "ADMIN");
+            assertNotNull(result);
+            assertEquals("修改后的姓名", result.getRealName());
+            assertEquals("newemail@test.com", result.getEmail());
+        }
+
+        @Test
+        @DisplayName("ADMIN 修改 STUDENT 的 role → role 不生效（只有 SUPER_ADMIN 能改）")
+        void updateUser_AdminChangesStudentRole_Ignored() {
+            UpdateUserRequest req = new UpdateUserRequest();
+            req.setRole("ADMIN"); // ADMIN 试图提升学生为管理员
+
+            UserVO result = userService.updateUser(studentId, req, 2L, "ADMIN");
+            // role 应保持不变（只有 SUPER_ADMIN 能改）
+            assertEquals("STUDENT", result.getRole());
+        }
+
+        @Test
+        @DisplayName("ADMIN 更新 ADMIN 用户 → FORBIDDEN")
+        void updateUser_AdminUpdatesAdmin_Forbidden() {
+            UpdateUserRequest req = new UpdateUserRequest();
+            req.setRealName("hacked");
+
+            BusinessException ex = assertThrows(BusinessException.class,
+                    () -> userService.updateUser(1L, req, 2L, "ADMIN"));
+            assertEquals(ResultCode.FORBIDDEN.getCode(), ex.getCode());
+        }
+
+        // ---- getUserList 补充筛选 ----
+
+        @Test
+        @DisplayName("按状态筛选用户")
+        void getUserList_ByStatus() {
+            // 先禁用一个用户
+            userService.updateStatus(studentId, 0, 1L, "SUPER_ADMIN");
+
+            var disabled = userService.getUserList(1, 10, null, null, 0);
+            assertTrue(disabled.getTotal() >= 1);
+            disabled.getRecords().forEach(u -> assertEquals(0, u.getStatus()));
+
+            var active = userService.getUserList(1, 10, null, null, 1);
+            assertTrue(active.getTotal() >= 1);
+            active.getRecords().forEach(u -> assertEquals(1, u.getStatus()));
         }
     }
 }

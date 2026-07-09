@@ -352,9 +352,8 @@ public class UserService {
             }
         }
 
-        user.setDeleted(1);
-        user.setUpdatedAt(LocalDateTime.now());
-        userMapper.updateById(user);
+        // 使用 MyBatis-Plus deleteById 触发 @TableLogic 逻辑删除
+        userMapper.deleteById(id);
     }
 
     /**
