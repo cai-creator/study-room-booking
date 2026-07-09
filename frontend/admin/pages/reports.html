@@ -134,6 +134,7 @@
         }
 
         function lineChartSvg(data, xKey, yKey, height, minY, maxY, color, fillColor, labelMap) {
+            if (!data || !data.length) return '<div class="py-10 text-center rounded-lg" style="background:var(--color-bg-secondary);color:var(--color-text-tertiary);font-size:var(--text-sm);">暂无图表数据</div>';
             height = height || 240;
             var W = 760, H = height, padL = 40, padR = 20, padT = 20, padB = 36;
             var gw = W - padL - padR, gh = H - padT - padB;
@@ -197,9 +198,10 @@
             var medalBg = ['#FEF3C7', '#F1F5F9', '#FEF3C7', '#F8FAFC', '#F8FAFC'];
             list.forEach(function (p, i) {
                 var pct = Math.min(100, Math.round(((p.count || 0) / maxCount) * 100));
-                var rankNum = (p.rank != null) ? p.rank : (i + 1);
+                var rankNum = i + 1;
+                var periodLabel = (p.label != null) ? p.label : ((p.hour != null) ? String(p.hour).padStart(2, '0') + ':00' : (p.period || ''));
                 h += '<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0" style="background:' + medalBg[i] + ';color:' + medals[i] + ';">' + rankNum + '</div>';
-                h += '<div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-1.5"><div class="text-sm font-medium truncate" style="color:var(--color-text-primary);">' + (p.period || '') + '</div><div class="text-sm font-bold flex items-center gap-1" style="color:var(--brand-primary);">' + (p.count || 0).toLocaleString() + ' 次</div></div>';
+                h += '<div class="flex-1 min-w-0"><div class="flex items-center justify-between mb-1.5"><div class="text-sm font-medium truncate" style="color:var(--color-text-primary);">' + periodLabel + '</div><div class="text-sm font-bold flex items-center gap-1" style="color:var(--brand-primary);">' + (p.count || 0).toLocaleString() + ' 次</div></div>';
                 h += '<div class="w-full h-2 rounded-full overflow-hidden" style="background:var(--color-bg-tertiary);"><div style="width:' + pct + '%;height:100%;background:linear-gradient(90deg,var(--brand-primary-light),var(--brand-primary));border-radius:9999px;"></div></div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);margin-top:4px;">预约热度排行第 ' + rankNum + ' 名</div>';
                 h += '</div></div>';
             });
@@ -251,18 +253,18 @@
         function loadNoShow() {
             var range = getDateRange();
             ReportAPI.getNoShowRate(range).then(function (d) {
-                var trend = (d && d.trendItems) || (d && d.trend) || [];
-                document.getElementById('noshow-chart').innerHTML = lineChartSvg(trend, 'month', 'rate', 240, 0, 5, '#DC2626', '#DC2626', function (m) { return buildMonthLabel(m); });
+                var trend = (d && d.monthlyData) || (d && d.trendItems) || (d && d.trend) || [];
+                document.getElementById('noshow-chart').innerHTML = lineChartSvg(trend, 'month', 'noShowRate', 240, 0, 100, '#DC2626', '#DC2626', function (m) { return buildMonthLabel(m); });
                 return d;
-            });
+            }).catch(function (e) { Utils.showToast(e.message || '爽约率加载失败', 'error'); });
         }
         function loadConversion() {
             var range = getDateRange();
             ReportAPI.getConversionRate(range).then(function (d) {
-                var trend = (d && d.trendItems) || (d && d.trend) || [];
-                document.getElementById('conversion-chart').innerHTML = lineChartSvg(trend, 'month', 'rate', 240, 70, 100, '#16A34A', '#16A34A', function (m) { return buildMonthLabel(m); });
+                var trend = (d && d.monthlyData) || (d && d.trendItems) || (d && d.trend) || [];
+                document.getElementById('conversion-chart').innerHTML = lineChartSvg(trend, 'month', 'completionRate', 240, 0, 100, '#16A34A', '#16A34A', function (m) { return buildMonthLabel(m); });
                 return d;
-            });
+            }).catch(function (e) { Utils.showToast(e.message || '转化率加载失败', 'error'); });
         }
 
         window.refreshAll = function () {

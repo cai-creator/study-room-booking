@@ -13,28 +13,36 @@
  * @property {string} date        - 日期 (yyyy-MM-dd)
  * @property {number} roomId      - 自习室ID
  * @property {string} roomName    - 自习室名称
- * @property {number} usageRate   - 使用率（百分比）
+ * @property {number} usedSeats   - 已使用座位数（已签到/已完成预约数）
+ * @property {number} totalSeats  - 总座位数
+ * @property {number} usageRate   - 使用率（百分比，如 30.5 表示30.5%）
  *
  * @typedef {Object} TimeDistributionItem
  * @property {number} hour        - 小时 (0-23)
+ * @property {string} label       - 小时描述，如 "09:00"
  * @property {number} count       - 预约数量
  *
  * @typedef {Object} HotPeriodItem
- * @property {string} period      - 时段描述，如 "09:00-10:00"
- * @property {number} rank        - 排名 (1-5)
+ * @property {number} hour        - 小时 (0-23)
+ * @property {string} label       - 时段描述，如 "09:00"（返回 List 顺序即为 TOP5 排名：第1条=第1名）
  * @property {number} count       - 预约数量
  *
  * @typedef {Object} NoShowRateResult
- * @property {number} totalReservations - 预约总数
- * @property {number} noShowCount       - 爽约次数
- * @property {number} noShowRate        - 爽约率（百分比，如 5.2 表示5.2%）
+ * @property {string} startDate           - 开始日期 (yyyy-MM-dd)
+ * @property {string} endDate             - 结束日期 (yyyy-MM-dd)
+ * @property {number} totalReservations   - 预约总数
+ * @property {number} noShowReservations  - 爽约预约数（NO_SHOW状态的预约数）
+ * @property {number} totalNoShowRecords  - 爽约记录条数（累计爽约记录）
+ * @property {number} noShowRate          - 爽约率（百分比，如 5.2 表示5.2%）
  *
  * @typedef {Object} ConversionRateResult
- * @property {number} totalReservations - 预约总数
- * @property {number} checkedInCount    - 签到数
- * @property {number} completedCount    - 完成数
- * @property {number} checkinRate       - 签到率（百分比）
- * @property {number} completionRate    - 完成率（百分比）
+ * @property {string} startDate           - 开始日期 (yyyy-MM-dd)
+ * @property {string} endDate             - 结束日期 (yyyy-MM-dd)
+ * @property {number} totalReservations   - 预约总数
+ * @property {number} checkedInCount      - 签到数（已签到/暂离/完成）
+ * @property {number} completedCount      - 完成数
+ * @property {number} checkinRate         - 签到率（百分比）
+ * @property {number} completionRate      - 完成率（签到→完成的转化率，百分比）
  */
 (function () {
   'use strict';

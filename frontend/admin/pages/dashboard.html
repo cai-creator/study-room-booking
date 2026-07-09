@@ -238,11 +238,11 @@
         }
 
         function usageHeatColor(rate) {
-            if (rate < 20) return '#DCFCE7';
-            if (rate < 40) return '#BBF7D0';
-            if (rate < 60) return '#FEF08A';
-            if (rate < 80) return '#FED7AA';
-            return '#FECACA';
+            if (rate < 20) return { bg: '#DCFCE7', bgLight: '#DCFCE7', text: '#166534', bar: '#22C55E' };
+            if (rate < 40) return { bg: '#BBF7D0', bgLight: '#BBF7D0', text: '#15803D', bar: '#4ADE80' };
+            if (rate < 60) return { bg: '#FEF08A', bgLight: '#FEF08A', text: '#A16207', bar: '#EAB308' };
+            if (rate < 80) return { bg: '#FED7AA', bgLight: '#FED7AA', text: '#C2410C', bar: '#F97316' };
+            return { bg: '#FECACA', bgLight: '#FECACA', text: '#B91C1C', bar: '#EF4444' };
         }
 
         function renderCampusHeatmap(campusName) {
@@ -263,7 +263,7 @@
                         var total = r.totalSeats || (r.rowsCount || 6) * (r.colsCount || 8);
                         var fakeRate = Math.min(95, Math.max(5, Math.round(30 + Math.random() * 50 + ((b.usageRate || 40) - 40))));
                         var color = usageHeatColor(fakeRate);
-                        h += '<div onclick="drillToRoom(\'' + Utils.escapeHtml(r.name) + '\', ' + r.id + ')" class="heatmap-cell cursor-pointer rounded-lg p-3 border" style="background:' + color + ';border-color:var(--color-border-light);"><div class="text-xs font-semibold truncate mb-1" style="color:#0F172A;">' + Utils.escapeHtml(r.name) + '</div><div class="flex items-center justify-between"><div class="text-[10px]" style="color:#334155;">' + total + '座</div><div class="text-xs font-bold" style="color:#0F172A;">' + fakeRate + '%</div></div></div>';
+                        h += '<div onclick="drillToRoom(\'' + Utils.escapeHtml(r.name) + '\', ' + r.id + ')" class="heatmap-cell cursor-pointer rounded-lg p-3 border" style="background:' + color.bg + ';border-color:var(--color-border-light);"><div class="text-xs font-semibold truncate mb-1" style="color:#0F172A;">' + Utils.escapeHtml(r.name) + '</div><div class="flex items-center justify-between"><div class="text-[10px]" style="color:#334155;">' + total + '座</div><div class="text-xs font-bold" style="color:#0F172A;">' + fakeRate + '%</div></div></div>';
                     });
                     h += '</div>';
                 }
