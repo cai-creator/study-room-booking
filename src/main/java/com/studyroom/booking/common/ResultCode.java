@@ -45,7 +45,16 @@ public enum ResultCode {
     BLACKLIST_NOT_FOUND(5002, "黑名单记录不存在"),
     BLACKLIST_ALREADY_EXISTS(5003, "该用户已在黑名单中，请勿重复添加"),
 
-    SPACE_NOT_FOUND(6001, "空间不存在");
+    CAMPUS_NOT_FOUND(6001, "校区不存在"),
+    BUILDING_NOT_FOUND(6002, "楼栋不存在"),
+    FLOOR_NOT_FOUND(6003, "楼层不存在"),
+
+    CAMPUS_HAS_BUILDINGS(6101, "校区下存在楼栋，无法删除"),
+    BUILDING_HAS_FLOORS(6102, "楼栋下存在楼层，无法删除"),
+    FLOOR_HAS_ROOMS(6103, "楼层下存在自习室，无法删除"),
+    ROOM_HAS_SEATS(6104, "自习室下存在座位，无法删除"),
+
+    FILE_IMPORT_FAILED(7001, "文件导入失败");
 
     private final Integer code;
     private final String message;

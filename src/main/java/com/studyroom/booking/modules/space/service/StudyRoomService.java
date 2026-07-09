@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.studyroom.booking.common.ResultCode;
 import com.studyroom.booking.common.exception.BusinessException;
 import com.studyroom.booking.modules.space.dto.RoomRequest;
 import com.studyroom.booking.modules.space.dto.RoomQueryRequest;
@@ -60,7 +61,7 @@ public class StudyRoomService extends ServiceImpl<StudyRoomMapper, StudyRoom> {
     public StudyRoom getById(Long id) {
         StudyRoom room = baseMapper.selectById(id);
         if (room == null) {
-            throw new BusinessException(2001, "自习室不存在");
+            throw new BusinessException(ResultCode.ROOM_NOT_FOUND);
         }
         return room;
     }
@@ -73,7 +74,7 @@ public class StudyRoomService extends ServiceImpl<StudyRoomMapper, StudyRoom> {
         // 校验楼层是否存在
         Floor floor = floorMapper.selectById(request.getFloorId());
         if (floor == null) {
-            throw new BusinessException(404, "所属楼层不存在");
+            throw new BusinessException(ResultCode.FLOOR_NOT_FOUND);
         }
 
         StudyRoom room = new StudyRoom();
@@ -114,7 +115,7 @@ public class StudyRoomService extends ServiceImpl<StudyRoomMapper, StudyRoom> {
         // 如果修改了楼层，校验新楼层是否存在
         if (request.getFloorId() != null && !request.getFloorId().equals(room.getFloorId())) {
             if (floorMapper.selectById(request.getFloorId()) == null) {
-                throw new BusinessException(404, "所属楼层不存在");
+                throw new BusinessException(ResultCode.FLOOR_NOT_FOUND);
             }
         }
 
@@ -154,7 +155,7 @@ public class StudyRoomService extends ServiceImpl<StudyRoomMapper, StudyRoom> {
                         .eq(Seat::getRoomId, id)
         );
         if (seatCount > 0) {
-            throw new BusinessException(2104, "自习室下存在 " + seatCount + " 个座位，无法删除");
+            throw new BusinessException(ResultCode.ROOM_HAS_SEATS.getCode(), "自习室下存在 " + seatCount + " 个座位，无法删除");
         }
 
         baseMapper.deleteById(id);
@@ -255,7 +256,7 @@ public class StudyRoomService extends ServiceImpl<StudyRoomMapper, StudyRoom> {
                 }
             }
         } catch (IOException e) {
-            throw new BusinessException(500, "读取Excel文件失败: " + e.getMessage());
+            throw new BusinessException(ResultCode.FILE_IMPORT_FAILED.getCode(), "读取Excel文件失败: " + e.getMessage());
         }
 
         Map<String, Object> result = new LinkedHashMap<>();

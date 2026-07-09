@@ -5,12 +5,14 @@ import com.studyroom.booking.common.annotation.RequireRole;
 import com.studyroom.booking.common.exception.BusinessException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Arrays;
 
+@Slf4j
 @Component
 public class RoleInterceptor implements HandlerInterceptor {
 
@@ -45,6 +47,7 @@ public class RoleInterceptor implements HandlerInterceptor {
         boolean hasRole = Arrays.asList(requiredRoles).contains(currentRole);
 
         if (!hasRole) {
+            log.warn("角色权限不足: 当前角色={}, 需要角色={}, 路径={}", currentRole, Arrays.toString(requiredRoles), request.getServletPath());
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
 

@@ -115,10 +115,10 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
 
         // 自习室开放时间检查
         if (room.getOpenTime() != null && startTime.toLocalTime().isBefore(room.getOpenTime())) {
-            throw new BusinessException(3002, "预约开始时间早于自习室开放时间(" + room.getOpenTime() + ")");
+            throw new BusinessException(ResultCode.RESERVATION_TIME_INVALID.getCode(), "预约开始时间早于自习室开放时间(" + room.getOpenTime() + ")");
         }
         if (room.getCloseTime() != null && endTime.toLocalTime().isAfter(room.getCloseTime())) {
-            throw new BusinessException(3002, "预约结束时间晚于自习室关闭时间(" + room.getCloseTime() + ")");
+            throw new BusinessException(ResultCode.RESERVATION_TIME_INVALID.getCode(), "预约结束时间晚于自习室关闭时间(" + room.getCloseTime() + ")");
         }
 
         // 当日预约次数检查

@@ -1,7 +1,9 @@
 package com.studyroom.booking.modules.space.service;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.studyroom.booking.common.ResultCode;
 import com.studyroom.booking.common.exception.BusinessException;
 import com.studyroom.booking.modules.space.dto.BuildingRequest;
 import com.studyroom.booking.modules.space.entity.Building;
@@ -10,9 +12,9 @@ import com.studyroom.booking.modules.space.mapper.BuildingMapper;
 import com.studyroom.booking.modules.space.mapper.CampusMapper;
 import com.studyroom.booking.modules.space.mapper.FloorMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import cn.hutool.core.bean.BeanUtil;
 
 import java.util.List;
 
@@ -21,6 +23,7 @@ import java.util.List;
  *
  * @author 陈梦涵
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BuildingService extends ServiceImpl<BuildingMapper, Building> {
@@ -46,7 +49,7 @@ public class BuildingService extends ServiceImpl<BuildingMapper, Building> {
     public Building getById(Long id) {
         Building building = baseMapper.selectById(id);
         if (building == null) {
-            throw new BusinessException(404, "楼栋不存在");
+            throw new BusinessException(ResultCode.BUILDING_NOT_FOUND);
         }
         return building;
     }
@@ -58,7 +61,7 @@ public class BuildingService extends ServiceImpl<BuildingMapper, Building> {
     public Building create(BuildingRequest request) {
         // 校验校区是否存在
         if (campusMapper.selectById(request.getCampusId()) == null) {
-            throw new BusinessException(404, "所属校区不存在");
+            throw new BusinessException(ResultCode.CAMPUS_NOT_FOUND);
         }
 
         Building building = new Building();
@@ -86,7 +89,7 @@ public class BuildingService extends ServiceImpl<BuildingMapper, Building> {
         // 如果修改了校区，校验新校区是否存在
         if (request.getCampusId() != null && !request.getCampusId().equals(building.getCampusId())) {
             if (campusMapper.selectById(request.getCampusId()) == null) {
-                throw new BusinessException(404, "所属校区不存在");
+                throw new BusinessException(ResultCode.CAMPUS_NOT_FOUND);
             }
         }
 
@@ -111,7 +114,7 @@ public class BuildingService extends ServiceImpl<BuildingMapper, Building> {
                         .eq(Floor::getBuildingId, id)
         );
         if (floorCount > 0) {
-            throw new BusinessException(2102, "楼栋下存在 " + floorCount + " 个楼层，无法删除");
+            throw new BusinessException(ResultCode.BUILDING_HAS_FLOORS.getCode(), "楼栋下存在 " + floorCount + " 个楼层，无法删除");
         }
 
         baseMapper.deleteById(id);

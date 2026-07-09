@@ -3,7 +3,6 @@ package com.studyroom.booking.modules.seat.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.studyroom.booking.common.context.UserContext;
-import com.studyroom.booking.common.exception.BusinessException;
 import com.studyroom.booking.modules.seat.dto.NoShowRecordVO;
 import com.studyroom.booking.modules.seat.entity.NoShowRecord;
 import com.studyroom.booking.modules.seat.entity.Reservation;
@@ -18,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +35,7 @@ public class NoShowRecordService {
     private final SeatControlMapper seatMapper;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final int MAX_PAGE_SIZE = 100;
 
     // ===================== 查询 =====================
 
@@ -43,6 +43,7 @@ public class NoShowRecordService {
      * 分页查询爽约记录（管理员）
      */
     public Page<NoShowRecordVO> getNoShowRecordPage(Integer pageNum, Integer pageSize, Long userId, String startDate, String endDate) {
+        pageSize = Math.min(pageSize, MAX_PAGE_SIZE);
         Page<NoShowRecord> page = new Page<>(pageNum, pageSize);
 
         LambdaQueryWrapper<NoShowRecord> wrapper = new LambdaQueryWrapper<>();
@@ -63,10 +64,43 @@ public class NoShowRecordService {
 
         Page<NoShowRecord> recordPage = noShowRecordMapper.selectPage(page, wrapper);
 
+        // 批量查询关联数据，避免 N+1
+        List<NoShowRecord> records = recordPage.getRecords();
+        Map<Long, Reservation> reservationMap = Collections.emptyMap();
+        Map<Long, SeatControl> seatMap = Collections.emptyMap();
+
+        if (!records.isEmpty()) {
+            List<Long> reservationIds = records.stream()
+                    .map(NoShowRecord::getReservationId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            if (!reservationIds.isEmpty()) {
+                List<Reservation> reservations = reservationMapper.selectBatchIds(reservationIds);
+                reservationMap = reservations.stream()
+                        .collect(Collectors.toMap(Reservation::getId, r -> r, (a, b) -> a));
+
+                List<Long> seatIds = reservations.stream()
+                        .map(Reservation::getSeatId)
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .collect(Collectors.toList());
+
+                if (!seatIds.isEmpty()) {
+                    List<SeatControl> seats = seatMapper.selectBatchIds(seatIds);
+                    seatMap = seats.stream()
+                            .collect(Collectors.toMap(SeatControl::getId, s -> s, (a, b) -> a));
+                }
+            }
+        }
+
         // 转换为VO
         Page<NoShowRecordVO> voPage = new Page<>(recordPage.getCurrent(), recordPage.getSize(), recordPage.getTotal());
-        List<NoShowRecordVO> voList = recordPage.getRecords().stream()
-                .map(this::convertToVO)
+        final Map<Long, Reservation> finalReservationMap = reservationMap;
+        final Map<Long, SeatControl> finalSeatMap = seatMap;
+        List<NoShowRecordVO> voList = records.stream()
+                .map(record -> convertToVO(record, finalReservationMap, finalSeatMap))
                 .collect(Collectors.toList());
         voPage.setRecords(voList);
 
@@ -120,7 +154,7 @@ public class NoShowRecordService {
 
     // ===================== 辅助方法 =====================
 
-    private NoShowRecordVO convertToVO(NoShowRecord record) {
+    private NoShowRecordVO convertToVO(NoShowRecord record, Map<Long, Reservation> reservationMap, Map<Long, SeatControl> seatMap) {
         NoShowRecordVO vo = new NoShowRecordVO();
         vo.setId(record.getId());
         vo.setUserId(record.getUserId());
@@ -129,17 +163,13 @@ public class NoShowRecordService {
         vo.setRecordDate(record.getRecordDate() != null ? record.getRecordDate().toString() : null);
         vo.setCreatedAt(record.getCreatedAt() != null ? record.getCreatedAt().format(FORMATTER) : null);
 
-        // 尝试获取预约和座位信息
-        try {
-            Reservation reservation = reservationMapper.selectById(record.getReservationId());
-            if (reservation != null) {
-                SeatControl seat = seatMapper.selectById(reservation.getSeatId());
-                if (seat != null) {
-                    vo.setSeatCode(seat.getSeatCode());
-                }
+        // 从批量查询的结果中获取预约和座位信息
+        Reservation reservation = reservationMap.get(record.getReservationId());
+        if (reservation != null) {
+            SeatControl seat = seatMap.get(reservation.getSeatId());
+            if (seat != null) {
+                vo.setSeatCode(seat.getSeatCode());
             }
-        } catch (Exception e) {
-            // 预约可能已被删除，忽略
         }
 
         return vo;

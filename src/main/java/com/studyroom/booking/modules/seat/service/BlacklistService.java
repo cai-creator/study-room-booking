@@ -51,6 +51,7 @@ public class BlacklistService {
      * 分页查询黑名单列表（管理员）
      */
     public Page<BlacklistVO> getBlacklistPage(Integer pageNum, Integer pageSize, String keyword, Integer status) {
+        pageSize = Math.min(pageSize, 100);
         Page<Blacklist> page = new Page<>(pageNum, pageSize);
 
         LambdaQueryWrapper<Blacklist> wrapper = new LambdaQueryWrapper<>();

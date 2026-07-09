@@ -16,6 +16,7 @@ import com.studyroom.booking.modules.user.entity.User;
 import com.studyroom.booking.modules.user.mapper.UserMapper;
 import com.studyroom.booking.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -65,6 +67,7 @@ public class UserService {
         loginVO.setExpireAt(expireAt);
         loginVO.setUser(convertToVO(user));
 
+        log.info("用户登录成功: username={}, role={}", user.getUsername(), user.getRole());
         return loginVO;
     }
 
@@ -99,6 +102,7 @@ public class UserService {
 
         userMapper.insert(user);
 
+        log.info("新用户注册: username={}, role=STUDENT", user.getUsername());
         return convertToVO(user);
     }
 
@@ -158,6 +162,7 @@ public class UserService {
      * 分页查询用户列表
      */
     public Page<UserVO> getUserList(Integer pageNum, Integer pageSize, String keyword, String role, Integer status) {
+        pageSize = Math.min(pageSize, 100);
         Page<User> page = new Page<>(pageNum, pageSize);
 
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
@@ -354,6 +359,7 @@ public class UserService {
 
         // 使用 MyBatis-Plus deleteById 触发 @TableLogic 逻辑删除
         userMapper.deleteById(id);
+        log.info("用户已删除: targetUserId={}, targetUsername={}, operatorId={}, operatorRole={}", id, user.getUsername(), currentUserId, currentRole);
     }
 
     /**

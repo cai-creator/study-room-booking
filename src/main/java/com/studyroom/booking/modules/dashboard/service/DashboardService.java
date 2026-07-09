@@ -2,6 +2,7 @@ package com.studyroom.booking.modules.dashboard.service;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.studyroom.booking.common.ResultCode;
 import com.studyroom.booking.common.exception.BusinessException;
 import com.studyroom.booking.modules.dashboard.dto.BuildingOverviewVO;
 import com.studyroom.booking.modules.dashboard.dto.CampusOverviewVO;
@@ -61,8 +62,8 @@ public class DashboardService {
                 .collect(Collectors.groupingBy(Building::getCampusId));
         Map<Long, List<Floor>> buildingFloors = floors.stream()
                 .collect(Collectors.groupingBy(Floor::getBuildingId));
-        Map<Long, StudyRoom> roomMap = rooms.stream()
-                .collect(Collectors.toMap(StudyRoom::getId, r -> r, (a, b) -> a));
+        Map<Long, List<StudyRoom>> floorRooms = rooms.stream()
+                .collect(Collectors.groupingBy(StudyRoom::getFloorId));
 
         // 2. 计算每个自习室的座位数
         List<Seat> allSeats = seatMapper.selectList(
@@ -71,7 +72,10 @@ public class DashboardService {
                 .collect(Collectors.groupingBy(Seat::getRoomId, Collectors.counting()));
 
         // 3. 查询当前活跃预约（被占用的座位）
-        Set<Long> occupiedSeatIds = getCurrentActiveReservationSeatIds();
+        List<Booking> activeBookings = getActiveBookings();
+        Set<Long> occupiedSeatIds = activeBookings.stream()
+                .map(Booking::getSeatId)
+                .collect(Collectors.toSet());
 
         // 按自习室统计被占用座位数
         Map<Long, Long> roomOccupiedSeats = new HashMap<>();
@@ -96,13 +100,12 @@ public class DashboardService {
             for (Building building : campusBuildingList) {
                 List<Floor> buildingFloorList = buildingFloors.getOrDefault(building.getId(), Collections.emptyList());
                 for (Floor floor : buildingFloorList) {
-                    for (StudyRoom room : rooms) {
-                        if (room.getFloorId().equals(floor.getId())) {
-                            campusTotalRooms++;
-                            int roomSeats = roomTotalSeats.getOrDefault(room.getId(), 0L).intValue();
-                            campusTotalSeats += roomSeats;
-                            campusOccupiedSeats += roomOccupiedSeats.getOrDefault(room.getId(), 0L).intValue();
-                        }
+                    List<StudyRoom> floorRoomList = floorRooms.getOrDefault(floor.getId(), Collections.emptyList());
+                    for (StudyRoom room : floorRoomList) {
+                        campusTotalRooms++;
+                        int roomSeats = roomTotalSeats.getOrDefault(room.getId(), 0L).intValue();
+                        campusTotalSeats += roomSeats;
+                        campusOccupiedSeats += roomOccupiedSeats.getOrDefault(room.getId(), 0L).intValue();
                     }
                 }
             }
@@ -161,7 +164,10 @@ public class DashboardService {
                 .collect(Collectors.groupingBy(Seat::getRoomId, Collectors.counting()));
 
         // 3. 活跃预约
-        Set<Long> occupiedSeatIds = getCurrentActiveReservationSeatIds();
+        List<Booking> activeBookings = getActiveBookings();
+        Set<Long> occupiedSeatIds = activeBookings.stream()
+                .map(Booking::getSeatId)
+                .collect(Collectors.toSet());
         Map<Long, Long> roomOccupiedSeats = new HashMap<>();
         for (Seat seat : allSeats) {
             if (occupiedSeatIds.contains(seat.getId())) {
@@ -214,7 +220,7 @@ public class DashboardService {
     public RoomDetailVO getRoomDetail(Long roomId) {
         StudyRoom room = studyRoomMapper.selectById(roomId);
         if (room == null) {
-            throw new BusinessException(2001, "自习室不存在");
+            throw new BusinessException(ResultCode.ROOM_NOT_FOUND);
         }
 
         // 查询关联信息
@@ -228,11 +234,18 @@ public class DashboardService {
                         .eq(Seat::getRoomId, roomId)
                         .orderByAsc(Seat::getRowNumber, Seat::getColNumber));
 
-        // 查询当前活跃预约
-        Set<Long> occupiedSeatIds = getCurrentActiveReservationSeatIds();
+        // 查询当前活跃预约（一次查询，复用两个派生结果）
+        List<Booking> activeBookings = getActiveBookings();
+        Set<Long> occupiedSeatIds = activeBookings.stream()
+                .map(Booking::getSeatId)
+                .collect(Collectors.toSet());
 
         // 需要区分 RESERVED / OCCUPIED / TEMPORARY_LEAVE
-        Map<Long, String> activeReservationStatus = getActiveReservationStatusBySeat();
+        Map<Long, String> activeReservationStatus = activeBookings.stream()
+                .collect(Collectors.toMap(
+                        Booking::getSeatId,
+                        Booking::getStatus,
+                        (existing, replacement) -> existing));
 
         // 构建VO
         RoomDetailVO vo = new RoomDetailVO();
@@ -310,38 +323,16 @@ public class DashboardService {
     // ==================== 私有辅助方法 ====================
 
     /**
-     * 获取当前活跃预约占用的座位ID集合
+     * 获取当前活跃预约列表（一次查询，多处复用）
      * <p>
      * 活跃状态: RESERVED, CHECKED_IN, TEMPORARY_LEAVE
      */
-    private Set<Long> getCurrentActiveReservationSeatIds() {
+    private List<Booking> getActiveBookings() {
         LocalDateTime now = LocalDateTime.now();
-        List<Booking> activeBookings = bookingMapper.selectList(
+        return bookingMapper.selectList(
                 new LambdaQueryWrapper<Booking>()
                         .in(Booking::getStatus, "RESERVED", "CHECKED_IN", "TEMPORARY_LEAVE")
                         .le(Booking::getStartTime, now)
                         .ge(Booking::getEndTime, now));
-        return activeBookings.stream()
-                .map(Booking::getSeatId)
-                .collect(Collectors.toSet());
-    }
-
-    /**
-     * 获取每个座位对应的活跃预约状态
-     * <p>
-     * 返回 Map<seatId, status>
-     */
-    private Map<Long, String> getActiveReservationStatusBySeat() {
-        LocalDateTime now = LocalDateTime.now();
-        List<Booking> activeBookings = bookingMapper.selectList(
-                new LambdaQueryWrapper<Booking>()
-                        .in(Booking::getStatus, "RESERVED", "CHECKED_IN", "TEMPORARY_LEAVE")
-                        .le(Booking::getStartTime, now)
-                        .ge(Booking::getEndTime, now));
-        return activeBookings.stream()
-                .collect(Collectors.toMap(
-                        Booking::getSeatId,
-                        Booking::getStatus,
-                        (existing, replacement) -> existing));
     }
 }

@@ -1,7 +1,9 @@
 package com.studyroom.booking.modules.space.service;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.studyroom.booking.common.ResultCode;
 import com.studyroom.booking.common.exception.BusinessException;
 import com.studyroom.booking.modules.space.dto.CampusRequest;
 import com.studyroom.booking.modules.space.entity.Building;
@@ -9,9 +11,9 @@ import com.studyroom.booking.modules.space.entity.Campus;
 import com.studyroom.booking.modules.space.mapper.BuildingMapper;
 import com.studyroom.booking.modules.space.mapper.CampusMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import cn.hutool.core.bean.BeanUtil;
 
 import java.util.List;
 
@@ -20,6 +22,7 @@ import java.util.List;
  *
  * @author 陈梦涵
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CampusService extends ServiceImpl<CampusMapper, Campus> {
@@ -41,7 +44,7 @@ public class CampusService extends ServiceImpl<CampusMapper, Campus> {
     public Campus getById(Long id) {
         Campus campus = baseMapper.selectById(id);
         if (campus == null) {
-            throw new BusinessException(404, "校区不存在");
+            throw new BusinessException(ResultCode.CAMPUS_NOT_FOUND);
         }
         return campus;
     }
@@ -90,7 +93,7 @@ public class CampusService extends ServiceImpl<CampusMapper, Campus> {
                         .eq(Building::getCampusId, id)
         );
         if (buildingCount > 0) {
-            throw new BusinessException(2101, "校区下存在 " + buildingCount + " 个楼栋，无法删除");
+            throw new BusinessException(ResultCode.CAMPUS_HAS_BUILDINGS.getCode(), "校区下存在 " + buildingCount + " 个楼栋，无法删除");
         }
 
         baseMapper.deleteById(id);

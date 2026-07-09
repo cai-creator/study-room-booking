@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.studyroom.booking.common.ResultCode;
 import com.studyroom.booking.common.exception.BusinessException;
 import com.studyroom.booking.modules.space.dto.RoomSeatStatusVO;
 import com.studyroom.booking.modules.space.dto.SeatGenerateRequest;
@@ -48,7 +49,7 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
     public Seat getById(Long id) {
         Seat seat = baseMapper.selectById(id);
         if (seat == null) {
-            throw new BusinessException(2003, "座位不存在");
+            throw new BusinessException(ResultCode.SEAT_NOT_FOUND);
         }
         return seat;
     }
@@ -63,7 +64,7 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
     public List<Seat> generateSeats(Long roomId, SeatGenerateRequest request) {
         StudyRoom room = studyRoomMapper.selectById(roomId);
         if (room == null) {
-            throw new BusinessException(2001, "自习室不存在");
+            throw new BusinessException(ResultCode.ROOM_NOT_FOUND);
         }
 
         int rows = request.getRows();
@@ -85,7 +86,7 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
                 validatePosition(sp.getRow(), sp.getCol(), rows, cols, "特殊标签位置");
                 String key = sp.getRow() + "-" + sp.getCol();
                 if (emptySet.contains(key)) {
-                    throw new BusinessException(400, "位置 (" + sp.getRow() + "," + sp.getCol() + ") 同时被设为留空和特殊标签，请检查");
+                    throw new BusinessException(ResultCode.PARAM_ERROR.getCode(), "位置 (" + sp.getRow() + "," + sp.getCol() + ") 同时被设为留空和特殊标签，请检查");
                 }
                 if (sp.getTags() != null && !sp.getTags().isEmpty()) {
                     specialMap.put(key, String.join(",", sp.getTags()));
@@ -186,7 +187,7 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
     @Transactional
     public void batchUpdateTags(Long roomId, SeatTagsUpdateRequest request) {
         if (request.getSeatIds() == null || request.getSeatIds().isEmpty()) {
-            throw new BusinessException(400, "座位ID列表不能为空");
+            throw new BusinessException(ResultCode.PARAM_ERROR.getCode(), "座位ID列表不能为空");
         }
 
         // 验证所有座位都属于该自习室
@@ -202,7 +203,7 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
                 .toList();
 
         if (!missingIds.isEmpty()) {
-            throw new BusinessException(400, "以下座位不属于该自习室: " + missingIds);
+            throw new BusinessException(ResultCode.PARAM_ERROR.getCode(), "以下座位不属于该自习室: " + missingIds);
         }
 
         String tags = request.getTags() != null ? String.join(",", request.getTags()) : "";
@@ -226,7 +227,7 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
     public RoomSeatStatusVO getRoomSeatStatus(Long roomId) {
         StudyRoom room = studyRoomMapper.selectById(roomId);
         if (room == null) {
-            throw new BusinessException(2001, "自习室不存在");
+            throw new BusinessException(ResultCode.ROOM_NOT_FOUND);
         }
 
         // 查询所有座位
@@ -347,13 +348,13 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
      */
     private void validatePosition(Integer row, Integer col, int maxRows, int maxCols, String label) {
         if (row == null || col == null) {
-            throw new BusinessException(400, label + "的行列号不能为空");
+            throw new BusinessException(ResultCode.PARAM_ERROR.getCode(), label + "的行列号不能为空");
         }
         if (row < 1 || row > maxRows) {
-            throw new BusinessException(400, label + "行号 " + row + " 超出范围 [1, " + maxRows + "]");
+            throw new BusinessException(ResultCode.PARAM_ERROR.getCode(), label + "行号 " + row + " 超出范围 [1, " + maxRows + "]");
         }
         if (col < 1 || col > maxCols) {
-            throw new BusinessException(400, label + "列号 " + col + " 超出范围 [1, " + maxCols + "]");
+            throw new BusinessException(ResultCode.PARAM_ERROR.getCode(), label + "列号 " + col + " 超出范围 [1, " + maxCols + "]");
         }
     }
 
