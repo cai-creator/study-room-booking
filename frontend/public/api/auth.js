@@ -35,16 +35,6 @@
     }
   }
 
-  function buildQuery(params) {
-    var parts = [];
-    for (var key in params) {
-      if (params.hasOwnProperty(key) && params[key] !== undefined && params[key] !== null && params[key] !== '') {
-        parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
-      }
-    }
-    return parts.join('&');
-  }
-
   /**
    * 用户名密码登录
    * @param {string} username               用户名/学号 (必填)
@@ -53,8 +43,7 @@
    * @returns {Promise<LoginVO>}
    */
   AuthAPI.login = function (username, password, expectedRole) {
-    var query = buildQuery({ username: username, password: password });
-    return Request.post('/auth/login' + (query ? '?' + query : '')).then(function (data) {
+    return Request.post('/auth/login', { username: username, password: password }).then(function (data) {
       if (expectedRole) {
         var role = data.user && data.user.role;
         var allow = false;
@@ -88,8 +77,7 @@
    * @returns {Promise<UserVO>}
    */
   AuthAPI.register = function (data) {
-    var query = buildQuery(data);
-    return Request.post('/auth/register' + (query ? '?' + query : ''));
+    return Request.post('/auth/register', data);
   };
 
   /**

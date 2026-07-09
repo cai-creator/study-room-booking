@@ -133,64 +133,18 @@
     <script src="../../public/js/request.js"></script>
     <script src="../../public/api/user.js"></script>
     <script src="../../public/api/auth.js"></script>
-    <script src="../../public/js/admin-navbar.js"></script>
+    <script src="../../public/js/navbar.js"></script>
 
     <script>
     (function () {
-        var NAVBAR_HTML = '<nav class="sticky top-0 z-50 border-b" style="height: var(--header-height); background: var(--color-surface); border-color: var(--color-border);"><div class="h-full max-w-[1280px] mx-auto px-4 sm:px-6 flex items-center justify-between" style="max-width: var(--max-width);"><div class="flex items-center gap-6"><a href="space-management.html" class="flex items-center gap-2 no-underline"><i data-lucide="book-open" style="width:22px;height:22px;color:var(--brand-primary);"></i><span style="font-size:var(--text-lg);font-weight:700;color:var(--color-text-primary);">智约自习</span><span class="px-2 py-0.5 rounded text-xs font-medium" style="background:var(--brand-primary-lighter);color:var(--brand-primary);">管理端</span></a><div class="hidden md:flex items-center gap-1" id="nav-links"><a href="space-management.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="space-management.html">空间管理</a><a href="user-management.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="user-management.html">用户管理</a><a href="blacklist.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="blacklist.html">黑名单管理</a><a href="reports.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="reports.html">数据报表</a><a href="dashboard.html" class="nav-link px-3 py-2 rounded-md text-sm font-medium transition-colors" data-page="dashboard.html">大屏看板</a></div></div><div class="flex items-center gap-3"><div class="flex items-center gap-2 cursor-pointer relative" id="user-menu-trigger" onclick="toggleUserMenu()"><div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold" style="background:var(--brand-primary);color:var(--color-text-inverse);"><span id="navbar-user-avatar">A</span></div><span class="hidden sm:block text-sm font-medium" id="navbar-user-name" style="color:var(--color-text-primary);">管理员</span><i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--color-text-tertiary);"></i></div><div id="user-dropdown" class="hidden absolute right-4 top-14 w-48 rounded-lg py-1" style="background:var(--surface-card);border:var(--surface-card-border);box-shadow:var(--shadow-lg);z-index:var(--z-dropdown);"><div class="px-4 py-2 border-b" style="border-color:var(--color-border);"><p class="text-sm font-medium" style="color:var(--color-text-primary);" id="dropdown-name"></p><p style="font-size:var(--text-xs);color:var(--color-text-tertiary);" id="dropdown-role"></p></div><button onclick="handleLogout()" class="w-full text-left px-4 py-2 text-sm transition-colors flex items-center gap-2" style="color:var(--state-error);"><i data-lucide="log-out" style="width:15px;height:15px;"></i> 退出登录</button></div></div><button class="md:hidden p-2" onclick="toggleMobileMenu()" style="color:var(--color-text-secondary);"><i data-lucide="menu" style="width:22px;height:22px;"></i></button></div><div id="mobile-menu" class="hidden md:hidden border-t" style="background:var(--color-surface);border-color:var(--color-border);"><a href="space-management.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="space-management.html">空间管理</a><a href="user-management.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="user-management.html">用户管理</a><a href="blacklist.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="blacklist.html">黑名单管理</a><a href="reports.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="reports.html">数据报表</a><a href="dashboard.html" class="block px-6 py-3 text-sm font-medium nav-link" data-page="dashboard.html">大屏看板</a></div></nav>';
-
-        function execNavbarScript() {
-            var user = null;
-            var userKey = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
-            try { var raw = localStorage.getItem(userKey); if (raw) user = JSON.parse(raw); } catch (e) {}
-            if (user) {
-                var ae = document.getElementById('navbar-user-avatar');
-                var ne = document.getElementById('navbar-user-name');
-                var dn = document.getElementById('dropdown-name');
-                var dr = document.getElementById('dropdown-role');
-                var ch = (user.realName || user.username || 'U').charAt(0);
-                if (ae) ae.textContent = ch;
-                if (ne) ne.textContent = user.realName || user.username;
-                if (dn) dn.textContent = user.realName || user.username;
-                var rm = { STUDENT: '学生', ADMIN: '管理员', SUPER_ADMIN: '超级管理员' };
-                if (dr) dr.textContent = rm[user.role] || user.role;
-            }
-            var cp = window.location.pathname.split('/').pop() || 'user-management.html';
-            document.querySelectorAll('.nav-link').forEach(function (l) {
-                var dp = l.getAttribute('data-page');
-                if (dp === cp) { l.style.color = 'var(--brand-primary)'; l.style.background = 'var(--brand-primary-lighter)'; }
-                else { l.style.color = 'var(--color-text-secondary)'; l.style.background = 'transparent'; }
-                l.addEventListener('mouseenter', function () { if (dp !== cp) l.style.background = 'var(--color-bg-tertiary)'; });
-                l.addEventListener('mouseleave', function () { if (dp !== cp) l.style.background = 'transparent'; });
-            });
-            window.toggleUserMenu = function () { var d = document.getElementById('user-dropdown'); if (d) d.classList.toggle('hidden'); if (window.lucide) lucide.createIcons(); };
-            window.toggleMobileMenu = function () { var m = document.getElementById('mobile-menu'); if (m) m.classList.toggle('hidden'); };
-            window.handleLogout = function () {
-                var tk = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.token) || 'study_room_token';
-                var uk = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
-                var lu = (window.AppConfig && AppConfig.loginUrl) || (BasePath.public + '/login.html');
-                localStorage.removeItem(tk); localStorage.removeItem(uk);
-                window.location.href = lu;
-            };
-            document.addEventListener('click', function (e) {
-                var t = document.getElementById('user-menu-trigger');
-                var d = document.getElementById('user-dropdown');
-                if (d && t && !t.contains(e.target) && !d.contains(e.target)) d.classList.add('hidden');
-            });
-            if (window.lucide) lucide.createIcons();
-        }
-
         function loadNavbar() {
             var placeholder = document.getElementById('navbar-placeholder');
             var navbarUrl = BasePath.admin + '/partials/navbar.html';
             fetch(navbarUrl).then(function (r) { return r.text(); }).then(function (html) {
                 placeholder.innerHTML = html;
-                if (window.initAdminNavbarUI) initAdminNavbarUI();
-                setTimeout(execNavbarScript, 0);
+                if (window.initNavbarUI) initNavbarUI();
             }).catch(function () {
-                placeholder.innerHTML = NAVBAR_HTML;
-                if (window.initAdminNavbarUI) initAdminNavbarUI();
-                setTimeout(execNavbarScript, 0);
+                placeholder.innerHTML = '<div style="padding:16px;text-align:center;color:var(--color-text-tertiary);">导航加载失败，请刷新页面</div>';
             });
         }
 

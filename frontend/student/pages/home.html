@@ -121,7 +121,7 @@
   <script src="../../public/api/space.js"></script>
   <script src="../../public/api/dashboard.js"></script>
   <script src="../../public/api/reservation.js"></script>
-  <script src="../../public/js/student-navbar.js"></script>
+  <script src="../../public/js/navbar.js"></script>
 
   <script>
     (function() {
@@ -167,7 +167,7 @@
         .then(r => r.text())
         .then(html => {
           document.getElementById('navbar-placeholder').innerHTML = html;
-          if (window.initStudentNavbarUI) initStudentNavbarUI();
+          if (window.initNavbarUI) initNavbarUI();
           lucide.createIcons();
         });
 

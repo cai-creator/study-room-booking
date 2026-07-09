@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,29 +25,13 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "用户登录", description = "用户名密码登录，返回JWT token")
-    public Result<LoginVO> login(
-            @Parameter(description = "用户名/学号", required = true) @RequestParam String username,
-            @Parameter(description = "密码", required = true) @RequestParam String password) {
-        LoginRequest request = new LoginRequest();
-        request.setUsername(username);
-        request.setPassword(password);
+    public Result<LoginVO> login(@Valid @RequestBody LoginRequest request) {
         return Result.success("登录成功", userService.login(request));
     }
 
     @PostMapping("/register")
     @Operation(summary = "用户注册", description = "新用户注册，默认角色为STUDENT")
-    public Result<UserVO> register(
-            @Parameter(description = "用户名/学号", required = true) @RequestParam String username,
-            @Parameter(description = "密码", required = true) @RequestParam String password,
-            @Parameter(description = "真实姓名", required = true) @RequestParam String realName,
-            @Parameter(description = "邮箱") @RequestParam(required = false) String email,
-            @Parameter(description = "手机号") @RequestParam(required = false) String phone) {
-        RegisterRequest request = new RegisterRequest();
-        request.setUsername(username);
-        request.setPassword(password);
-        request.setRealName(realName);
-        request.setEmail(email);
-        request.setPhone(phone);
+    public Result<UserVO> register(@Valid @RequestBody RegisterRequest request) {
         return Result.success("注册成功", userService.register(request));
     }
 
