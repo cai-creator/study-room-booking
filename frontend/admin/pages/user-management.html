@@ -365,6 +365,7 @@
         };
 
         document.getElementById('kw-input').addEventListener('input', applySearchDebounced);
+        if (!Utils.requireRole(['ADMIN', 'SUPER_ADMIN'])) return;
         loadNavbar();
         loadUsers();
     })();

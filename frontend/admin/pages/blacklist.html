@@ -272,14 +272,19 @@
             var st = document.getElementById('b-status').value;
             if (kw) params.keyword = kw;
             if (st !== '') params.status = st;
-            SeatAPI.getBlacklist(params).then(function (d) {
+            SeatAPI.getBlacklist(params)
+              .catch(function (e) {
+                Utils.showToast(e.message || '黑名单加载失败', 'error');
+                return { records: [], list: [], total: 0 };
+              })
+              .then(function (d) {
                 state.b.list = d.records || d.list || [];
                 state.b.total = d.total || 0;
                 document.getElementById('count-blacklist').textContent = state.b.total;
                 renderKPI_B();
                 renderBlacklistTbl();
                 renderPagination('b-page', state.b, 'goBlacklistPage');
-            }).catch(function (e) { Utils.showToast(e.message || '加载失败', 'error'); });
+              });
         };
         window.goBlacklistPage = function (n) { state.b.page = n; loadBlacklist(); };
 
@@ -312,13 +317,18 @@
             var params = { pageNum: state.n.page, pageSize: state.n.size };
             var kw = document.getElementById('n-kw').value.trim();
             if (kw) params.keyword = kw;
-            SeatAPI.getNoShowRecords(params).then(function (d) {
+            SeatAPI.getNoShowRecords(params)
+              .catch(function (e) {
+                Utils.showToast(e.message || '爽约记录加载失败', 'error');
+                return { records: [], list: [], total: 0 };
+              })
+              .then(function (d) {
                 state.n.list = d.records || d.list || [];
                 state.n.total = d.total || 0;
                 document.getElementById('count-noshow').textContent = state.n.total;
                 renderNoShowTbl();
                 renderPagination('n-page', state.n, 'goNoShowPage');
-            }).catch(function (e) { Utils.showToast(e.message || '加载失败', 'error'); });
+              });
         };
         window.goNoShowPage = function (n) { state.n.page = n; loadNoShow(); };
 
@@ -398,6 +408,7 @@
             }).catch(function (e) { Utils.showToast(e.message || '操作失败', 'error'); });
         };
 
+        if (!Utils.requireRole(['ADMIN', 'SUPER_ADMIN'])) return;
         loadNavbar();
         loadBlacklist();
         loadNoShow();

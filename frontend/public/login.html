@@ -211,6 +211,13 @@
   // ===== 初始化 =====
   document.addEventListener('DOMContentLoaded', function () {
     lucide.createIcons();
+    // 若已登录，自动按角色跳转到正确的首页（避免停留在登录页）
+    if (Utils.redirectIfLoggedIn()) return;
+
+    // 取出并显示角色不匹配 / 权限不足的提示（来自其他页面跳回时的缓存）
+    var roleMsg = Utils.takeLoginMessage();
+    if (roleMsg) showError(roleMsg);
+
     var token = Utils.getToken();
     var user = Utils.getUser();
     if (token && user) {

@@ -60,6 +60,8 @@
     (function() {
       'use strict';
 
+      if (!Utils.requireRole(['STUDENT'])) return;
+
       fetch('../partials/navbar.html')
         .then(r => r.text())
         .then(html => {
@@ -237,6 +239,8 @@
           Utils.showToast(err.message || '操作失败', 'error');
         });
       };
+
+      loadReservations(1);
     })();
   </script>
 </body>

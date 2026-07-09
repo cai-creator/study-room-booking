@@ -444,6 +444,7 @@
             });
         }
 
+        if (!Utils.requireRole(['ADMIN', 'SUPER_ADMIN'])) return;
         loadNavbar();
         loadAllData();
     })();

@@ -83,6 +83,8 @@
     (function() {
       'use strict';
 
+      if (!Utils.requireRole(['STUDENT'])) return;
+
       fetch('../partials/navbar.html')
         .then(r => r.text())
         .then(html => {
@@ -100,11 +102,17 @@
       };
 
       function loadCampusOverview() {
-        DashboardAPI.getCampusOverview().then(function(list) {
+        DashboardAPI.getCampusOverview()
+          .catch(function () { return []; })
+          .then(function(list) {
           document.getElementById('campus-loading').classList.add('hidden');
           var container = document.getElementById('campus-overview');
           container.classList.remove('hidden');
           container.innerHTML = '';
+          if (!list.length) {
+            container.innerHTML = '<div class="text-sm text-center py-4" style="color:var(--color-text-tertiary);">暂无校区概览数据</div>';
+            return;
+          }
           list.forEach(function(c) {
             var el = document.createElement('div');
             el.className = 'rounded-xl p-5';
@@ -132,16 +140,22 @@
           });
           lucide.createIcons();
         }).catch(function() {
-          document.getElementById('campus-loading').textContent = '加载失败';
+          document.getElementById('campus-loading').classList.add('hidden');
         });
       }
 
       function loadBuildingOverview() {
-        DashboardAPI.getBuildingOverview().then(function(list) {
+        DashboardAPI.getBuildingOverview()
+          .catch(function () { return []; })
+          .then(function(list) {
           document.getElementById('building-loading').classList.add('hidden');
           var container = document.getElementById('building-list');
           container.classList.remove('hidden');
           container.innerHTML = '';
+          if (!list.length) {
+            container.innerHTML = '<div class="text-sm text-center py-4" style="color:var(--color-text-tertiary);">暂无楼栋概览数据</div>';
+            return;
+          }
           list.forEach(function(b) {
             var el = document.createElement('div');
             el.className = 'rounded-lg p-3 flex items-center justify-between flex-wrap gap-2';
@@ -165,12 +179,14 @@
             container.appendChild(el);
           });
         }).catch(function() {
-          document.getElementById('building-loading').textContent = '加载失败';
+          document.getElementById('building-loading').classList.add('hidden');
         });
       }
 
       function loadRoomList() {
-        SpaceAPI.getRooms({ pageSize: 100 }).then(function(result) {
+        SpaceAPI.getRooms({ pageSize: 100 })
+          .catch(function () { return { records: [], list: [] }; })
+          .then(function(result) {
           var sel = document.getElementById('room-select');
           sel.innerHTML = '<option value="">选择自习室</option>';
           var list = result.records || result.list || [];

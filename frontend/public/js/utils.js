@@ -238,6 +238,61 @@
     return path.substring(path.lastIndexOf('/') + 1);
   };
 
+  /**
+   * 权限守卫：要求当前登录用户角色必须在允许列表中
+   *  - 未登录（无 token/user）→ 跳登录页
+   *  - 已登录但角色不符 → 清除登录态 + 跳登录页（防止跨角色串页：管理员进学生端 / 学生进管理员端）
+   * @param {Array<'STUDENT'|'ADMIN'|'SUPER_ADMIN'>} allowedRoles - 允许的角色列表
+   * @returns {boolean} true 表示通过守卫，false 表示已触发跳转
+   */
+  Utils.requireRole = function (allowedRoles) {
+    var token = Utils.getToken();
+    var user = Utils.getUser();
+    var loginUrl = (window.AppConfig && AppConfig.loginUrl) || (window.BasePath ? BasePath.public + '/login.html' : '/public/login.html');
+
+    if (!token || !user) {
+      window.location.replace(loginUrl);
+      return false;
+    }
+    var role = user.role;
+    var allow = Array.isArray(allowedRoles) && allowedRoles.indexOf(role) !== -1;
+    if (!allow) {
+      Utils.clearToken();
+      Utils.clearUser();
+      try { sessionStorage.setItem('roleMismatchMsg', '该账号为' + (ROLE_MAP[role] || role) + '账号，无法访问此页面'); } catch (e) {}
+      window.location.replace(loginUrl);
+      return false;
+    }
+    return true;
+  };
+
+  /**
+   * 登录页自动跳转：若已登录则按角色跳到对应首页（避免停留在登录页）
+   */
+  Utils.redirectIfLoggedIn = function () {
+    var token = Utils.getToken();
+    var user = Utils.getUser();
+    if (!token || !user) return false;
+    var role = user.role;
+    var target = (window.BasePath ? BasePath.public + '/login.html' : '/public/login.html');
+    if (role === 'STUDENT') {
+      target = (window.BasePath ? BasePath.student : '/student') + '/pages/home.html';
+    } else if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+      target = (window.BasePath ? BasePath.admin : '/admin') + '/pages/space-management.html';
+    }
+    window.location.replace(target);
+    return true;
+  };
+
+  /** 取出并清除登录页的错误提示（角色不符等） */
+  Utils.takeLoginMessage = function () {
+    try {
+      var msg = sessionStorage.getItem('roleMismatchMsg');
+      if (msg) { sessionStorage.removeItem('roleMismatchMsg'); return msg; }
+    } catch (e) {}
+    return null;
+  };
+
   // 导出到全局
   window.Utils = Utils;
 })();

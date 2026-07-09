@@ -85,6 +85,8 @@
     (function() {
       'use strict';
 
+      if (!Utils.requireRole(['STUDENT'])) return;
+
       fetch('../partials/navbar.html')
         .then(r => r.text())
         .then(html => {
@@ -95,7 +97,21 @@
 
       var currentPage = 1;
       var campuses = [], buildings = [], floors = [];
-      var typeNames = { 'READING_ROOM': '阅览室', 'SELF_STUDY_ROOM': '自习室', 'COMPUTER_ROOM': '电子阅览室', 'GROUP_ROOM': '研讨间' };
+      var typeNames = { 'READING_ROOM': '阅览室', 'SELF_STUDY_ROOM': '自习室', 'COMPUTER_ROOM': '电子阅览室', 'GROUP_ROOM': '研讨间', 'LIBRARY': '图书馆自习室', 'TEACHING': '教学楼自习室', 'READING': '阅览室' };
+
+      function resolveRoomLocation(room) {
+        if (room.campusName && room.buildingName) {
+          return { campusName: room.campusName, buildingName: room.buildingName, floorNumber: room.floorNumber || '' };
+        }
+        var floor = floors.find(function(f) { return f.id === room.floorId; });
+        var building = floor ? buildings.find(function(b) { return b.id === floor.buildingId; }) : null;
+        var campus = building ? campuses.find(function(c) { return c.id === building.campusId; }) : null;
+        return {
+          campusName: campus ? campus.name : (room.campusName || ''),
+          buildingName: building ? building.name : (room.buildingName || ''),
+          floorNumber: floor ? floor.floorNumber : (room.floorNumber || '')
+        };
+      }
 
       // 加载校区
       SpaceAPI.getCampuses().then(function(list) {
@@ -108,9 +124,16 @@
         });
       });
 
-      // 加载楼栋
+      // 加载楼栋 + 所有楼层（用于房间位置关联）
       SpaceAPI.getBuildings().then(function(list) {
         buildings = list || [];
+        var fps = buildings.map(function(b) {
+          return SpaceAPI.getFloors(b.id).catch(function() { return []; });
+        });
+        Promise.all(fps).then(function(res) {
+          floors = [];
+          res.forEach(function(f) { floors = floors.concat(f || []); });
+        });
       });
 
       // 校区变化加载楼栋
@@ -166,11 +189,23 @@
         document.getElementById('rooms-empty').classList.add('hidden');
         document.getElementById('pagination').classList.add('hidden');
 
-        SpaceAPI.getRooms(params).then(function(result) {
+        SpaceAPI.getRooms(params)
+          .catch(function (err) {
+            if (err && (err.code === 500 || err.code === 0)) {
+              return { records: [], list: [], total: 0, _softFail: err.code };
+            }
+            throw err;
+          })
+          .then(function(result) {
           document.getElementById('rooms-loading').classList.add('hidden');
+          document.getElementById('rooms-loading').textContent = '加载中...';
           var list = result.records || result.list || [];
           if (list.length === 0) {
-            document.getElementById('rooms-empty').classList.remove('hidden');
+            var empty = document.getElementById('rooms-empty');
+            empty.classList.remove('hidden');
+            if (result._softFail === 500) {
+              empty.querySelector('p') && (empty.querySelector('p').textContent = '自习室服务暂不可用，请稍后重试');
+            }
             lucide.createIcons();
             return;
           }
@@ -178,6 +213,7 @@
           container.innerHTML = '';
           container.classList.remove('hidden');
           list.forEach(function(room) {
+            var loc = resolveRoomLocation(room);
             var el = document.createElement('div');
             el.className = 'rounded-xl p-5 transition-all hover:shadow-lg';
             el.style.cssText = 'background:var(--surface-card);border:var(--surface-card-border);';
@@ -189,7 +225,7 @@
               '<div class="flex items-start justify-between mb-3">' +
                 '<div>' +
                   '<h3 class="font-semibold text-sm mb-1">' + Utils.escapeHtml(room.name) + '</h3>' +
-                  '<p class="text-xs" style="color:var(--color-text-tertiary);">' + Utils.escapeHtml(room.campusName || '') + ' · ' + Utils.escapeHtml(room.buildingName || '') + ' · ' + (room.floorNumber || '') + '层</p>' +
+                  '<p class="text-xs" style="color:var(--color-text-tertiary);">' + Utils.escapeHtml(loc.campusName) + ' · ' + Utils.escapeHtml(loc.buildingName) + ' · ' + loc.floorNumber + '层</p>' +
                 '</div>' +
                 statusBadge +
               '</div>' +
@@ -204,8 +240,12 @@
           });
           renderPagination(result.total || 0, result.current || result.pageNum || 1, result.size || result.pageSize || 9);
           lucide.createIcons();
-        }).catch(function() {
-          document.getElementById('rooms-loading').textContent = '加载失败，请重试';
+        }).catch(function(e) {
+          document.getElementById('rooms-loading').classList.add('hidden');
+          document.getElementById('rooms-loading').textContent = '加载中...';
+          var empty = document.getElementById('rooms-empty');
+          empty.classList.remove('hidden');
+          empty.querySelector('p') && (empty.querySelector('p').textContent = (e && e.message) || '加载失败，请重试');
         });
       };
 

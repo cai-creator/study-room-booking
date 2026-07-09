@@ -253,7 +253,7 @@
             p.then(function () {
                 Utils.showToast('保存成功', 'success');
                 closeEntityModal();
-                loadTree();
+                loadAllData();
             }).catch(function (err) { Utils.showToast(err.message || '保存失败', 'error'); });
         };
 
@@ -332,25 +332,37 @@
         };
 
         function loadAllData() {
-            Promise.all([SpaceAPI.getCampuses(), SpaceAPI.getBuildings({})]).then(function (res) {
+            Promise.all([
+                SpaceAPI.getCampuses().catch(function () { return []; }),
+                SpaceAPI.getBuildings({}).catch(function () { return []; })
+            ]).then(function (res) {
                 state.campuses = res[0] || [];
                 state.buildings = res[1] || [];
-                var fps = state.buildings.map(function (b) { return SpaceAPI.getFloors(b.id); });
+                renderTree();
+                var fps = state.buildings.map(function (b) { return SpaceAPI.getFloors(b.id).catch(function () { return []; }); });
                 return Promise.all(fps);
             }).then(function (fRes) {
                 state.floors = [];
                 fRes.forEach(function (f) { state.floors = state.floors.concat(f || []); });
-                var rps = state.floors.map(function (f) { return SpaceAPI.getRooms({ floorId: f.id }); });
+                renderTree();
+                var rps = state.floors.map(function (f) {
+                    return SpaceAPI.getRooms({ floorId: f.id })
+                        .then(function (rp) {
+                            if (rp) {
+                                var arr = rp.records || rp.list || [];
+                                if (Array.isArray(rp)) arr = rp;
+                                return arr;
+                            }
+                            return [];
+                        })
+                        .catch(function () { return []; });
+                });
                 return Promise.all(rps);
             }).then(function (rRes) {
                 state.rooms = [];
-                rRes.forEach(function (rp) {
-                    if (rp) {
-                        var arr = rp.records || rp.list || [];
-                        if (Array.isArray(rp)) arr = rp;
-                        state.rooms = state.rooms.concat(arr);
-                    }
-                });
+                rRes.forEach(function (arr) { state.rooms = state.rooms.concat(arr || []); });
+                renderTree();
+            }).catch(function () {
                 renderTree();
             });
         }
@@ -505,6 +517,7 @@
             document.getElementById('seat-grid').innerHTML = h;
         }
 
+        if (!Utils.requireRole(['ADMIN', 'SUPER_ADMIN'])) return;
         loadNavbar();
         loadAllData();
     })();

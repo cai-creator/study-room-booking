@@ -98,6 +98,8 @@
     (function() {
       'use strict';
 
+      if (!Utils.requireRole(['STUDENT'])) return;
+
       fetch('../partials/navbar.html')
         .then(r => r.text())
         .then(html => {

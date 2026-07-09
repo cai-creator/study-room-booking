@@ -313,9 +313,13 @@
 
         window.refreshAll = function () {
             var range = getDateRange();
-            Promise.all([ReportAPI.getUsageRate(range), ReportAPI.getNoShowRate(range), ReportAPI.getConversionRate(range)]).then(function (r) {
+            Promise.all([
+                ReportAPI.getUsageRate(range).catch(function () { return null; }),
+                ReportAPI.getNoShowRate(range).catch(function () { return null; }),
+                ReportAPI.getConversionRate(range).catch(function () { return null; })
+            ]).then(function (r) {
                 renderKPIs(r[0], r[1], r[2]);
-            });
+            }).catch(function () {});
             loadUsage();
             loadTimeDist();
             loadHotPeriods();
@@ -333,11 +337,16 @@
 
         document.getElementById('range-select').addEventListener('change', refreshAll);
 
+        if (!Utils.requireRole(['ADMIN', 'SUPER_ADMIN'])) return;
         loadNavbar();
         var initRange = getDateRange();
-        Promise.all([ReportAPI.getUsageRate(initRange), ReportAPI.getNoShowRate(initRange), ReportAPI.getConversionRate(initRange)]).then(function (r) {
+        Promise.all([
+            ReportAPI.getUsageRate(initRange).catch(function () { return null; }),
+            ReportAPI.getNoShowRate(initRange).catch(function () { return null; }),
+            ReportAPI.getConversionRate(initRange).catch(function () { return null; })
+        ]).then(function (r) {
             renderKPIs(r[0], r[1], r[2]);
-        });
+        }).catch(function () {});
         loadUsage();
         loadTimeDist();
         loadHotPeriods();

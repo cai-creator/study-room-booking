@@ -127,6 +127,41 @@
     (function() {
       'use strict';
 
+      if (!Utils.requireRole(['STUDENT'])) return;
+
+      var allCampuses = [];
+      var allBuildings = [];
+      var allFloors = [];
+
+      function resolveRoomLocation(room) {
+        if (room.campusName && room.buildingName) {
+          return { campusName: room.campusName, buildingName: room.buildingName, floorNumber: room.floorNumber || '' };
+        }
+        var floor = allFloors.find(function(f) { return f.id === room.floorId; });
+        var building = floor ? allBuildings.find(function(b) { return b.id === floor.buildingId; }) : null;
+        var campus = building ? allCampuses.find(function(c) { return c.id === building.campusId; }) : null;
+        return {
+          campusName: campus ? campus.name : (room.campusName || ''),
+          buildingName: building ? building.name : (room.buildingName || ''),
+          floorNumber: floor ? floor.floorNumber : (room.floorNumber || '')
+        };
+      }
+
+      function loadSpaceMetadata() {
+        return Promise.all([
+          SpaceAPI.getCampuses().catch(function() { return []; }),
+          SpaceAPI.getBuildings({}).catch(function() { return []; })
+        ]).then(function(res) {
+          allCampuses = res[0] || [];
+          allBuildings = res[1] || [];
+          var fps = allBuildings.map(function(b) { return SpaceAPI.getFloors(b.id).catch(function() { return []; }); });
+          return Promise.all(fps);
+        }).then(function(fRes) {
+          allFloors = [];
+          fRes.forEach(function(f) { allFloors = allFloors.concat(f || []); });
+        }).catch(function() {});
+      }
+
       // 加载导航栏
       fetch('../partials/navbar.html')
         .then(r => r.text())
@@ -149,10 +184,15 @@
 
       // 加载校区概览
       DashboardAPI.getCampusOverview()
+        .catch(function () { return []; })
         .then(function(list) {
           document.getElementById('campus-loading').classList.add('hidden');
           var container = document.getElementById('campus-list');
           container.classList.remove('hidden');
+          if (!list.length) {
+            container.innerHTML = '<div class="text-sm text-center py-4" style="color:var(--color-text-tertiary);">暂无校区数据</div>';
+            return;
+          }
           list.forEach(function(c) {
             var el = document.createElement('div');
             el.className = 'rounded-lg p-4';
@@ -170,9 +210,8 @@
             container.appendChild(el);
           });
           lucide.createIcons();
-        })
-        .catch(function() {
-          document.getElementById('campus-loading').textContent = '加载失败';
+        }).catch(function() {
+          document.getElementById('campus-loading').classList.add('hidden');
         });
 
       // 加载今日预约
@@ -209,15 +248,26 @@
           lucide.createIcons();
         });
 
-      // 加载推荐自习室
-      SpaceAPI.getRooms({ hasAvailableSeats: true, pageSize: 6 })
+      // 加载空间元数据 + 推荐自习室（容错：/rooms 500时不阻断其他数据）
+      loadSpaceMetadata()
+        .catch(function () {})
+        .then(function() {
+          return SpaceAPI.getRooms({ hasAvailableSeats: true, pageSize: 6 })
+            .catch(function () { return { records: [], list: [] }; });
+        })
         .then(function(result) {
           document.getElementById('rooms-loading').classList.add('hidden');
+          document.getElementById('rooms-loading').textContent = '加载中...';
           var container = document.getElementById('rooms-list');
           container.classList.remove('hidden');
-          var typeNames = { 'READING_ROOM': '阅览室', 'SELF_STUDY_ROOM': '自习室', 'COMPUTER_ROOM': '电子阅览室', 'GROUP_ROOM': '研讨间' };
+          var typeNames = { 'READING_ROOM': '阅览室', 'SELF_STUDY_ROOM': '自习室', 'COMPUTER_ROOM': '电子阅览室', 'GROUP_ROOM': '研讨间', 'LIBRARY': '图书馆自习室', 'TEACHING': '教学楼自习室', 'READING': '阅览室' };
           var list = result.records || result.list || [];
+          if (!list.length) {
+            container.innerHTML = '<div class="col-span-full text-sm text-center py-8" style="color:var(--color-text-tertiary);">暂无推荐自习室</div>';
+            return;
+          }
           list.forEach(function(room) {
+            var loc = resolveRoomLocation(room);
             var el = document.createElement('a');
             el.href = 'seat-selection.html?roomId=' + room.id;
             el.className = 'rounded-lg p-4 transition-all hover:shadow-md';
@@ -227,7 +277,7 @@
                 '<span class="font-medium text-sm" style="color:var(--color-text-primary);">' + Utils.escapeHtml(room.name) + '</span>' +
                 '<span class="text-xs px-2 py-0.5 rounded-full" style="background:var(--brand-primary-lighter);color:var(--brand-primary);">' + (typeNames[room.roomType] || room.roomType) + '</span>' +
               '</div>' +
-              '<div class="text-xs mb-2" style="color:var(--color-text-tertiary);">' + Utils.escapeHtml(room.campusName) + ' · ' + Utils.escapeHtml(room.buildingName) + ' · ' + room.floorNumber + '层</div>' +
+              '<div class="text-xs mb-2" style="color:var(--color-text-tertiary);">' + Utils.escapeHtml(loc.campusName) + ' · ' + Utils.escapeHtml(loc.buildingName) + ' · ' + loc.floorNumber + '层</div>' +
               '<div class="flex items-center gap-3 text-xs">' +
                 '<span style="color:var(--color-text-secondary);"><i data-lucide="users" class="inline" style="width:12px;height:12px;"></i> ' + room.totalSeats + '座</span>' +
                 '<span style="color:var(--state-success);"><i data-lucide="circle-check" class="inline" style="width:12px;height:12px;"></i> 有空座</span>' +
@@ -237,7 +287,10 @@
           lucide.createIcons();
         })
         .catch(function() {
-          document.getElementById('rooms-loading').textContent = '加载失败';
+          document.getElementById('rooms-loading').classList.add('hidden');
+          document.getElementById('rooms-loading').textContent = '加载中...';
+          document.getElementById('rooms-list').classList.remove('hidden');
+          document.getElementById('rooms-list').innerHTML = '<div class="col-span-full text-sm text-center py-8" style="color:var(--color-text-tertiary);">暂无推荐自习室</div>';
         });
     })();
   </script>
