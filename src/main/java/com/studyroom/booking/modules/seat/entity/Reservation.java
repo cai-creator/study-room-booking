@@ -53,6 +53,7 @@ public class Reservation implements Serializable {
     private LocalDateTime temporaryLeaveTime;
 
     /** 乐观锁版本号 */
+    @Version
     @TableField("version")
     private Integer version;
 

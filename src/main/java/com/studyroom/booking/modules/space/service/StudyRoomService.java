@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.studyroom.booking.common.exception.BusinessException;
@@ -134,10 +135,10 @@ public class StudyRoomService extends ServiceImpl<StudyRoomMapper, StudyRoom> {
     @Transactional
     public void updateStatus(Long id, Integer status) {
         StudyRoom room = getById(id);
-        StudyRoom update = new StudyRoom();
-        update.setId(id);
-        update.setStatus(status);
-        baseMapper.updateById(update);
+        LambdaUpdateWrapper<StudyRoom> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(StudyRoom::getId, id)
+               .set(StudyRoom::getStatus, status);
+        baseMapper.update(null, wrapper);
     }
 
     /**

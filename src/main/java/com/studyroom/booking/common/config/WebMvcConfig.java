@@ -17,11 +17,19 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     /**
      * 配置跨域
+     * <p>注意：allowCredentials(true) 与 allowedOriginPatterns("*") 不兼容（违反 CORS 规范），
+     * 浏览器会拒绝带 credentials 的通配符跨域请求。此处使用具体的前端地址。
+     * 生产环境请根据实际部署域名修改。
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOriginPatterns("*")
+                .allowedOriginPatterns(
+                        "http://localhost:3000",
+                        "http://127.0.0.1:3000",
+                        "http://localhost:8081",
+                        "http://127.0.0.1:8081"
+                )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
