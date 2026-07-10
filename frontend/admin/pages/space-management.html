@@ -96,14 +96,119 @@
             var modal = document.getElementById('entity-modal');
             var title = document.getElementById('modal-title');
             var form = document.getElementById('entity-form');
-            window._editing = editData || null;
+            window._editing = editData ? Object.assign({}, editData) : null;
             window._entityType = type;
             var titles = { campus: '校区', building: '楼栋', floor: '楼层', room: '自习室' };
             title.textContent = (editData ? '编辑' : '新建') + titles[type];
-            form.innerHTML = buildFormFields(type, editData);
+
+            if (window._editing) {
+                // 编辑楼层/自习室时，从 buildingId/floorId 反查 campusId，确保校区下拉正确选中
+                if (type === 'floor' && window._editing.buildingId) {
+                    var bForFloor = state.buildings.find(function (b) { return b.id === window._editing.buildingId; });
+                    if (bForFloor) window._editing.campusId = bForFloor.campusId;
+                } else if (type === 'room' && window._editing.floorId) {
+                    var fForRoom = state.floors.find(function (f) { return f.id === window._editing.floorId; });
+                    if (fForRoom) {
+                        window._editing.buildingId = fForRoom.buildingId;
+                        var bForRoom = state.buildings.find(function (b) { return b.id === fForRoom.buildingId; });
+                        if (bForRoom) window._editing.campusId = bForRoom.campusId;
+                    }
+                }
+            } else {
+                // 新建时，根据当前选中的树节点推断默认的 campusId/buildingId/floorId
+                var defaults = deriveDefaultsFromSelection(type);
+                if (defaults) window._editing = defaults;
+            }
+
+            form.innerHTML = buildFormFields(type, window._editing);
             modal.classList.remove('hidden');
             if (window.lucide) lucide.createIcons();
+
+            // 表单渲染后，填充联动下拉并回显选中值
+            var ci = document.querySelector('[name="campusId"]');
+            if (ci && ci.value) {
+                updateBuildingSelect(ci.value);
+                var bi = document.getElementById('sel-buildingId');
+                if (bi && window._editing && window._editing.buildingId) {
+                    bi.value = String(window._editing.buildingId);
+                    updateFloorSelect(window._editing.buildingId);
+                    var fi = document.getElementById('sel-floorId');
+                    if (fi && window._editing.floorId) {
+                        fi.value = String(window._editing.floorId);
+                    }
+                }
+            }
         };
+
+        // 根据当前选中的树节点，推断新建时各下拉的默认值
+        function deriveDefaultsFromSelection(type) {
+            var sel = state.selected;
+            if (!sel.type || !sel.id) return null;
+
+            if (type === 'building') {
+                if (sel.type === 'campus') return { campusId: sel.id };
+                if (sel.type === 'building') {
+                    var b = state.buildings.find(function (x) { return x.id === sel.id; });
+                    if (b) return { campusId: b.campusId };
+                }
+                if (sel.type === 'floor' || sel.type === 'room') {
+                    var floor = sel.type === 'floor'
+                        ? state.floors.find(function (x) { return x.id === sel.id; })
+                        : state.floors.find(function (x) { return x.id === (state.rooms.find(function (r) { return r.id === sel.id; }) || {}).floorId; });
+                    if (floor) {
+                        var bld = state.buildings.find(function (x) { return x.id === floor.buildingId; });
+                        if (bld) return { campusId: bld.campusId };
+                    }
+                }
+            } else if (type === 'floor') {
+                if (sel.type === 'campus') return { campusId: sel.id };
+                if (sel.type === 'building') {
+                    var b2 = state.buildings.find(function (x) { return x.id === sel.id; });
+                    if (b2) return { campusId: b2.campusId, buildingId: b2.id };
+                }
+                if (sel.type === 'floor') {
+                    var f2 = state.floors.find(function (x) { return x.id === sel.id; });
+                    if (f2) {
+                        var b3 = state.buildings.find(function (x) { return x.id === f2.buildingId; });
+                        if (b3) return { campusId: b3.campusId, buildingId: b3.id };
+                    }
+                }
+                if (sel.type === 'room') {
+                    var r2 = state.rooms.find(function (x) { return x.id === sel.id; });
+                    if (r2) {
+                        var f3 = state.floors.find(function (x) { return x.id === r2.floorId; });
+                        if (f3) {
+                            var b4 = state.buildings.find(function (x) { return x.id === f3.buildingId; });
+                            if (b4) return { campusId: b4.campusId, buildingId: b4.id };
+                        }
+                    }
+                }
+            } else if (type === 'room') {
+                if (sel.type === 'floor') {
+                    var f4 = state.floors.find(function (x) { return x.id === sel.id; });
+                    if (f4) {
+                        var b5 = state.buildings.find(function (x) { return x.id === f4.buildingId; });
+                        if (b5) return { campusId: b5.campusId, buildingId: b5.id, floorId: f4.id };
+                    }
+                }
+                if (sel.type === 'building') {
+                    var b6 = state.buildings.find(function (x) { return x.id === sel.id; });
+                    if (b6) return { campusId: b6.campusId, buildingId: b6.id };
+                }
+                if (sel.type === 'campus') return { campusId: sel.id };
+                if (sel.type === 'room') {
+                    var r3 = state.rooms.find(function (x) { return x.id === sel.id; });
+                    if (r3) {
+                        var f5 = state.floors.find(function (x) { return x.id === r3.floorId; });
+                        if (f5) {
+                            var b7 = state.buildings.find(function (x) { return x.id === f5.buildingId; });
+                            if (b7) return { campusId: b7.campusId, buildingId: b7.id, floorId: f5.id };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
 
         window.closeEntityModal = function () {
             document.getElementById('entity-modal').classList.add('hidden');
@@ -178,11 +283,6 @@
             var fList = state.floors.filter(function (f) { return String(f.buildingId) === String(buildingId); });
             sel.innerHTML = '<option value="">请选择楼层</option>' + fList.map(function (f) { return '<option value="' + f.id + '">' + f.floorNumber + '层</option>'; }).join('');
         };
-
-        setTimeout(function () {
-            var ci = document.querySelector('[name="campusId"]');
-            if (ci && ci.value) updateBuildingSelect(ci.value);
-        }, 100);
 
         window.handleEntitySubmit = function (e) {
             e.preventDefault();
