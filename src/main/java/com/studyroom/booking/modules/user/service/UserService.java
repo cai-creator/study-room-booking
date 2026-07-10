@@ -76,33 +76,50 @@ public class UserService {
      */
     @Transactional
     public UserVO register(RegisterRequest request) {
-        // 检查用户名是否已存在
-        User existingUser = userMapper.selectOne(
-                new LambdaQueryWrapper<User>()
-                        .eq(User::getUsername, request.getUsername())
-                        .eq(User::getDeleted, 0)
-        );
+        User existingUser = userMapper.selectByUsernameIncludeDeleted(request.getUsername());
 
-        if (existingUser != null) {
+        if (existingUser != null && existingUser.getDeleted() == 0) {
             throw new BusinessException(ResultCode.USER_ALREADY_EXISTS);
         }
 
-        // 创建用户
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setPassword(BCrypt.hashpw(request.getPassword()));
-        user.setRealName(request.getRealName());
-        user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
-        user.setRole("STUDENT");
-        user.setStatus(1);
-        user.setDeleted(0);
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
+        User user;
+        if (existingUser != null) {
+            userMapper.updateIncludeDeleted(
+                    existingUser.getId(),
+                    BCrypt.hashpw(request.getPassword()),
+                    request.getRealName(),
+                    request.getEmail(),
+                    request.getPhone(),
+                    "STUDENT",
+                    1,
+                    0,
+                    LocalDateTime.now()
+            );
+            user = existingUser;
+            user.setPassword(BCrypt.hashpw(request.getPassword()));
+            user.setRealName(request.getRealName());
+            user.setEmail(request.getEmail());
+            user.setPhone(request.getPhone());
+            user.setRole("STUDENT");
+            user.setStatus(1);
+            user.setDeleted(0);
+            log.info("已注销用户重新注册: username={}, role=STUDENT", user.getUsername());
+        } else {
+            user = new User();
+            user.setUsername(request.getUsername());
+            user.setPassword(BCrypt.hashpw(request.getPassword()));
+            user.setRealName(request.getRealName());
+            user.setEmail(request.getEmail());
+            user.setPhone(request.getPhone());
+            user.setRole("STUDENT");
+            user.setStatus(1);
+            user.setDeleted(0);
+            user.setCreatedAt(LocalDateTime.now());
+            user.setUpdatedAt(LocalDateTime.now());
+            userMapper.insert(user);
+            log.info("新用户注册: username={}, role=STUDENT", user.getUsername());
+        }
 
-        userMapper.insert(user);
-
-        log.info("新用户注册: username={}, role=STUDENT", user.getUsername());
         return convertToVO(user);
     }
 
@@ -112,37 +129,53 @@ public class UserService {
      */
     @Transactional
     public UserVO createUser(CreateUserRequest request, String currentRole) {
-        // 检查用户名是否已存在
-        User existingUser = userMapper.selectOne(
-                new LambdaQueryWrapper<User>()
-                        .eq(User::getUsername, request.getUsername())
-                        .eq(User::getDeleted, 0)
-        );
+        User existingUser = userMapper.selectByUsernameIncludeDeleted(request.getUsername());
 
-        if (existingUser != null) {
+        if (existingUser != null && existingUser.getDeleted() == 0) {
             throw new BusinessException(ResultCode.USER_ALREADY_EXISTS);
         }
 
-        // ADMIN 只能创建 STUDENT 角色
         String targetRole = request.getRole() != null ? request.getRole() : "STUDENT";
         if ("ADMIN".equals(currentRole) && !"STUDENT".equals(targetRole)) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
 
-        // 创建用户
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setPassword(BCrypt.hashpw(request.getPassword()));
-        user.setRealName(request.getRealName());
-        user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
-        user.setRole(targetRole);
-        user.setStatus(1);
-        user.setDeleted(0);
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-
-        userMapper.insert(user);
+        User user;
+        if (existingUser != null) {
+            userMapper.updateIncludeDeleted(
+                    existingUser.getId(),
+                    BCrypt.hashpw(request.getPassword()),
+                    request.getRealName(),
+                    request.getEmail(),
+                    request.getPhone(),
+                    targetRole,
+                    1,
+                    0,
+                    LocalDateTime.now()
+            );
+            user = existingUser;
+            user.setPassword(BCrypt.hashpw(request.getPassword()));
+            user.setRealName(request.getRealName());
+            user.setEmail(request.getEmail());
+            user.setPhone(request.getPhone());
+            user.setRole(targetRole);
+            user.setStatus(1);
+            user.setDeleted(0);
+            log.info("已注销用户重新创建: username={}, role={}", user.getUsername(), targetRole);
+        } else {
+            user = new User();
+            user.setUsername(request.getUsername());
+            user.setPassword(BCrypt.hashpw(request.getPassword()));
+            user.setRealName(request.getRealName());
+            user.setEmail(request.getEmail());
+            user.setPhone(request.getPhone());
+            user.setRole(targetRole);
+            user.setStatus(1);
+            user.setDeleted(0);
+            user.setCreatedAt(LocalDateTime.now());
+            user.setUpdatedAt(LocalDateTime.now());
+            userMapper.insert(user);
+        }
 
         return convertToVO(user);
     }
