@@ -336,6 +336,18 @@
   SpaceAPI.getSeatStatus = function (roomId) { return Request.get('/rooms/' + roomId + '/seats/status'); };
 
   /**
+   * 获取自习室座位在指定时段的状态
+   * @param {number} roomId    自习室ID (必填)
+   * @param {string} date      查询日期 (yyyy-MM-dd)
+   * @param {string} startTime 时段开始时间 (HH:mm)
+   * @param {string} endTime   时段结束时间 (HH:mm)
+   * @returns {Promise<RoomSeatStatusVO>}
+   */
+  SpaceAPI.getSeatStatusByTime = function (roomId, date, startTime, endTime) {
+    return Request.get('/rooms/' + roomId + '/seats/status-by-time', { date: date, startTime: startTime, endTime: endTime });
+  };
+
+  /**
    * 批量生成座位（按行列网格）
    * @param {number} roomId  自习室ID (必填)
    * @param {SeatGenerateRequest} config

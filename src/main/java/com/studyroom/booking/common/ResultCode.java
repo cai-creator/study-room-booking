@@ -31,6 +31,7 @@ public enum ResultCode {
     RESERVATION_TOO_LATE(3006, "预约时间过晚"),
     RESERVATION_CONFLICT(3007, "该时段座位已被预约"),
     RESERVATION_CANCEL_NOT_ALLOWED(3008, "当前状态不允许取消预约"),
+    RESERVATION_USER_CONFLICT(3009, "该时段您已有其他预约"),
 
     CHECKIN_NOT_ALLOWED(4001, "无法签到"),
     CHECKIN_ALREADY_DONE(4002, "已签到"),

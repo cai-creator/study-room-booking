@@ -91,4 +91,16 @@ public class SeatController {
     public Result<RoomSeatStatusVO> getSeatStatus(@PathVariable Long roomId) {
         return Result.success(seatService.getRoomSeatStatus(roomId));
     }
+
+    @GetMapping("/rooms/{roomId}/seats/status-by-time")
+    @Operation(summary = "获取自习室座位在指定时段的状态")
+    public Result<RoomSeatStatusVO> getSeatStatusByTime(
+            @PathVariable Long roomId,
+            @Parameter(description = "查询日期", example = "2024-01-15") @RequestParam String date,
+            @Parameter(description = "时段开始时间", example = "08:00") @RequestParam String startTime,
+            @Parameter(description = "时段结束时间", example = "09:00") @RequestParam String endTime) {
+        java.time.LocalDateTime start = java.time.LocalDateTime.parse(date + "T" + startTime + ":00");
+        java.time.LocalDateTime end = java.time.LocalDateTime.parse(date + "T" + endTime + ":00");
+        return Result.success(seatService.getRoomSeatStatusByTime(roomId, start, end));
+    }
 }

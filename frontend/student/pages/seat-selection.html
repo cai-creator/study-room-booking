@@ -43,16 +43,29 @@
           <p class="text-xs mt-0.5" style="color:var(--color-text-tertiary);" id="room-location">--</p>
         </div>
         <div class="flex items-center gap-4 text-xs">
-          <span>总座位: <strong id="stat-total">0</strong></span>
-          <span style="color:var(--seat-available);">空闲: <strong id="stat-available">0</strong></span>
-          <span style="color:var(--seat-reserved);">已预约: <strong id="stat-reserved">0</strong></span>
-          <span style="color:var(--seat-occupied);">使用中: <strong id="stat-occupied">0</strong></span>
+          <span>开放时间: <strong id="room-hours">--</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 日期和时段选择 -->
+    <div id="time-selector" class="rounded-xl p-4 mb-4 hidden" style="background: var(--surface-card); border: var(--surface-card-border);">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="text-sm font-medium mb-2 block" style="color:var(--color-text-secondary);">预约日期</label>
+          <input type="date" id="date-picker" class="px-3 py-2 rounded-md text-sm outline-none w-full"
+                 style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);">
+        </div>
+        <div>
+          <label class="text-sm font-medium mb-2 block" style="color:var(--color-text-secondary);">选择时段</label>
+          <div id="slot-list" class="flex flex-wrap gap-2"></div>
+          <div id="slot-empty" class="hidden text-xs" style="color:var(--color-text-tertiary);">请先选择日期</div>
         </div>
       </div>
     </div>
 
     <!-- 状态图例 -->
-    <div class="rounded-xl p-3 mb-4 flex items-center gap-4 flex-wrap" style="background: var(--surface-card); border: var(--surface-card-border);">
+    <div id="seat-legend" class="rounded-xl p-3 mb-4 hidden flex items-center gap-4 flex-wrap" style="background: var(--surface-card); border: var(--surface-card-border);">
       <span class="text-xs font-medium" style="color:var(--color-text-secondary);">图例：</span>
       <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:var(--seat-available);"></span><span class="text-xs" style="color:var(--color-text-tertiary);">空闲</span></div>
       <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:var(--seat-reserved);"></span><span class="text-xs" style="color:var(--color-text-tertiary);">已预约</span></div>
@@ -61,29 +74,33 @@
       <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm" style="background:var(--color-border);"></span><span class="text-xs" style="color:var(--color-text-tertiary);">不可用</span></div>
     </div>
 
+    <!-- 座位统计 -->
+    <div id="seat-stats" class="rounded-xl p-3 mb-4 hidden flex items-center gap-4 text-xs" style="background: var(--surface-card); border: var(--surface-card-border);">
+      <span>总座位: <strong id="stat-total">0</strong></span>
+      <span style="color:var(--seat-available);">空闲: <strong id="stat-available">0</strong></span>
+      <span style="color:var(--seat-reserved);">已预约: <strong id="stat-reserved">0</strong></span>
+      <span style="color:var(--seat-occupied);">使用中: <strong id="stat-occupied">0</strong></span>
+    </div>
+
     <!-- 座位网格 -->
-    <div id="seat-loading" class="py-12 text-center text-sm" style="color:var(--color-text-tertiary);">加载中...</div>
+    <div id="seat-loading" class="py-12 text-center text-sm hidden" style="color:var(--color-text-tertiary);">请先选择时段</div>
     <div id="seat-grid-container" class="hidden rounded-xl p-4 mb-4" style="background: var(--surface-card); border: var(--surface-card-border);">
       <div class="text-center text-xs mb-3" style="color:var(--color-text-tertiary);">讲台</div>
       <div id="seat-grid" class="flex flex-col items-center gap-1.5"></div>
     </div>
 
-    <!-- 选中座位信息 -->
+    <!-- 选中座位信息和预约确认 -->
     <div id="seat-detail" class="hidden rounded-xl p-4" style="background: var(--surface-card); border: var(--surface-card-border);">
-      <h3 class="font-semibold text-sm mb-3">座位信息</h3>
+      <h3 class="font-semibold text-sm mb-3">预约确认</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <p class="text-sm mb-1">座位编号：<strong id="detail-code">--</strong></p>
           <p class="text-sm mb-1">状态：<span id="detail-status">--</span></p>
           <p class="text-sm" style="color:var(--color-text-tertiary);" id="detail-tags">--</p>
         </div>
-        <div id="reservation-section">
-          <label class="text-sm font-medium mb-2 block">预约日期</label>
-          <input type="date" id="date-picker" class="px-3 py-2 rounded-md text-sm outline-none w-full md:w-48 mb-3"
-                 style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);">
-          <label class="text-sm font-medium mb-2 block">选择时段</label>
-          <div id="slot-list" class="flex flex-wrap gap-2 mb-3"></div>
-          <div id="slot-empty" class="hidden text-xs mb-3" style="color:var(--color-text-tertiary);">该日期暂无可用时段，请选择其他日期</div>
+        <div>
+          <p class="text-sm mb-1">预约日期：<strong id="detail-date">--</strong></p>
+          <p class="text-sm mb-3">预约时段：<strong id="detail-slot">--</strong></p>
           <button onclick="makeReservation()" id="btn-reserve" class="px-5 py-2 rounded-md text-sm font-medium text-white"
                   style="background:var(--brand-primary);">确认预约</button>
         </div>
@@ -113,8 +130,10 @@
         });
 
       var currentRoomId = null;
-      var selectedSeat = null;
+      var currentRoom = null;
+      var selectedDate = null;
       var selectedSlot = null;
+      var selectedSeat = null;
       var seatStatusMap = { 'AVAILABLE': '空闲', 'RESERVED': '已预约', 'OCCUPIED': '使用中', 'TEMPORARY_LEAVE': '暂离', 'UNAVAILABLE': '不可用' };
       var statusColors = {
         'AVAILABLE': { bg: 'var(--seat-available)', text: '#fff' },
@@ -130,12 +149,12 @@
 
       if (roomIdFromUrl) {
         currentRoomId = Number(roomIdFromUrl);
-        loadRoomInfo(currentRoomId);
-        loadSeats(currentRoomId);
+        initRoom(currentRoomId);
       } else {
         // 显示自习室选择器
         document.getElementById('room-selector').classList.remove('hidden');
-        document.getElementById('seat-loading').classList.add('hidden');
+        document.getElementById('seat-loading').classList.remove('hidden');
+        document.getElementById('seat-loading').textContent = '请先选择自习室';
         SpaceAPI.getRooms({ pageSize: 100 }).then(function(result) {
           var sel = document.getElementById('room-select');
           var list = result.records || result.list || [];
@@ -147,137 +166,165 @@
           sel.addEventListener('change', function() {
             if (this.value) {
               currentRoomId = Number(this.value);
-              loadRoomInfo(currentRoomId);
-              loadSeats(currentRoomId);
+              initRoom(currentRoomId);
             }
           });
         });
       }
 
-      function loadRoomInfo(roomId) {
+      function initRoom(roomId) {
         SpaceAPI.getRoom(roomId).then(function(room) {
-          if (room) {
-            document.getElementById('room-name').textContent = room.name;
-            document.getElementById('room-location').textContent = room.campusName + ' · ' + room.buildingName + ' · ' + room.floorNumber + '层';
-            document.getElementById('room-info').classList.remove('hidden');
-          }
+          currentRoom = room;
+          document.getElementById('room-name').textContent = room.name;
+          document.getElementById('room-location').textContent = room.campusName + ' · ' + room.buildingName + ' · ' + room.floorNumber + '层';
+          document.getElementById('room-hours').textContent = (room.openTime || '08:00:00').slice(0, 5) + ' - ' + (room.closeTime || '22:00:00').slice(0, 5);
+          document.getElementById('room-info').classList.remove('hidden');
+          document.getElementById('time-selector').classList.remove('hidden');
+          document.getElementById('seat-legend').classList.remove('hidden');
+          document.getElementById('seat-stats').classList.remove('hidden');
+
+          // 初始化日期选择器（默认明天）
+          var datePicker = document.getElementById('date-picker');
+          var tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          selectedDate = tomorrow.toISOString().slice(0, 10);
+          datePicker.value = selectedDate;
+          datePicker.min = new Date().toISOString().slice(0, 10);
+
+          datePicker.addEventListener('change', function() {
+            if (this.value) {
+              selectedDate = this.value;
+              selectedSlot = null;
+              selectedSeat = null;
+              document.getElementById('seat-detail').classList.add('hidden');
+              generateTimeSlots();
+              document.getElementById('seat-grid-container').classList.add('hidden');
+              document.getElementById('seat-loading').classList.remove('hidden');
+              document.getElementById('seat-loading').textContent = '请选择时段';
+            }
+          });
+
+          // 生成时段列表
+          generateTimeSlots();
         });
       }
 
-      function loadSeats(roomId) {
+      function generateTimeSlots() {
+        selectedSlot = null;
+        selectedSeat = null;
+        document.getElementById('seat-detail').classList.add('hidden');
+        var container = document.getElementById('slot-list');
+        container.innerHTML = '';
+
+        if (!currentRoom || !selectedDate) {
+          document.getElementById('slot-empty').classList.remove('hidden');
+          return;
+        }
+        document.getElementById('slot-empty').classList.add('hidden');
+
+        var openTime = currentRoom.openTime || '08:00:00';
+        var closeTime = currentRoom.closeTime || '22:00:00';
+        var openHour = parseInt(openTime.split(':')[0]);
+        var closeHour = parseInt(closeTime.split(':')[0]);
+
+        for (var h = openHour; h < closeHour; h++) {
+          var start = String(h).padStart(2, '0') + ':00';
+          var end = String(h + 1).padStart(2, '0') + ':00';
+          var btn = document.createElement('button');
+          btn.className = 'px-3 py-1.5 rounded-md text-xs font-medium transition-all';
+          btn.style.cssText = 'background:var(--color-bg-secondary);color:var(--color-text-secondary);border:1px solid var(--color-border);cursor:pointer;';
+          btn.textContent = start + '-' + end;
+          btn.dataset.start = start;
+          btn.dataset.end = end;
+          btn.onclick = function() {
+            selectedSlot = { startTime: this.dataset.start, endTime: this.dataset.end };
+            Array.from(container.children).forEach(function(c) {
+              c.style.cssText = 'background:var(--color-bg-secondary);color:var(--color-text-secondary);border:1px solid var(--color-border);cursor:pointer;';
+            });
+            this.style.cssText = 'background:var(--brand-primary);color:var(--color-text-inverse);border:1px solid var(--brand-primary);cursor:pointer;';
+            loadSeatsByTime();
+          };
+          container.appendChild(btn);
+        }
+      }
+
+      function loadSeatsByTime() {
+        if (!currentRoomId || !selectedDate || !selectedSlot) return;
+
         document.getElementById('seat-loading').classList.remove('hidden');
+        document.getElementById('seat-loading').textContent = '加载中...';
         document.getElementById('seat-grid-container').classList.add('hidden');
         document.getElementById('seat-detail').classList.add('hidden');
-        selectedSeat = null; selectedSlot = null;
+        selectedSeat = null;
 
-        SpaceAPI.getSeatStatus(roomId).then(function(data) {
-          document.getElementById('seat-loading').classList.add('hidden');
-          document.getElementById('seat-grid-container').classList.remove('hidden');
-          document.getElementById('stat-total').textContent = data.totalSeats;
-          document.getElementById('stat-available').textContent = data.availableSeats;
-          document.getElementById('stat-reserved').textContent = data.reservedSeats;
-          document.getElementById('stat-occupied').textContent = data.occupiedSeats;
+        SpaceAPI.getSeatStatusByTime(currentRoomId, selectedDate, selectedSlot.startTime, selectedSlot.endTime)
+          .then(function(data) {
+            document.getElementById('seat-loading').classList.add('hidden');
+            document.getElementById('seat-grid-container').classList.remove('hidden');
+            document.getElementById('stat-total').textContent = data.totalSeats;
+            document.getElementById('stat-available').textContent = data.availableSeats;
+            document.getElementById('stat-reserved').textContent = data.reservedSeats;
+            document.getElementById('stat-occupied').textContent = data.occupiedSeats;
 
-          var grid = document.getElementById('seat-grid');
-          grid.innerHTML = '';
-          var seats = data.seats || [];
-          var seatsByRow = {};
-          seats.forEach(function(s) {
-            if (!seatsByRow[s.rowNumber]) seatsByRow[s.rowNumber] = [];
-            seatsByRow[s.rowNumber].push(s);
-          });
-
-          Object.keys(seatsByRow).sort(function(a,b){return a-b;}).forEach(function(rowNum) {
-            var rowDiv = document.createElement('div');
-            rowDiv.className = 'flex gap-1.5';
-            seatsByRow[rowNum].forEach(function(seat) {
-              var btn = document.createElement('button');
-              btn.className = 'w-9 h-9 rounded text-xs font-medium transition-all flex items-center justify-center';
-              var sc = statusColors[seat.status] || statusColors['UNAVAILABLE'];
-              btn.style.cssText = 'background:' + sc.bg + ';color:' + sc.text + ';border:none;cursor:pointer;';
-              btn.textContent = seat.seatCode;
-              btn.title = seat.seatCode + ' - ' + seatStatusMap[seat.status];
-              if (seat.status === 'AVAILABLE') {
-                btn.onclick = function() { selectSeat(seat); };
-              }
-              rowDiv.appendChild(btn);
+            var grid = document.getElementById('seat-grid');
+            grid.innerHTML = '';
+            var seats = data.seats || [];
+            var seatsByRow = {};
+            seats.forEach(function(s) {
+              if (!seatsByRow[s.rowNumber]) seatsByRow[s.rowNumber] = [];
+              seatsByRow[s.rowNumber].push(s);
             });
-            grid.appendChild(rowDiv);
-          });
-        }).catch(function() {
-          document.getElementById('seat-loading').textContent = '加载失败';
-        });
-      }
 
-      function loadSlotsForDate(seat, dateStr) {
-        selectedSlot = null;
-        document.getElementById('slot-empty').classList.add('hidden');
-        ReservationAPI.getAvailableSlots(seat.seatId, dateStr).then(function(slots) {
-          var container = document.getElementById('slot-list');
-          container.innerHTML = '';
-          if (!slots || slots.length === 0) {
-            document.getElementById('slot-empty').classList.remove('hidden');
-            return;
-          }
-          slots.forEach(function(slot) {
-            var btn = document.createElement('button');
-            btn.className = 'px-3 py-1.5 rounded-md text-xs font-medium transition-all';
-            btn.style.cssText = 'background:var(--color-bg-secondary);color:var(--color-text-secondary);border:1px solid var(--color-border);cursor:pointer;';
-            btn.textContent = Utils.formatTime(slot.startTime) + '-' + Utils.formatTime(slot.endTime);
-            btn.onclick = function() {
-              selectedSlot = slot;
-              Array.from(container.children).forEach(function(c) {
-                c.style.cssText = 'background:var(--color-bg-secondary);color:var(--color-text-secondary);border:1px solid var(--color-border);cursor:pointer;';
+            Object.keys(seatsByRow).sort(function(a,b){return a-b;}).forEach(function(rowNum) {
+              var rowDiv = document.createElement('div');
+              rowDiv.className = 'flex gap-1.5';
+              seatsByRow[rowNum].forEach(function(seat) {
+                var btn = document.createElement('button');
+                btn.className = 'w-9 h-9 rounded text-xs font-medium transition-all flex items-center justify-center';
+                var sc = statusColors[seat.status] || statusColors['UNAVAILABLE'];
+                btn.style.cssText = 'background:' + sc.bg + ';color:' + sc.text + ';border:none;cursor:pointer;';
+                btn.textContent = seat.seatCode;
+                btn.title = seat.seatCode + ' - ' + seatStatusMap[seat.status];
+                if (seat.status === 'AVAILABLE') {
+                  btn.onclick = function() { selectSeat(seat); };
+                }
+                rowDiv.appendChild(btn);
               });
-              btn.style.cssText = 'background:var(--brand-primary);color:var(--color-text-inverse);border:1px solid var(--brand-primary);cursor:pointer;';
-            };
-            container.appendChild(btn);
+              grid.appendChild(rowDiv);
+            });
+          }).catch(function(err) {
+            console.error('座位状态加载失败:', err);
+            document.getElementById('seat-loading').textContent = '加载失败: ' + (err.message || '未知错误');
           });
-        }).catch(function() {
-          document.getElementById('slot-empty').classList.remove('hidden');
-        });
       }
 
       function selectSeat(seat) {
         selectedSeat = seat;
-        selectedSlot = null;
         document.getElementById('seat-detail').classList.remove('hidden');
         document.getElementById('detail-code').textContent = seat.seatCode;
         var st = statusColors[seat.status] || statusColors['UNAVAILABLE'];
         document.getElementById('detail-status').innerHTML = '<span style="color:' + st.bg + ';font-weight:600;">' + seatStatusMap[seat.status] + '</span>';
         var tagText = (seat.tags || []).join('、') || '无特殊标签';
         document.getElementById('detail-tags').textContent = '标签：' + tagText;
-
-        // 初始化日期选择器（默认明天）
-        var datePicker = document.getElementById('date-picker');
-        var tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        datePicker.value = tomorrow.toISOString().slice(0, 10);
-        datePicker.min = new Date().toISOString().slice(0, 10);
-
-        // 监听日期变化
-        datePicker.onchange = function() {
-          if (this.value) {
-            loadSlotsForDate(selectedSeat, this.value);
-          }
-        };
-
-        // 加载默认日期的时段
-        loadSlotsForDate(seat, datePicker.value);
+        document.getElementById('detail-date').textContent = selectedDate;
+        document.getElementById('detail-slot').textContent = selectedSlot.startTime + ' - ' + selectedSlot.endTime;
       }
 
       window.makeReservation = function() {
-        if (!selectedSeat || !selectedSlot) {
-          Utils.showToast('请选择时段', 'warning');
+        if (!selectedSeat || !selectedSlot || !selectedDate) {
+          Utils.showToast('请选择座位和时段', 'warning');
           return;
         }
+        var startTime = selectedDate + ' ' + selectedSlot.startTime + ':00';
+        var endTime = selectedDate + ' ' + selectedSlot.endTime + ':00';
         ReservationAPI.createReservation({
           seatId: selectedSeat.seatId,
-          startTime: selectedSlot.startTime,
-          endTime: selectedSlot.endTime
+          startTime: startTime,
+          endTime: endTime
         }).then(function() {
           Utils.showToast('预约成功！', 'success');
-          loadSeats(currentRoomId);
+          loadSeatsByTime();
+          document.getElementById('seat-detail').classList.add('hidden');
         }).catch(function(err) {
           Utils.showToast(err.message || '预约失败', 'error');
         });

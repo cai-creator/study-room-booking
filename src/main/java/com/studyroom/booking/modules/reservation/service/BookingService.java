@@ -133,7 +133,17 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
             throw new BusinessException(ResultCode.RESERVATION_DAILY_LIMIT_EXCEEDED);
         }
 
-        // 时段冲突检查（高并发下存在TOCTOU窗口，生产环境应加分布式锁或数据库约束）
+        // 用户时段冲突检查：同一用户在同一时段不能有多个预约
+        Long userConflictCount = baseMapper.selectCount(new LambdaQueryWrapper<Booking>()
+                .eq(Booking::getUserId, userId)
+                .in(Booking::getStatus, "RESERVED", "CHECKED_IN", "TEMPORARY_LEAVE")
+                .lt(Booking::getStartTime, endTime)
+                .gt(Booking::getEndTime, startTime));
+        if (userConflictCount > 0) {
+            throw new BusinessException(ResultCode.RESERVATION_USER_CONFLICT);
+        }
+
+        // 座位时段冲突检查（高并发下存在TOCTOU窗口，生产环境应加分布式锁或数据库约束）
         Long conflictCount = baseMapper.selectCount(new LambdaQueryWrapper<Booking>()
                 .eq(Booking::getSeatId, request.getSeatId())
                 .in(Booking::getStatus, "RESERVED", "CHECKED_IN", "TEMPORARY_LEAVE")

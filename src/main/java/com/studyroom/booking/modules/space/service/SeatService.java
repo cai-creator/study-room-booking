@@ -11,6 +11,9 @@ import com.studyroom.booking.modules.space.dto.SeatGenerateRequest;
 import com.studyroom.booking.modules.space.dto.SeatTagsUpdateRequest;
 import com.studyroom.booking.modules.space.entity.Seat;
 import com.studyroom.booking.modules.space.entity.StudyRoom;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.studyroom.booking.modules.reservation.entity.Booking;
+import com.studyroom.booking.modules.reservation.mapper.BookingMapper;
 import com.studyroom.booking.modules.space.mapper.SeatMapper;
 import com.studyroom.booking.modules.space.mapper.StudyRoomMapper;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,6 +36,7 @@ import java.util.stream.Collectors;
 public class SeatService extends ServiceImpl<SeatMapper, Seat> {
 
     private final StudyRoomMapper studyRoomMapper;
+    private final BookingMapper bookingMapper;
 
     /**
      * 获取自习室下所有座位
@@ -277,6 +282,58 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
         vo.setOccupiedSeats(occupiedCount);
 
         return vo;
+    }
+
+    /**
+     * 获取自习室座位在指定时段的状态
+     * <p>
+     * 查询该时段内所有有效预约记录，判断每个座位在该时段是否被占用。
+     *
+     * @param roomId    自习室ID
+     * @param startTime 时段开始时间
+     * @param endTime   时段结束时间
+     */
+    public RoomSeatStatusVO getRoomSeatStatusByTime(Long roomId,
+                                                      LocalDateTime startTime,
+                                                      LocalDateTime endTime) {
+        // 查询该时段内的有效预约记录（时间重叠判断）
+        List<Booking> bookings = bookingMapper.selectList(
+                new LambdaQueryWrapper<Booking>()
+                        .eq(Booking::getRoomId, roomId)
+                        .in(Booking::getStatus, "RESERVED", "CHECKED_IN", "TEMPORARY_LEAVE")
+                        .lt(Booking::getStartTime, endTime)
+                        .gt(Booking::getEndTime, startTime)
+        );
+
+        // 构建 seatId -> status 映射（同座位有多条预约时，取优先级最高的状态）
+        Map<Long, String> reservations = new HashMap<>();
+        for (Booking booking : bookings) {
+            Long seatId = booking.getSeatId();
+            String status = booking.getStatus();
+            String existing = reservations.get(seatId);
+            // 优先级：CHECKED_IN > TEMPORARY_LEAVE > RESERVED
+            if (existing == null || isHigherPriority(status, existing)) {
+                reservations.put(seatId, status);
+            }
+        }
+
+        return getRoomSeatStatusWithReservations(roomId, reservations);
+    }
+
+    private boolean isHigherPriority(String status, String existing) {
+        int priority = switch (status) {
+            case "CHECKED_IN" -> 3;
+            case "TEMPORARY_LEAVE" -> 2;
+            case "RESERVED" -> 1;
+            default -> 0;
+        };
+        int existingPriority = switch (existing) {
+            case "CHECKED_IN" -> 3;
+            case "TEMPORARY_LEAVE" -> 2;
+            case "RESERVED" -> 1;
+            default -> 0;
+        };
+        return priority > existingPriority;
     }
 
     /**
