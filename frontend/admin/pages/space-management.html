@@ -925,6 +925,26 @@
                     Utils.showToast('请选择生效日期范围', 'error');
                     return;
                 }
+                if (new Date(startDate.replace(/-/g, '/')) > new Date(endDate.replace(/-/g, '/'))) {
+                    Utils.showToast('开始日期不能晚于结束日期', 'error');
+                    return;
+                }
+            }
+
+            var timeToMin = function (t) {
+                if (!t) return -1;
+                var p = t.split(':');
+                return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+            };
+            var sMin = timeToMin(startHour);
+            var eMin = (endHour === '24:00') ? 24 * 60 : timeToMin(endHour);
+            if (sMin < 0 || eMin < 0) {
+                Utils.showToast('请选择开始时间和结束时间', 'error');
+                return;
+            }
+            if (sMin >= eMin) {
+                Utils.showToast('开始时间必须早于结束时间', 'error');
+                return;
             }
 
             if (endHour === '24:00') {

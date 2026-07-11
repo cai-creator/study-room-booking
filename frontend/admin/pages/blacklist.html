@@ -145,10 +145,10 @@
                 </label>
                 <div class="grid grid-cols-2 gap-3 mb-4">
                     <label class="block"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">开始日期<span style="color:var(--state-error);">*</span></span>
-                        <input id="in-start" type="date" required class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                        <input id="in-start" type="date" required onchange="document.getElementById('in-end').min = this.value" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
                     </label>
                     <label class="block"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">结束日期<span style="color:var(--state-error);">*</span></span>
-                        <input id="in-end" type="date" required class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
+                        <input id="in-end" type="date" required onchange="document.getElementById('in-start').max = this.value" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);">
                     </label>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
@@ -252,8 +252,12 @@
             }
             var h = '';
             list.forEach(function (b) {
+                var uname = b.username || (b.user && b.user.username) || '';
+                var rname = b.realName || (b.user && b.user.realName) || '';
+                var displayName = rname || uname || '—';
+                var initial = (rname || uname || 'U').charAt(0);
                 h += '<tr style="border-top:1px solid var(--color-border-light);" class="hover:bg-gray-50 transition-colors">';
-                h += '<td class="px-5 py-4"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold" style="background:var(--state-error-bg);color:var(--state-error);">' + (b.realName || b.username || 'U').charAt(0) + '</div><div><div class="font-medium" style="color:var(--color-text-primary);">' + Utils.escapeHtml(b.realName || '—') + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">' + Utils.escapeHtml(b.username || '') + '</div></div></div></td>';
+                h += '<td class="px-5 py-4"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold" style="background:var(--state-error-bg);color:var(--state-error);">' + initial + '</div><div><div class="font-medium" style="color:var(--color-text-primary);">' + Utils.escapeHtml(displayName) + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">' + Utils.escapeHtml(uname || '') + '</div></div></div></td>';
                 h += '<td class="px-5 py-4" style="color:var(--color-text-secondary);"><div class="max-w-xs" title="' + Utils.escapeHtml(b.reason || '') + '">' + Utils.escapeHtml(b.reason || '—') + '</div></td>';
                 h += '<td class="px-5 py-4" style="color:var(--color-text-secondary);"><div>' + Utils.formatDate(b.startTime, 'yyyy-MM-dd') + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">至 ' + Utils.formatDate(b.endTime, 'yyyy-MM-dd') + '</div></td>';
                 h += '<td class="px-5 py-4"><div style="color:var(--color-text-primary);font-size:var(--text-sm);">' + Utils.escapeHtml(b.operatorName || '系统') + '</div></td>';
@@ -296,8 +300,12 @@
             }
             var h = '';
             list.forEach(function (r) {
+                var uname = r.username || (r.user && r.user.username) || '';
+                var rname = r.realName || (r.user && r.user.realName) || '';
+                var displayName = rname || uname || '—';
+                var initial = (rname || uname || 'U').charAt(0);
                 h += '<tr style="border-top:1px solid var(--color-border-light);" class="hover:bg-gray-50 transition-colors">';
-                h += '<td class="px-5 py-4"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold" style="background:var(--state-warning-bg);color:var(--state-warning);">' + (r.realName || r.username || 'U').charAt(0) + '</div><div><div class="font-medium" style="color:var(--color-text-primary);">' + Utils.escapeHtml(r.realName || '—') + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">' + Utils.escapeHtml(r.username || '') + '</div></div></div></td>';
+                h += '<td class="px-5 py-4"><div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold" style="background:var(--state-warning-bg);color:var(--state-warning);">' + initial + '</div><div><div class="font-medium" style="color:var(--color-text-primary);">' + Utils.escapeHtml(displayName) + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">' + Utils.escapeHtml(uname || '') + '</div></div></div></td>';
                 h += '<td class="px-5 py-4"><div style="color:var(--color-text-primary);">' + Utils.escapeHtml(r.roomName || '—') + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">座位号：' + Utils.escapeHtml(r.seatCode || '') + '</div></td>';
                 h += '<td class="px-5 py-4" style="color:var(--color-text-secondary);"><div>' + Utils.formatDate(r.startTime, 'MM-dd HH:mm') + '</div><div style="font-size:var(--text-xs);color:var(--color-text-tertiary);">至 ' + Utils.formatDate(r.endTime, 'MM-dd HH:mm') + '</div></td>';
                 h += '<td class="px-5 py-4"><span class="inline-block px-2.5 py-1 rounded-lg text-xs" style="background:var(--state-warning-bg);color:var(--state-warning);">' + Utils.escapeHtml(r.reason || '超时未签到') + '</span></td>';
@@ -341,8 +349,14 @@
             var t = new Date();
             var td = t.toISOString().slice(0, 10);
             var nt = new Date(t.getTime() + 7 * 86400000).toISOString().slice(0, 10);
-            document.getElementById('in-start').value = td;
-            document.getElementById('in-end').value = nt;
+            var sEl = document.getElementById('in-start');
+            var eEl = document.getElementById('in-end');
+            sEl.value = td;
+            eEl.value = nt;
+            sEl.min = td;
+            eEl.min = td;
+            eEl.max = '';
+            sEl.max = '';
             document.getElementById('add-modal').classList.remove('hidden');
         };
         window.closeAddModal = function () { document.getElementById('add-modal').classList.add('hidden'); };
@@ -350,7 +364,14 @@
             e.preventDefault();
             var username = document.getElementById('in-username').value.trim();
             var reason = document.getElementById('in-reason').value;
-            var endTime = document.getElementById('in-end').value + ' 23:59:59';
+            var startVal = document.getElementById('in-start').value;
+            var endVal = document.getElementById('in-end').value;
+            if (!startVal || !endVal) { Utils.showToast('请选择开始日期和结束日期', 'error'); return; }
+            if (new Date(startVal.replace(/-/g, '/')) > new Date(endVal.replace(/-/g, '/'))) {
+                Utils.showToast('开始日期不能晚于结束日期', 'error');
+                return;
+            }
+            var endTime = endVal + ' 23:59:59';
             if (!username) { Utils.showToast('请输入学号/账号', 'error'); return; }
             UserAPI.getUsers({ keyword: username, pageNum: 1, pageSize: 50 }).then(function (res) {
                 var list = res.records || res.list || [];
