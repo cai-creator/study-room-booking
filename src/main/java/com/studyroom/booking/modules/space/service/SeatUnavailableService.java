@@ -8,6 +8,7 @@ import com.studyroom.booking.modules.space.entity.SeatUnavailable;
 import com.studyroom.booking.modules.space.mapper.SeatUnavailableMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -125,13 +126,39 @@ public class SeatUnavailableService extends ServiceImpl<SeatUnavailableMapper, S
         }
     }
 
-    private boolean isTimeOverlap(LocalDateTime ruleStart, LocalDateTime ruleEnd, 
+    private boolean isTimeOverlap(LocalDateTime ruleStart, LocalDateTime ruleEnd,
                                    LocalDateTime queryStart, LocalDateTime queryEnd) {
         java.time.LocalTime ruleStartTime = ruleStart.toLocalTime();
         java.time.LocalTime ruleEndTime = ruleEnd.toLocalTime();
         java.time.LocalTime queryStartTime = queryStart.toLocalTime();
         java.time.LocalTime queryEndTime = queryEnd.toLocalTime();
-        
+
         return !(queryEndTime.isBefore(ruleStartTime) || queryStartTime.isAfter(ruleEndTime));
+    }
+
+    /**
+     * 自动清理过期的不可用规则
+     * 每天凌晨3点执行，逻辑删除所有已过期的规则。
+     * 判断标准：end_date_time 所在日期已过今天。
+     */
+    @Scheduled(cron = "0 0 3 * * ?")
+    @Transactional
+    public void autoCleanExpiredRules() {
+        LocalDate today = LocalDate.now();
+
+        List<SeatUnavailable> expired = baseMapper.selectList(
+                new LambdaQueryWrapper<SeatUnavailable>()
+                        .eq(SeatUnavailable::getDeleted, 0)
+                        .eq(SeatUnavailable::getStatus, 1)
+                        .lt(SeatUnavailable::getEndDateTime, today.atStartOfDay())
+        );
+
+        if (expired.isEmpty()) return;
+
+        for (SeatUnavailable rule : expired) {
+            baseMapper.deleteById(rule.getId());
+        }
+
+        log.info("自动清理过期不可用规则: 共删除{}条", expired.size());
     }
 }

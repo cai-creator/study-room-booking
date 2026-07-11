@@ -99,6 +99,14 @@ modules/space/
 | 批量更新标签 | PATCH | `/api/rooms/{roomId}/seats/tags` | 批量更新标签 | ADMIN |
 | 座位实时状态 | GET | `/api/rooms/{roomId}/seats/status` | 实时状态查询 | 公开 |
 
+### 六、座位不可用时间规则
+
+| 接口 | 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|------|
+| 添加不可用规则 | POST | `/api/seat-unavailable` | 添加座位不可用时间规则 | ADMIN |
+| 删除不可用规则 | DELETE | `/api/seat-unavailable/{id}` | 删除不可用规则 | ADMIN |
+| 查询不可用规则 | GET | `/api/seat-unavailable?seatId=` | 查询座位的不可用规则列表 | ADMIN |
+
 ## 业务规则
 
 - **级联删除保护**：删除前检查下级是否存在数据，有则拒绝删除
@@ -111,6 +119,10 @@ modules/space/
 - **座位编号规则**：行字母(1→A, 2→B, …, 26→Z, 27→AA) + "-" + 列号(01, 02…)
 - **座位标签**：WINDOW-靠窗, POWER-有电源, ACCESSIBLE-无障碍
 - **座位状态**：AVAILABLE(空闲), RESERVED(已预约), OCCUPIED(已占用), TEMPORARY_LEAVE(暂离), UNAVAILABLE(不可用)
+- **座位不可用规则**：支持设置座位在指定时段不可用，可选择单次(ONCE)、每日(DAILY)、每周(WEEKLY)、每月(MONTHLY)重复
+  - 每周：支持多选星期（周日~周六）
+  - 每月：支持多选日期（1~31号），该月不存在的日期自动跳过
+  - 过期规则：系统每天凌晨3点自动清理已过期的规则
 
 ## 依赖说明
 
@@ -120,6 +132,7 @@ modules/space/
 - `floor` - 楼层表
 - `study_room` - 自习室表
 - `seat` - 座位表
+- `seat_unavailable` - 座位不可用时间表
 
 座位实时状态查询需要关联 `reservation` 表（由成员C管理）。
 

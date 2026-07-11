@@ -997,6 +997,7 @@
                 window.toggleAddUnavailable();
                 document.getElementById('unavailable-reason').value = '';
                 window.loadUnavailableList();
+                refreshSeatGrid();
             }).catch(function (err) {
                 Utils.showToast('添加失败: ' + err.message, 'error');
             });
@@ -1022,6 +1023,7 @@
                     if (result.code === 200) {
                         Utils.showToast('规则已删除', 'success');
                         window.loadUnavailableList();
+                        refreshSeatGrid();
                     } else {
                         Utils.showToast('删除失败: ' + result.message, 'error');
                     }
