@@ -183,13 +183,30 @@
           document.getElementById('seat-legend').classList.remove('hidden');
           document.getElementById('seat-stats').classList.remove('hidden');
 
-          // 初始化日期选择器（默认明天）
+          // 初始化日期选择器（今天到后天，共3天）
           var datePicker = document.getElementById('date-picker');
-          var tomorrow = new Date();
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          selectedDate = tomorrow.toISOString().slice(0, 10);
+          var today = new Date();
+          var todayStr = today.toISOString().slice(0, 10);
+          var dayAfterTomorrow = new Date();
+          dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+          var dayAfterTomorrowStr = dayAfterTomorrow.toISOString().slice(0, 10);
+
+          // 默认选今天，若今天时段全过期则尝试明天
+          var now = new Date();
+          var currentMinutes = now.getHours() * 60 + now.getMinutes();
+          var closeTimeStr = (currentRoom.closeTime || '22:00:00');
+          var closeMinutes = parseInt(closeTimeStr.split(':')[0]) * 60 + parseInt(closeTimeStr.split(':')[1]);
+          if (currentMinutes >= closeMinutes - 50) {
+            var tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            selectedDate = tomorrow.toISOString().slice(0, 10);
+          } else {
+            selectedDate = todayStr;
+          }
+
           datePicker.value = selectedDate;
-          datePicker.min = new Date().toISOString().slice(0, 10);
+          datePicker.min = todayStr;
+          datePicker.max = dayAfterTomorrowStr;
 
           datePicker.addEventListener('change', function() {
             if (this.value) {
@@ -227,7 +244,19 @@
         var openHour = parseInt(openTime.split(':')[0]);
         var closeHour = parseInt(closeTime.split(':')[0]);
 
+        // 判断选中的日期是否为今天
+        var todayStr = new Date().toISOString().slice(0, 10);
+        var isToday = (selectedDate === todayStr);
+        var now = new Date();
+        var currentMinutes = now.getHours() * 60 + now.getMinutes();
+
         for (var h = openHour; h < closeHour; h++) {
+          // 如果是今天，跳过已过期的时段（开始时间+50分钟已过）
+          if (isToday) {
+            var slotStartMinutes = h * 60;
+            if (currentMinutes >= slotStartMinutes + 50) continue;
+          }
+
           var start = String(h).padStart(2, '0') + ':00';
           var end = String(h + 1).padStart(2, '0') + ':00';
           var btn = document.createElement('button');
@@ -245,6 +274,12 @@
             loadSeatsByTime();
           };
           container.appendChild(btn);
+        }
+
+        // 如果没有可用的时段
+        if (container.children.length === 0) {
+          document.getElementById('slot-empty').classList.remove('hidden');
+          document.getElementById('slot-empty').textContent = '今日可选时段已结束，请选择其他日期';
         }
       }
 
