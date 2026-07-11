@@ -68,6 +68,19 @@
         </div>
     </div>
 
+    <div id="seat-modal" class="hidden fixed inset-0 z-[210] flex items-center justify-center p-4">
+        <div class="modal-backdrop absolute inset-0" style="background: rgba(15,23,42,0.45);" onclick="closeSeatModal()"></div>
+        <div class="relative w-full rounded-xl p-6 z-10" style="background: var(--surface-card); box-shadow: var(--shadow-lg); max-width: 400px;">
+            <div class="flex items-center justify-between mb-5">
+                <h3 id="seat-modal-title" class="text-lg font-semibold" style="color: var(--color-text-primary);">编辑座位</h3>
+                <button onclick="closeSeatModal()" class="p-1 rounded-lg transition-colors hover:bg-gray-100" style="color: var(--color-text-tertiary);">
+                    <i data-lucide="x" style="width:20px;height:20px;"></i>
+                </button>
+            </div>
+            <div id="seat-modal-content"></div>
+        </div>
+    </div>
+
     <script src="../../public/js/config.js"></script>
     <script src="../../public/js/utils.js"></script>
     <script src="../../public/js/request.js"></script>
@@ -537,9 +550,19 @@
         }
 
         function loadRoomDetail(r) {
+            state.currentRoom = r;
             var panel = document.getElementById('detail-panel');
-            panel.innerHTML = '<div class="rounded-xl p-6 mb-6" style="background:var(--surface-card);border:var(--surface-card-border);box-shadow:var(--shadow-sm);"><div class="flex items-center gap-2 mb-1"><span class="px-2 py-0.5 rounded text-xs font-medium" style="background:var(--state-info-bg);color:var(--state-info);">座位视图</span><h2 class="text-xl font-bold" style="color:var(--color-text-primary);">' + Utils.escapeHtml(r.name) + '</h2></div><p style="color:var(--color-text-tertiary);font-size:var(--text-sm);" id="seat-stats">加载座位信息中...</p></div><div id="seat-grid-wrapper" class="rounded-xl p-6" style="background:var(--surface-card);border:var(--surface-card-border);"><div class="flex justify-center"><div style="width:70%;max-width:500px;padding:1.5rem 1rem 2rem;border-bottom:3px solid var(--color-border);border-radius:0 0 var(--radius-lg) var(--radius-lg);color:var(--color-text-tertiary);font-size:var(--text-sm);text-align:center;background:var(--color-bg-secondary);"><i data-lucide="monitor-play" style="width:16px;height:16px;display:inline;margin-right:4px;"></i>讲台 / 投影屏幕</div></div><div id="seat-grid" class="mt-8 flex justify-center"><div class="text-sm py-12" style="color:var(--color-text-tertiary);">加载中...</div></div></div>';
-            SpaceAPI.getSeatStatus(r.id).then(function (data) { renderSeatGrid(data); if (window.lucide) lucide.createIcons(); }).catch(function () {
+            panel.innerHTML = '<div class="rounded-xl p-6 mb-6" style="background:var(--surface-card);border:var(--surface-card-border);box-shadow:var(--shadow-sm);"><div class="flex items-center gap-2 mb-1"><span class="px-2 py-0.5 rounded text-xs font-medium" style="background:var(--state-info-bg);color:var(--state-info);">座位视图</span><h2 class="text-xl font-bold" style="color:var(--color-text-primary);">' + Utils.escapeHtml(r.name) + '</h2></div><p style="color:var(--color-text-tertiary);font-size:var(--text-sm);" id="seat-stats">加载座位信息中...</p><p style="color:var(--color-text-tertiary);font-size:var(--text-xs);margin-top:4px;">点击座位可编辑状态</p></div><div id="seat-grid-wrapper" class="rounded-xl p-6" style="background:var(--surface-card);border:var(--surface-card-border);"><div class="flex justify-center"><div style="width:70%;max-width:500px;padding:1.5rem 1rem 2rem;border-bottom:3px solid var(--color-border);border-radius:0 0 var(--radius-lg) var(--radius-lg);color:var(--color-text-tertiary);font-size:var(--text-sm);text-align:center;background:var(--color-bg-secondary);"><i data-lucide="monitor-play" style="width:16px;height:16px;display:inline;margin-right:4px;"></i>讲台 / 投影屏幕</div></div><div id="seat-grid" class="mt-8 flex justify-center"><div class="text-sm py-12" style="color:var(--color-text-tertiary);">加载中...</div></div></div>';
+            refreshSeatGrid();
+        }
+
+        function refreshSeatGrid() {
+            if (!state.currentRoom) return;
+            SpaceAPI.getSeatStatus(state.currentRoom.id).then(function (data) {
+                state.seatsCache = data.seats || [];
+                renderSeatGrid(data);
+                if (window.lucide) lucide.createIcons();
+            }).catch(function () {
                 document.getElementById('seat-stats').textContent = '座位信息加载失败';
             });
         }
@@ -570,7 +593,7 @@
                     var s = row[c];
                     if (!s) { h += '<div style="width:40px;height:40px;"></div>'; continue; }
                     var cm = colorMap[s.status] || colorMap['AVAILABLE'];
-                    h += '<div class="seat-btn rounded-md flex items-center justify-center text-xs font-semibold" title="' + s.seatCode + ' · ' + Utils.getStatusLabel(s.status, 'seat') + '" style="width:40px;height:40px;background:' + cm.bg + ';color:' + cm.fg + ';border:1.5px solid ' + cm.border + ';">' + String(c).padStart(2, '0') + '</div>';
+                    h += '<div class="seat-btn rounded-md flex items-center justify-center text-xs font-semibold cursor-pointer" onclick="openSeatModal(' + s.seatId + ')" title="' + s.seatCode + ' · ' + Utils.getStatusLabel(s.status, 'seat') + ' (点击编辑)" style="width:40px;height:40px;background:' + cm.bg + ';color:' + cm.fg + ';border:1.5px solid ' + cm.border + ';">' + String(c).padStart(2, '0') + '</div>';
                 }
                 h += '</div>';
             });
@@ -583,6 +606,430 @@
             h += '</div>';
             document.getElementById('seat-grid').innerHTML = h;
         }
+
+        window.openSeatModal = function (seatId) {
+            var seat = null;
+            if (state.seatsCache) {
+                for (var i = 0; i < state.seatsCache.length; i++) {
+                    if (state.seatsCache[i].seatId == seatId) {
+                        seat = state.seatsCache[i];
+                        break;
+                    }
+                }
+            }
+            if (!seat) {
+                Utils.showToast('未找到座位信息', 'error');
+                return;
+            }
+            state.editingSeat = seat;
+            var modal = document.getElementById('seat-modal');
+            var title = document.getElementById('seat-modal-title');
+            var content = document.getElementById('seat-modal-content');
+            title.textContent = '编辑座位 - ' + seat.seatCode;
+
+            var isAvailable = seat.status !== 'UNAVAILABLE';
+            var statusLabel = isAvailable ? '可用' : '不可用';
+            var statusBadgeStyle = isAvailable
+                ? 'background:var(--state-success-bg);color:var(--state-success);'
+                : 'background:var(--state-error-bg);color:var(--state-error);';
+
+            var h = '';
+            h += '<div class="mb-5">';
+            h += '<div class="flex items-center justify-between mb-4">';
+            h += '<span style="color:var(--color-text-secondary);font-size:var(--text-sm);">当前状态</span>';
+            h += '<span class="px-2.5 py-1 rounded text-xs font-medium" style="' + statusBadgeStyle + '">' + statusLabel + '</span>';
+            h += '</div>';
+            h += '<div class="text-xs" style="color:var(--color-text-tertiary);line-height:1.6;">';
+            h += '行号: ' + (seat.rowNumber || '-') + ' · 列号: ' + (seat.colNumber || '-');
+            if (seat.tags && seat.tags.length) {
+                h += '<br>标签: ' + seat.tags.join('、');
+            }
+            h += '</div>';
+            h += '</div>';
+
+            h += '<div class="mb-6">';
+            h += '<div class="flex items-center justify-between mb-3">';
+            h += '<label class="block text-sm font-medium" style="color:var(--color-text-primary);">设置不可用时间</label>';
+            h += '<button type="button" onclick="toggleAddUnavailable()" class="text-xs px-3 py-1 rounded-full transition-colors" style="background:var(--state-success-bg);color:var(--state-success);">添加规则</button>';
+            h += '</div>';
+
+            h += '<div id="unavailable-list" class="space-y-2 mb-4"></div>';
+
+            h += '<div id="add-unavailable-form" class="hidden p-4 rounded-lg" style="background:var(--color-bg-secondary);border:1px dashed var(--color-border);">';
+            h += '<div class="grid grid-cols-2 gap-3 mb-3">';
+            h += '<div>';
+            h += '<label class="block text-xs font-medium mb-1" style="color:var(--color-text-secondary);">重复类型</label>';
+            h += '<select id="repeat-type" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);">';
+            h += '<option value="ONCE">单次</option>';
+            h += '<option value="DAILY">每日</option>';
+            h += '<option value="WEEKLY">每周</option>';
+            h += '<option value="MONTHLY">每月</option>';
+            h += '</select>';
+            h += '</div>';
+            h += '<div id="day-select" class="hidden">';
+            h += '<label class="block text-xs font-medium mb-1" style="color:var(--color-text-secondary);" id="day-label">星期</label>';
+            h += '<div id="day-checkbox-container" class="flex flex-wrap gap-2"></div>';
+            h += '</div>';
+            h += '</div>';
+
+            h += '<div id="date-once-wrapper" class="mb-3">';
+            h += '<label class="block text-xs font-medium mb-1" style="color:var(--color-text-secondary);">日期</label>';
+            h += '<input type="date" id="unavailable-date" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);">';
+            h += '</div>';
+
+            h += '<div id="date-range-wrapper" class="hidden mb-3">';
+            h += '<div class="grid grid-cols-2 gap-3">';
+            h += '<div>';
+            h += '<label class="block text-xs font-medium mb-1" style="color:var(--color-text-secondary);">生效起始日期</label>';
+            h += '<input type="date" id="unavailable-start-date" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);">';
+            h += '</div>';
+            h += '<div>';
+            h += '<label class="block text-xs font-medium mb-1" style="color:var(--color-text-secondary);">生效结束日期</label>';
+            h += '<input type="date" id="unavailable-end-date" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);">';
+            h += '</div>';
+            h += '</div>';
+            h += '</div>';
+
+            h += '<div class="grid grid-cols-2 gap-3 mb-3">';
+            h += '<div>';
+            h += '<label class="block text-xs font-medium mb-1" style="color:var(--color-text-secondary);">开始时间</label>';
+            h += '<select id="unavailable-start-hour" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);">';
+            for (var _hr = 0; _hr < 24; _hr++) {
+                var _hrStr = String(_hr).padStart(2, '0') + ':00';
+                h += '<option value="' + _hrStr + '">' + _hrStr + '</option>';
+            }
+            h += '</select>';
+            h += '</div>';
+            h += '<div>';
+            h += '<label class="block text-xs font-medium mb-1" style="color:var(--color-text-secondary);">结束时间</label>';
+            h += '<select id="unavailable-end-hour" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);">';
+            for (var _hr2 = 0; _hr2 < 24; _hr2++) {
+                var _hrStr2 = String(_hr2).padStart(2, '0') + ':00';
+                h += '<option value="' + _hrStr2 + '">' + _hrStr2 + '</option>';
+            }
+            h += '<option value="24:00">24:00</option>';
+            h += '</select>';
+            h += '</div>';
+            h += '</div>';
+
+            h += '<div class="mb-3">';
+            h += '<label class="block text-xs font-medium mb-1" style="color:var(--color-text-secondary);">原因（可选）</label>';
+            h += '<input type="text" id="unavailable-reason" placeholder="输入不可用原因" class="w-full px-3 py-2 rounded-lg text-sm" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);">';
+            h += '</div>';
+
+            h += '<div class="flex justify-end gap-2">';
+            h += '<button id="btn-cancel-unavailable" class="px-3 py-1.5 rounded-lg text-xs font-medium" style="background:var(--color-bg-tertiary);color:var(--color-text-primary);">取消</button>';
+            h += '<button id="btn-save-unavailable" class="px-3 py-1.5 rounded-lg text-xs font-medium" style="background:var(--state-success-bg);color:var(--state-success);">保存</button>';
+            h += '</div>';
+            h += '</div>';
+            h += '</div>';
+
+            h += '<div class="flex justify-end gap-2">';
+            h += '<button onclick="closeSeatModal()" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors" style="background:var(--color-bg-tertiary);color:var(--color-text-primary);">关闭</button>';
+            h += '</div>';
+
+            content.innerHTML = h;
+            modal.classList.remove('hidden');
+
+            setTimeout(function() {
+                document.getElementById('repeat-type').addEventListener('change', function(e) {
+                var daySelect = document.getElementById('day-select');
+                var dayLabel = document.getElementById('day-label');
+                var dayContainer = document.getElementById('day-checkbox-container');
+                var dateOnceWrapper = document.getElementById('date-once-wrapper');
+                var dateRangeWrapper = document.getElementById('date-range-wrapper');
+                dayContainer.innerHTML = '';
+
+                if (e.target.value === 'WEEKLY') {
+                    dayLabel.textContent = '星期';
+                    var weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                    weekDays.forEach(function(d, i) {
+                        dayContainer.innerHTML += '<label class="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs cursor-pointer" style="background:var(--color-bg-secondary);border:1px solid var(--color-border);"><input type="checkbox" name="day-of-week" value="' + (i + 1) + '" style="margin:0;">' + d + '</label>';
+                    });
+                    daySelect.classList.remove('hidden');
+                    dateOnceWrapper.classList.add('hidden');
+                    dateRangeWrapper.classList.remove('hidden');
+                } else if (e.target.value === 'MONTHLY') {
+                    dayLabel.textContent = '每月几号';
+                    var monthHtml = '';
+                    for (var i = 1; i <= 31; i++) {
+                        monthHtml += '<label class="flex items-center justify-center w-8 h-7 rounded-md text-xs cursor-pointer" style="background:var(--color-bg-secondary);border:1px solid var(--color-border);"><input type="checkbox" name="day-of-month" value="' + i + '" style="margin:0;">' + i + '</label>';
+                    }
+                    dayContainer.innerHTML = monthHtml;
+                    daySelect.classList.remove('hidden');
+                    dateOnceWrapper.classList.add('hidden');
+                    dateRangeWrapper.classList.remove('hidden');
+                } else if (e.target.value === 'DAILY') {
+                    daySelect.classList.add('hidden');
+                    dateOnceWrapper.classList.add('hidden');
+                    dateRangeWrapper.classList.remove('hidden');
+                } else {
+                    daySelect.classList.add('hidden');
+                    dateOnceWrapper.classList.remove('hidden');
+                    dateRangeWrapper.classList.add('hidden');
+                }
+            });
+
+            document.getElementById('btn-cancel-unavailable').addEventListener('click', function() {
+                window.toggleAddUnavailable();
+            });
+
+            document.getElementById('btn-save-unavailable').addEventListener('click', function() {
+                window.saveUnavailable();
+            });
+
+                loadUnavailableList();
+            }, 0);
+        };
+
+        window.closeSeatModal = function () {
+            document.getElementById('seat-modal').classList.add('hidden');
+            state.editingSeat = null;
+        };
+
+        window.toggleAddUnavailable = function () {
+            var form = document.getElementById('add-unavailable-form');
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+                var now = new Date();
+                var pad = function(n) { return n.toString().padStart(2, '0'); };
+                var todayStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+                var startHr = pad(now.getHours()) + ':00';
+                var endHr = pad((now.getHours() + 1) % 24) + ':00';
+
+                var dateInput = document.getElementById('unavailable-date');
+                if (dateInput) dateInput.value = todayStr;
+                var startDateInput = document.getElementById('unavailable-start-date');
+                if (startDateInput) startDateInput.value = todayStr;
+                var endDateInput = document.getElementById('unavailable-end-date');
+                if (endDateInput) {
+                    var farFuture = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+                    endDateInput.value = farFuture.getFullYear() + '-' + pad(farFuture.getMonth() + 1) + '-' + pad(farFuture.getDate());
+                }
+                document.getElementById('unavailable-start-hour').value = startHr;
+                document.getElementById('unavailable-end-hour').value = endHr;
+
+                var repeatType = document.getElementById('repeat-type').value;
+                var dateOnceWrapper = document.getElementById('date-once-wrapper');
+                var dateRangeWrapper = document.getElementById('date-range-wrapper');
+                if (repeatType === 'ONCE') {
+                    dateOnceWrapper.classList.remove('hidden');
+                    dateRangeWrapper.classList.add('hidden');
+                } else {
+                    dateOnceWrapper.classList.add('hidden');
+                    dateRangeWrapper.classList.remove('hidden');
+                }
+            } else {
+                form.classList.add('hidden');
+            }
+        };
+
+        window.formatDateTimeLocal = function (date) {
+            var pad = function(n) { return n.toString().padStart(2, '0'); };
+            return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) +
+                   'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+        };
+
+        window.loadUnavailableList = function () {
+            var seat = state.editingSeat;
+            if (!seat) return;
+
+            var url = AppConfig.apiBaseUrl + '/seats/' + seat.seatId + '/unavailable';
+            fetch(url, {
+                headers: {
+                    'Authorization': 'Bearer ' + Utils.getToken()
+                }
+            })
+                .then(function(res) { return res.json(); })
+                .then(function (result) {
+                    var list = document.getElementById('unavailable-list');
+                    var data = result.data || [];
+
+                    if (data.length === 0) {
+                        list.innerHTML = '<div class="text-sm py-4 text-center" style="color:var(--color-text-tertiary);">暂无不可用规则</div>';
+                        return;
+                    }
+
+                    var repeatMap = { 'ONCE': '单次', 'DAILY': '每日', 'WEEKLY': '每周', 'MONTHLY': '每月' };
+                    var weekDayMap = { 1: '周日', 2: '周一', 3: '周二', 4: '周三', 5: '周四', 6: '周五', 7: '周六' };
+
+                    var h = '';
+                    data.forEach(function(item) {
+                        var repeatText = repeatMap[item.repeatType] || item.repeatType;
+                        if (item.dayOfWeek) repeatText += '(' + weekDayMap[item.dayOfWeek] + ')';
+                        if (item.dayOfMonth) repeatText += '(' + item.dayOfMonth + '号)';
+
+                        var start = item.startDateTime ? new Date(item.startDateTime) : null;
+                        var end = item.endDateTime ? new Date(item.endDateTime) : null;
+                        var timeText = '';
+                        if (start && end) {
+                            if (item.repeatType === 'ONCE') {
+                                timeText = start.toLocaleString('zh-CN') + ' ~ ' + end.toLocaleString('zh-CN');
+                            } else {
+                                timeText = start.getHours().toString().padStart(2, '0') + ':' + 
+                                           start.getMinutes().toString().padStart(2, '0') + ' ~ ' +
+                                           end.getHours().toString().padStart(2, '0') + ':' +
+                                           end.getMinutes().toString().padStart(2, '0');
+                            }
+                        }
+
+                        h += '<div class="flex items-center justify-between p-3 rounded-lg" style="background:var(--color-bg-secondary);">';
+                        h += '<div>';
+                        h += '<div class="text-sm font-medium" style="color:var(--color-text-primary);">' + repeatText + '</div>';
+                        h += '<div class="text-xs mt-1" style="color:var(--color-text-tertiary);">' + timeText + '</div>';
+                        if (item.reason) {
+                            h += '<div class="text-xs mt-1" style="color:var(--color-text-secondary);">原因: ' + item.reason + '</div>';
+                        }
+                        h += '</div>';
+                        h += '<button onclick="deleteUnavailable(' + item.id + ')" class="p-1.5 rounded text-xs transition-colors hover:bg-red-50" style="color:var(--state-error);">删除</button>';
+                        h += '</div>';
+                    });
+                    list.innerHTML = h;
+                })
+                .catch(function () {
+                    document.getElementById('unavailable-list').innerHTML = '<div class="text-sm py-4 text-center" style="color:var(--color-text-tertiary);">加载失败</div>';
+                });
+        };
+
+        window.formatDateTimeForBackend = function (dateStr) {
+            if (!dateStr) return '';
+            var parts = dateStr.split('T');
+            if (parts.length !== 2) return '';
+            return parts[0] + ' ' + parts[1] + ':00';
+        };
+
+        window.saveUnavailable = function () {
+            var seat = state.editingSeat;
+            if (!seat) {
+                Utils.showToast('未找到座位信息', 'error');
+                return;
+            }
+
+            var repeatType = document.getElementById('repeat-type').value;
+            var startHour = document.getElementById('unavailable-start-hour').value;
+            var endHour = document.getElementById('unavailable-end-hour').value;
+            var reason = document.getElementById('unavailable-reason').value;
+
+            var startDate, endDate;
+            if (repeatType === 'ONCE') {
+                startDate = document.getElementById('unavailable-date').value;
+                endDate = startDate;
+                if (!startDate) {
+                    Utils.showToast('请选择日期', 'error');
+                    return;
+                }
+            } else {
+                startDate = document.getElementById('unavailable-start-date').value;
+                endDate = document.getElementById('unavailable-end-date').value;
+                if (!startDate || !endDate) {
+                    Utils.showToast('请选择生效日期范围', 'error');
+                    return;
+                }
+            }
+
+            if (endHour === '24:00') {
+                if (repeatType === 'ONCE') {
+                    var d = new Date(startDate + 'T00:00:00');
+                    d.setDate(d.getDate() + 1);
+                    var pad = function(n) { return n.toString().padStart(2, '0'); };
+                    endDate = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+                    endHour = '00:00';
+                } else {
+                    endHour = '23:59';
+                }
+            }
+
+            var startFormatted = startDate + ' ' + startHour + ':00';
+            var endFormatted = endDate + ' ' + endHour + ':00';
+
+            var selectedDays = [];
+            if (repeatType === 'WEEKLY') {
+                var weekChecks = document.querySelectorAll('input[name="day-of-week"]:checked');
+                weekChecks.forEach(function(cb) { selectedDays.push({ dayOfWeek: parseInt(cb.value) }); });
+                if (selectedDays.length === 0) {
+                    Utils.showToast('请至少选择一个星期', 'error');
+                    return;
+                }
+            } else if (repeatType === 'MONTHLY') {
+                var monthChecks = document.querySelectorAll('input[name="day-of-month"]:checked');
+                monthChecks.forEach(function(cb) { selectedDays.push({ dayOfMonth: parseInt(cb.value) }); });
+                if (selectedDays.length === 0) {
+                    Utils.showToast('请至少选择一个日期', 'error');
+                    return;
+                }
+            } else {
+                selectedDays.push({});
+            }
+
+            var url = AppConfig.apiBaseUrl + '/seats/' + seat.seatId + '/unavailable';
+            var successCount = 0;
+            var failCount = 0;
+
+            selectedDays.reduce(function(prevPromise, dayInfo) {
+                return prevPromise.then(function() {
+                    var data = {};
+                    data.repeatType = repeatType;
+                    data.startDateTime = startFormatted;
+                    data.endDateTime = endFormatted;
+                    if (dayInfo.dayOfWeek != null) data.dayOfWeek = dayInfo.dayOfWeek;
+                    if (dayInfo.dayOfMonth != null) data.dayOfMonth = dayInfo.dayOfMonth;
+                    if (reason) data.reason = reason;
+
+                    return fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + Utils.getToken()
+                        },
+                        body: JSON.stringify(data)
+                    }).then(function(response) { return response.json(); })
+                      .then(function(res) {
+                          if (res.code === 200) successCount++;
+                          else failCount++;
+                      });
+                });
+            }, Promise.resolve()).then(function() {
+                if (failCount === 0) {
+                    Utils.showToast('规则已添加（共' + successCount + '条）', 'success');
+                } else {
+                    Utils.showToast('成功' + successCount + '条，失败' + failCount + '条', 'warning');
+                }
+                window.toggleAddUnavailable();
+                document.getElementById('unavailable-reason').value = '';
+                window.loadUnavailableList();
+            }).catch(function (err) {
+                Utils.showToast('添加失败: ' + err.message, 'error');
+            });
+        };
+
+        window.deleteUnavailable = function (id) {
+            var seat = state.editingSeat;
+            if (!seat) return;
+
+            if (!confirm('确定要删除这条不可用规则吗？')) {
+                return;
+            }
+
+            var url = AppConfig.apiBaseUrl + '/seats/' + seat.seatId + '/unavailable/' + id;
+            fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + Utils.getToken()
+                }
+            })
+                .then(function(res) { return res.json(); })
+                .then(function (result) {
+                    if (result.code === 200) {
+                        Utils.showToast('规则已删除', 'success');
+                        window.loadUnavailableList();
+                    } else {
+                        Utils.showToast('删除失败: ' + result.message, 'error');
+                    }
+                })
+                .catch(function (err) {
+                    Utils.showToast('删除失败: ' + (err.message || '未知错误'), 'error');
+                });
+        };
 
         if (!Utils.requireRole(['ADMIN', 'SUPER_ADMIN'])) return;
         loadNavbar();

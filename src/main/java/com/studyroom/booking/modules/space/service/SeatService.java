@@ -37,6 +37,7 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
 
     private final StudyRoomMapper studyRoomMapper;
     private final BookingMapper bookingMapper;
+    private final SeatUnavailableService seatUnavailableService;
 
     /**
      * 获取自习室下所有座位
@@ -265,6 +266,8 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
             // 判断状态
             if (seat.getStatus() == 0) {
                 item.setStatus("UNAVAILABLE");
+            } else if (seatUnavailableService.isSeatCurrentlyUnavailable(seat.getId())) {
+                item.setStatus("UNAVAILABLE");
             } else {
                 // 默认可预约，后续可通过关联预约表进一步细化
                 // 精确的状态（RESERVED/OCCUPIED/TEMPORARY_LEAVE）需要查询预约表
@@ -296,6 +299,8 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
     public RoomSeatStatusVO getRoomSeatStatusByTime(Long roomId,
                                                       LocalDateTime startTime,
                                                       LocalDateTime endTime) {
+        log.info("getRoomSeatStatusByTime - roomId={}, startTime={}, endTime={}", roomId, startTime, endTime);
+        
         // 查询该时段内的有效预约记录（时间重叠判断）
         List<Booking> bookings = bookingMapper.selectList(
                 new LambdaQueryWrapper<Booking>()
@@ -317,7 +322,7 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
             }
         }
 
-        return getRoomSeatStatusWithReservations(roomId, reservations);
+        return getRoomSeatStatusWithReservations(roomId, reservations, startTime, endTime);
     }
 
     private boolean isHigherPriority(String status, String existing) {
@@ -378,6 +383,78 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
             }
         }
 
+        vo.setAvailableSeats(availableCount);
+        vo.setReservedSeats(reservedCount);
+        vo.setOccupiedSeats(occupiedCount);
+
+        return vo;
+    }
+
+    public RoomSeatStatusVO getRoomSeatStatusWithReservations(Long roomId,
+                                                               Map<Long, String> reservations,
+                                                               LocalDateTime startTime,
+                                                               LocalDateTime endTime) {
+        StudyRoom room = studyRoomMapper.selectById(roomId);
+        if (room == null) {
+            throw new BusinessException(ResultCode.ROOM_NOT_FOUND);
+        }
+
+        List<Seat> seats = listByRoomId(roomId);
+
+        RoomSeatStatusVO vo = new RoomSeatStatusVO();
+        vo.setRoomId(roomId);
+        vo.setRoomName(room.getName());
+        vo.setTotalSeats(seats.size());
+
+        List<RoomSeatStatusVO.SeatStatusItem> items = new ArrayList<>();
+        int availableCount = 0;
+        int reservedCount = 0;
+        int occupiedCount = 0;
+
+        for (Seat seat : seats) {
+            RoomSeatStatusVO.SeatStatusItem item = new RoomSeatStatusVO.SeatStatusItem();
+            item.setSeatId(seat.getId());
+            item.setSeatCode(seat.getSeatCode());
+            item.setRowNumber(seat.getRowNumber());
+            item.setColNumber(seat.getColNumber());
+
+            if (StrUtil.isNotBlank(seat.getTags())) {
+                item.setTags(Arrays.asList(seat.getTags().split(",")));
+            } else {
+                item.setTags(Collections.emptyList());
+            }
+
+            if (seat.getStatus() == 0) {
+                item.setStatus("UNAVAILABLE");
+            } else if (seatUnavailableService.isSeatUnavailableInPeriod(seat.getId(), startTime, endTime)) {
+                item.setStatus("UNAVAILABLE");
+            } else {
+                String resStatus = reservations.get(seat.getId());
+                if (resStatus == null) {
+                    item.setStatus("AVAILABLE");
+                    availableCount++;
+                } else {
+                    switch (resStatus) {
+                        case "TEMPORARY_LEAVE":
+                            item.setStatus("TEMPORARY_LEAVE");
+                            occupiedCount++;
+                            break;
+                        case "CHECKED_IN":
+                            item.setStatus("OCCUPIED");
+                            occupiedCount++;
+                            break;
+                        default:
+                            item.setStatus("RESERVED");
+                            reservedCount++;
+                            break;
+                    }
+                }
+            }
+
+            items.add(item);
+        }
+
+        vo.setSeats(items);
         vo.setAvailableSeats(availableCount);
         vo.setReservedSeats(reservedCount);
         vo.setOccupiedSeats(occupiedCount);

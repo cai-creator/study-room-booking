@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.studyroom.booking.modules.space.mapper.SeatUnavailableMapper">
+
+    <select id="selectActiveBySeatId" resultType="com.studyroom.booking.modules.space.entity.SeatUnavailable">
+        SELECT id, seat_id, repeat_type, start_date_time, end_date_time,
+               day_of_week, day_of_month, reason, status, deleted, created_at, updated_at
+        FROM seat_unavailable
+        WHERE seat_id = #{seatId}
+          AND deleted = 0
+          AND status = 1
+    </select>
+
+    <select id="selectCurrentlyUnavailable" resultType="com.studyroom.booking.modules.space.entity.SeatUnavailable">
+        <![CDATA[
+        SELECT id, seat_id, repeat_type, start_date_time, end_date_time,
+               day_of_week, day_of_month, reason, status, deleted, created_at, updated_at
+        FROM seat_unavailable
+        WHERE seat_id = #{seatId}
+          AND deleted = 0
+          AND status = 1
+          AND (
+              (repeat_type = 'ONCE' AND start_date_time <= #{now} AND end_date_time >= #{now})
+              OR (repeat_type = 'DAILY' AND DATE(start_date_time) <= DATE(#{now}) AND DATE(end_date_time) >= DATE(#{now}))
+              OR (repeat_type = 'WEEKLY' AND day_of_week = DAYOFWEEK(#{now}) AND DATE(start_date_time) <= DATE(#{now}) AND DATE(end_date_time) >= DATE(#{now}))
+              OR (repeat_type = 'MONTHLY' AND day_of_month = DAY(#{now}) AND DATE(start_date_time) <= DATE(#{now}) AND DATE(end_date_time) >= DATE(#{now}))
+          )
+          AND TIME(start_date_time) <= TIME(#{now})
+          AND TIME(end_date_time) >= TIME(#{now})
+        ]]>
+    </select>
+
+</mapper>

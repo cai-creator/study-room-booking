@@ -121,6 +121,27 @@ CREATE TABLE seat (
     KEY idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='座位表';
 
+DROP TABLE IF EXISTS seat_unavailable;
+CREATE TABLE seat_unavailable (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+    seat_id BIGINT NOT NULL COMMENT '座位ID',
+    repeat_type VARCHAR(20) NOT NULL COMMENT '重复类型: ONCE-单次, DAILY-每日, WEEKLY-每周, MONTHLY-每月',
+    start_date_time DATETIME NOT NULL COMMENT '开始日期时间',
+    end_date_time DATETIME NOT NULL COMMENT '结束日期时间',
+    day_of_week INT DEFAULT NULL COMMENT '星期几(1-7，每周重复时使用)',
+    day_of_month INT DEFAULT NULL COMMENT '每月几号(1-31，每月重复时使用)',
+    reason VARCHAR(255) DEFAULT NULL COMMENT '不可用原因',
+    status TINYINT NOT NULL DEFAULT 1 COMMENT '状态: 0-禁用, 1-启用',
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    KEY idx_seat_id (seat_id),
+    KEY idx_repeat_type (repeat_type),
+    KEY idx_status (status),
+    KEY idx_start_date_time (start_date_time),
+    KEY idx_end_date_time (end_date_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='座位定时不可用表';
+
 -- =====================================================
 -- 3. 预约核心模块
 -- =====================================================

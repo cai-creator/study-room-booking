@@ -371,6 +371,44 @@
   SpaceAPI.deleteSeat = function (id) { return Request.del('/seats/' + id); };
 
   /**
+   * 获取座位的定时不可用列表
+   * @param {number} seatId 座位ID
+   * @returns {Promise<Array>}
+   */
+  SpaceAPI.getSeatUnavailableList = function (seatId) { return Request.get('/seats/' + seatId + '/unavailable'); };
+
+  /**
+   * 创建座位定时不可用记录
+   * @param {number} seatId 座位ID
+   * @param {object} data
+   * @returns {Promise<object>}
+   */
+  SpaceAPI.createSeatUnavailable = function (seatId, data) { return Request.post('/seats/' + seatId + '/unavailable', data); };
+
+  /**
+   * 更新座位定时不可用记录
+   * @param {number} id 记录ID
+   * @param {object} data
+   * @returns {Promise<object>}
+   */
+  SpaceAPI.updateSeatUnavailable = function (seatId, id, data) { return Request.put('/seats/' + seatId + '/unavailable/' + id, data); };
+
+  /**
+   * 删除座位定时不可用记录
+   * @param {number} seatId 座位ID
+   * @param {number} id 记录ID
+   * @returns {Promise<void>}
+   */
+  SpaceAPI.deleteSeatUnavailable = function (seatId, id) { return Request.del('/seats/' + seatId + '/unavailable/' + id); };
+
+  /**
+   * 检查座位当前是否不可用
+   * @param {number} seatId 座位ID
+   * @returns {Promise<boolean>}
+   */
+  SpaceAPI.checkSeatCurrentUnavailable = function (seatId) { return Request.get('/seats/' + seatId + '/unavailable/current'); };
+
+  /**
    * 批量更新座位标签
    * @param {number} roomId 自习室ID (必填)
    * @param {SeatTagsUpdateRequest} data
