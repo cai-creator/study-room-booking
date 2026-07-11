@@ -687,7 +687,8 @@ campus (校区)
         └── floor (楼层)
             └── study_room (自习室)
                 └── seat (座位)
-                    └── reservation (预约记录)
+                    ├── reservation (预约记录)
+                    └── seat_unavailable (不可用时间规则)
 ```
 
 ### 核心表说明
@@ -700,6 +701,7 @@ campus (校区)
 | floor | 楼层表 | id, building_id, floor_number |
 | study_room | 自习室表 | id, floor_id, name, room_type, total_seats, rows_count, cols_count, status |
 | seat | 座位表 | id, room_id, seat_code, row_number, col_number, tags, status |
+| seat_unavailable | 座位不可用时间表 | id, seat_id, repeat_type, start_date_time, end_date_time, day_of_week, day_of_month, reason, status |
 | reservation | 预约记录表 | id, user_id, seat_id, room_id, start_time, end_time, status, version |
 | blacklist | 黑名单表 | id, user_id, reason, start_time, end_time, status |
 | no_show_record | 爽约记录表 | id, user_id, reservation_id, reason, record_date |
