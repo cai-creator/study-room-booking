@@ -11,7 +11,6 @@ import com.studyroom.booking.modules.space.dto.SeatGenerateRequest;
 import com.studyroom.booking.modules.space.dto.SeatTagsUpdateRequest;
 import com.studyroom.booking.modules.space.entity.Seat;
 import com.studyroom.booking.modules.space.entity.StudyRoom;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.studyroom.booking.modules.reservation.entity.Booking;
 import com.studyroom.booking.modules.reservation.mapper.BookingMapper;
 import com.studyroom.booking.modules.space.mapper.SeatMapper;
@@ -239,6 +238,32 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
         // 查询所有座位
         List<Seat> seats = listByRoomId(roomId);
 
+        // 查询当天有效预约（RESERVED/CHECKED_IN/TEMPORARY_LEAVE）
+        java.time.LocalDateTime dayStart = java.time.LocalDate.now().atStartOfDay();
+        java.time.LocalDateTime dayEnd = dayStart.plusDays(1);
+        List<Booking> todayBookings = bookingMapper.selectList(
+                new LambdaQueryWrapper<Booking>()
+                        .eq(Booking::getRoomId, roomId)
+                        .in(Booking::getStatus, "RESERVED", "CHECKED_IN", "TEMPORARY_LEAVE")
+                        .ge(Booking::getStartTime, dayStart)
+                        .lt(Booking::getStartTime, dayEnd)
+        );
+
+        // 构建 seatId -> 最高优先级状态 的映射
+        // 优先级: CHECKED_IN > TEMPORARY_LEAVE > RESERVED
+        Map<Long, String> seatStatusMap = new HashMap<>();
+        for (Booking b : todayBookings) {
+            String existing = seatStatusMap.get(b.getSeatId());
+            if (existing == null) {
+                seatStatusMap.put(b.getSeatId(), b.getStatus());
+            } else if ("CHECKED_IN".equals(b.getStatus())) {
+                seatStatusMap.put(b.getSeatId(), b.getStatus());
+            } else if ("TEMPORARY_LEAVE".equals(b.getStatus()) && !"CHECKED_IN".equals(existing)) {
+                seatStatusMap.put(b.getSeatId(), b.getStatus());
+            }
+            // RESERVED 优先级最低，不需要覆盖已有状态
+        }
+
         RoomSeatStatusVO vo = new RoomSeatStatusVO();
         vo.setRoomId(roomId);
         vo.setRoomName(room.getName());
@@ -263,17 +288,32 @@ public class SeatService extends ServiceImpl<SeatMapper, Seat> {
                 item.setTags(Collections.emptyList());
             }
 
-            // 判断状态
+            // 判断状态：先检查物理状态，再检查预约状态
             if (seat.getStatus() == 0) {
                 item.setStatus("UNAVAILABLE");
             } else if (seatUnavailableService.isSeatCurrentlyUnavailable(seat.getId())) {
                 item.setStatus("UNAVAILABLE");
             } else {
-                // 默认可预约，后续可通过关联预约表进一步细化
-                // 精确的状态（RESERVED/OCCUPIED/TEMPORARY_LEAVE）需要查询预约表
-                // 此处实现基础版本：座位物理可用 = AVAILABLE
-                item.setStatus("AVAILABLE");
-                availableCount++;
+                String resStatus = seatStatusMap.get(seat.getId());
+                if (resStatus == null) {
+                    item.setStatus("AVAILABLE");
+                    availableCount++;
+                } else {
+                    switch (resStatus) {
+                        case "TEMPORARY_LEAVE":
+                            item.setStatus("TEMPORARY_LEAVE");
+                            occupiedCount++;
+                            break;
+                        case "CHECKED_IN":
+                            item.setStatus("OCCUPIED");
+                            occupiedCount++;
+                            break;
+                        default: // RESERVED
+                            item.setStatus("RESERVED");
+                            reservedCount++;
+                            break;
+                    }
+                }
             }
 
             items.add(item);
