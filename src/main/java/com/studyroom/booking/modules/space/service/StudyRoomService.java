@@ -66,11 +66,15 @@ public class StudyRoomService extends ServiceImpl<StudyRoomMapper, StudyRoom> {
             }
         }
         if (query.getBuildingId() != null) {
+            // buildingId 精确筛选，覆盖 campusId 的结果
+            floorIdSet.clear();
             floorMapper.selectList(
                     new LambdaQueryWrapper<Floor>().eq(Floor::getBuildingId, query.getBuildingId())
             ).forEach(f -> floorIdSet.add(f.getId()));
         }
         if (query.getFloorId() != null) {
+            // floorId 精确筛选，覆盖前面的结果
+            floorIdSet.clear();
             floorIdSet.add(query.getFloorId());
         }
         if (!floorIdSet.isEmpty()) {
