@@ -117,6 +117,10 @@
             var navbarUrl = BasePath.admin + '/partials/navbar.html';
             fetch(navbarUrl).then(function (r) { return r.text(); }).then(function (html) {
                 placeholder.innerHTML = html;
+                var adminBase = (window.BasePath && BasePath.admin) || '.';
+                placeholder.querySelectorAll('a[href^="/admin/"]').forEach(function(a) {
+                    a.href = adminBase + a.getAttribute('href');
+                });
                 if (window.initNavbarUI) initNavbarUI();
             }).catch(function () {
                 placeholder.innerHTML = '<div style="padding:16px;text-align:center;color:var(--color-text-tertiary);">导航加载失败，请刷新页面</div>';
