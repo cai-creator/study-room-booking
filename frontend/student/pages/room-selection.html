@@ -33,28 +33,27 @@
                 style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);">
           <option value="">全部校区</option>
         </select>
-        <select id="filter-building" class="px-3 py-2 rounded-md text-sm outline-none"
+        <select id="filter-building" class="px-3 py-2 rounded-md text-sm outline-none hidden"
                 style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);">
           <option value="">全部楼栋</option>
         </select>
-        <select id="filter-floor" class="px-3 py-2 rounded-md text-sm outline-none"
+        <select id="filter-floor" class="px-3 py-2 rounded-md text-sm outline-none hidden"
                 style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);">
           <option value="">全部楼层</option>
         </select>
-        <select id="filter-type" class="px-3 py-2 rounded-md text-sm outline-none"
+        <select id="filter-type" onchange="searchRooms()" class="px-3 py-2 rounded-md text-sm outline-none"
                 style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);">
           <option value="">全部类型</option>
-          <option value="SELF_STUDY_ROOM">自习室</option>
-          <option value="READING_ROOM">阅览室</option>
-          <option value="COMPUTER_ROOM">电子阅览室</option>
-          <option value="GROUP_ROOM">研讨间</option>
+          <option value="LIBRARY">图书馆</option>
+          <option value="TEACHING">教学楼</option>
+          <option value="READING">阅览室</option>
         </select>
         <div class="flex items-center gap-2 col-span-2 md:col-span-1">
-          <input type="checkbox" id="filter-available" class="w-4 h-4 rounded" style="accent-color:var(--brand-primary);">
+          <input type="checkbox" id="filter-available" onchange="searchRooms()" class="w-4 h-4 rounded" style="accent-color:var(--brand-primary);">
           <label for="filter-available" class="text-sm" style="color:var(--color-text-secondary);">仅看有空座</label>
         </div>
         <div class="col-span-2 md:col-span-2 lg:col-span-1 flex gap-2">
-          <input type="text" id="filter-keyword" placeholder="搜索自习室..."
+          <input type="text" id="filter-keyword" placeholder="搜索自习室..." onkeypress="if(event.key==='Enter')searchRooms()"
                  class="flex-1 px-3 py-2 rounded-md text-sm outline-none"
                  style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);">
           <button onclick="searchRooms()" class="px-4 py-2 rounded-md text-sm font-medium text-white"
@@ -97,7 +96,7 @@
 
       var currentPage = 1;
       var campuses = [], buildings = [], floors = [];
-      var typeNames = { 'READING_ROOM': '阅览室', 'SELF_STUDY_ROOM': '自习室', 'COMPUTER_ROOM': '电子阅览室', 'GROUP_ROOM': '研讨间', 'LIBRARY': '图书馆自习室', 'TEACHING': '教学楼自习室', 'READING': '阅览室' };
+      var typeNames = { 'LIBRARY': '图书馆', 'TEACHING': '教学楼', 'READING': '阅览室' };
 
       function resolveRoomLocation(room) {
         if (room.campusName && room.buildingName) {
@@ -139,31 +138,47 @@
       // 校区变化加载楼栋
       document.getElementById('filter-campus').addEventListener('change', function() {
         var cid = this.value;
-        var sel = document.getElementById('filter-building');
-        sel.innerHTML = '<option value="">全部楼栋</option>';
-        document.getElementById('filter-floor').innerHTML = '<option value="">全部楼层</option>';
-        if (!cid) return;
+        var selB = document.getElementById('filter-building');
+        var selF = document.getElementById('filter-floor');
+        selB.innerHTML = '<option value="">全部楼栋</option>';
+        selF.innerHTML = '<option value="">全部楼层</option>';
+        // 清空校区时隐藏楼栋和楼层
+        if (!cid) {
+          selB.classList.add('hidden');
+          selF.classList.add('hidden');
+          searchRooms();
+          return;
+        }
         SpaceAPI.getBuildings({ campusId: cid }).then(function(list) {
           (list || []).forEach(function(b) {
             var opt = document.createElement('option');
             opt.value = b.id; opt.textContent = b.name;
-            sel.appendChild(opt);
+            selB.appendChild(opt);
           });
+          selB.classList.remove('hidden');
+          searchRooms();
         });
       });
 
       // 楼栋变化加载楼层
       document.getElementById('filter-building').addEventListener('change', function() {
         var bid = this.value;
-        var sel = document.getElementById('filter-floor');
-        sel.innerHTML = '<option value="">全部楼层</option>';
-        if (!bid) return;
+        var selF = document.getElementById('filter-floor');
+        selF.innerHTML = '<option value="">全部楼层</option>';
+        // 清空楼栋时隐藏楼层
+        if (!bid) {
+          selF.classList.add('hidden');
+          searchRooms();
+          return;
+        }
         SpaceAPI.getFloors(bid).then(function(list) {
           (list || []).forEach(function(f) {
             var opt = document.createElement('option');
             opt.value = f.id; opt.textContent = f.floorNumber + '层';
-            sel.appendChild(opt);
+            selF.appendChild(opt);
           });
+          selF.classList.remove('hidden');
+          searchRooms();
         });
       });
 

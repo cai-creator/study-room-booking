@@ -31,7 +31,7 @@
       <button onclick="filterByStatus('')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all active" data-status="" style="background:var(--brand-primary);color:var(--color-text-inverse);border:1px solid var(--brand-primary);">全部</button>
       <button onclick="filterByStatus('RESERVED')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all" data-status="RESERVED" style="background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);">已预约</button>
       <button onclick="filterByStatus('CHECKED_IN')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all" data-status="CHECKED_IN" style="background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);">已签到</button>
-      <button onclick="filterByStatus('CHECKED_OUT')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all" data-status="CHECKED_OUT" style="background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);">已签退</button>
+      <button onclick="filterByStatus('COMPLETED')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all" data-status="COMPLETED" style="background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);">已签退</button>
       <button onclick="filterByStatus('TEMPORARY_LEAVE')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all" data-status="TEMPORARY_LEAVE" style="background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);">暂离</button>
       <button onclick="filterByStatus('CANCELLED')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all" data-status="CANCELLED" style="background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);">已取消</button>
       <button onclick="filterByStatus('NO_SHOW')" class="status-tab px-4 py-1.5 rounded-full text-sm font-medium transition-all" data-status="NO_SHOW" style="background:var(--color-bg);color:var(--color-text-secondary);border:1px solid var(--color-border);">爽约</button>
@@ -77,7 +77,7 @@
       var statusStyles = {
         'RESERVED': { bg: 'var(--state-warning-bg)', color: 'var(--state-warning)' },
         'CHECKED_IN': { bg: 'var(--state-success-bg)', color: 'var(--state-success)' },
-        'CHECKED_OUT': { bg: 'var(--state-info-bg)', color: 'var(--state-info)' },
+        'COMPLETED': { bg: 'var(--state-info-bg)', color: 'var(--state-info)' },
         'CANCELLED': { bg: 'var(--color-bg-tertiary)', color: 'var(--color-text-tertiary)' },
         'NO_SHOW': { bg: 'var(--state-error-bg)', color: 'var(--state-error)' }
       };

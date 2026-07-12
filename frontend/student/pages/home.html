@@ -260,7 +260,7 @@
           document.getElementById('rooms-loading').textContent = '加载中...';
           var container = document.getElementById('rooms-list');
           container.classList.remove('hidden');
-          var typeNames = { 'READING_ROOM': '阅览室', 'SELF_STUDY_ROOM': '自习室', 'COMPUTER_ROOM': '电子阅览室', 'GROUP_ROOM': '研讨间', 'LIBRARY': '图书馆自习室', 'TEACHING': '教学楼自习室', 'READING': '阅览室' };
+          var typeNames = { 'LIBRARY': '图书馆', 'TEACHING': '教学楼', 'READING': '阅览室' };
           var list = result.records || result.list || [];
           if (!list.length) {
             container.innerHTML = '<div class="col-span-full text-sm text-center py-8" style="color:var(--color-text-tertiary);">暂无推荐自习室</div>';

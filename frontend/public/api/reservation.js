@@ -17,7 +17,7 @@
  * @property {string} campusName    - 校区名称
  * @property {string} startTime     - 开始时间
  * @property {string} endTime       - 结束时间
- * @property {string} status        - 状态：RESERVED已预约 CHECKED_IN已签到 CHECKED_OUT已签退 CANCELLED已取消 NO_SHOW爽约
+ * @property {string} status        - 状态：RESERVED已预约 CHECKED_IN已签到 TEMPORARY_LEAVE暂离 COMPLETED已签退 CANCELLED已取消 NO_SHOW爽约
  * @property {string} [checkinCode] - 签到码
  * @property {string} createdAt     - 创建时间
  *
@@ -57,7 +57,7 @@
    * @param {Object} [params]
    * @param {number} [params.pageNum=1]   页码
    * @param {number} [params.pageSize=20] 每页条数
-   * @param {string} [params.status]      状态筛选：RESERVED/CHECKED_IN/CHECKED_OUT/CANCELLED/NO_SHOW
+   * @param {string} [params.status]      状态筛选：RESERVED/CHECKED_IN/TEMPORARY_LEAVE/COMPLETED/CANCELLED/NO_SHOW
    * @param {string} [params.date]        日期筛选 (yyyy-MM-dd)
    * @returns {Promise<Page<BookingVO>>}
    */

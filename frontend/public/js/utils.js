@@ -55,7 +55,8 @@
   var RESERVATION_STATUS_MAP = {
     'RESERVED': '已预约',
     'CHECKED_IN': '已签到',
-    'CHECKED_OUT': '已签退',
+    'TEMPORARY_LEAVE': '暂离',
+    'COMPLETED': '已签退',
     'CANCELLED': '已取消',
     'NO_SHOW': '爽约',
   };
