@@ -57,6 +57,7 @@
     'CHECKED_IN': '已签到',
     'TEMPORARY_LEAVE': '暂离',
     'COMPLETED': '已签退',
+    'CHECKED_OUT': '已签退',
     'CANCELLED': '已取消',
     'NO_SHOW': '爽约',
   };
