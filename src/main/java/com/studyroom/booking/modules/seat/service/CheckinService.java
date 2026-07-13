@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /**
  * 签到/签退/暂离/返回 服务
@@ -148,6 +149,9 @@ public class CheckinService {
         reservation.setCheckoutTime(LocalDateTime.now());
         reservation.setUpdatedAt(LocalDateTime.now());
         reservationMapper.updateById(reservation);
+
+        // 3. 如果属于分组预约，取消同组后续所有 RESERVED 预约
+        cancelSubsequentGroupReservations(reservation);
 
         log.info("用户 {} 签退成功，预约ID: {}", userId, reservation.getId());
 
@@ -283,5 +287,29 @@ public class CheckinService {
             vo.setSeatCode(seat.getSeatCode());
         }
         return vo;
+    }
+
+    /**
+     * 取消同组后续所有 RESERVED 状态的预约
+     * <p>
+     * 当用户签退、暂离超时或爽约时，同组中尚未开始的后续预约也应一并取消。
+     */
+    void cancelSubsequentGroupReservations(Reservation current) {
+        if (current.getGroupId() == null) return;
+
+        List<Reservation> subsequent = reservationMapper.selectList(
+                new LambdaQueryWrapper<Reservation>()
+                        .eq(Reservation::getGroupId, current.getGroupId())
+                        .eq(Reservation::getStatus, "RESERVED")
+                        .gt(Reservation::getStartTime, current.getStartTime())
+        );
+
+        LocalDateTime now = LocalDateTime.now();
+        for (Reservation r : subsequent) {
+            r.setStatus("CANCELLED");
+            r.setUpdatedAt(now);
+            reservationMapper.updateById(r);
+            log.info("分组预约级联取消：预约ID: {}, 原预约ID: {}, groupId: {}", r.getId(), current.getId(), current.getGroupId());
+        }
     }
 }

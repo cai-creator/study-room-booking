@@ -106,8 +106,9 @@
                    style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);">
           </div>
           <div>
-            <label class="text-sm font-medium mb-2 block" style="color:var(--color-text-secondary);">选择时段</label>
+            <label class="text-sm font-medium mb-2 block" style="color:var(--color-text-secondary);">选择时段（可多选相邻时段）</label>
             <div id="slot-list" class="flex flex-wrap gap-2"></div>
+            <div id="slot-hint" class="hidden text-xs mt-1" style="color:var(--brand-primary);">已选时段将以同一组预约提交，只需签到一次</div>
             <div id="slot-empty" class="hidden text-xs" style="color:var(--color-text-tertiary);">请先选择日期</div>
           </div>
         </div>
@@ -187,7 +188,7 @@
       var currentRoomId = null;
       var currentRoom = null;
       var selectedDate = null;
-      var selectedSlot = null;
+      var selectedSlots = []; // 多时段选择，按时间排序
       var selectedSeat = null;
       var seatStatusMap = { 'AVAILABLE': '空闲', 'RESERVED': '已预约', 'OCCUPIED': '使用中', 'TEMPORARY_LEAVE': '暂离', 'UNAVAILABLE': '不可用' };
       var statusColors = {
@@ -399,7 +400,7 @@
         document.getElementById('page-title').textContent = '座位预约';
         currentRoomId = null;
         currentRoom = null;
-        selectedSlot = null;
+        selectedSlots = [];
         selectedSeat = null;
         window.scrollTo(0, 0);
       };
@@ -439,7 +440,7 @@
           datePicker.onchange = function() {
             if (this.value) {
               selectedDate = this.value;
-              selectedSlot = null;
+              selectedSlots = [];
               selectedSeat = null;
               document.getElementById('seat-detail').classList.add('hidden');
               generateTimeSlots();
@@ -454,7 +455,7 @@
       }
 
       function generateTimeSlots() {
-        selectedSlot = null;
+        selectedSlots = [];
         selectedSeat = null;
         document.getElementById('seat-detail').classList.add('hidden');
         var container = document.getElementById('slot-list');
@@ -476,39 +477,101 @@
         var now = new Date();
         var currentMinutes = now.getHours() * 60 + now.getMinutes();
 
+        var slotData = []; // 保存所有可用时段数据
         for (var h = openHour; h < closeHour; h++) {
           if (isToday) {
             var slotStartMinutes = h * 60;
             if (currentMinutes >= slotStartMinutes + 50) continue;
           }
-
           var start = String(h).padStart(2, '0') + ':00';
           var end = String(h + 1).padStart(2, '0') + ':00';
+          slotData.push({ start: start, end: end, hour: h });
+        }
+
+        if (slotData.length === 0) {
+          document.getElementById('slot-empty').classList.remove('hidden');
+          document.getElementById('slot-empty').textContent = '今日可选时段已结束，请选择其他日期';
+          return;
+        }
+
+        // 创建时段按钮
+        slotData.forEach(function(sd) {
           var btn = document.createElement('button');
           btn.className = 'px-3 py-1.5 rounded-md text-xs font-medium transition-all';
           btn.style.cssText = 'background:var(--color-bg-secondary);color:var(--color-text-secondary);border:1px solid var(--color-border);cursor:pointer;';
-          btn.textContent = start + '-' + end;
-          btn.dataset.start = start;
-          btn.dataset.end = end;
-          btn.onclick = function() {
-            selectedSlot = { startTime: this.dataset.start, endTime: this.dataset.end };
-            Array.from(container.children).forEach(function(c) {
-              c.style.cssText = 'background:var(--color-bg-secondary);color:var(--color-text-secondary);border:1px solid var(--color-border);cursor:pointer;';
-            });
-            this.style.cssText = 'background:var(--brand-primary);color:var(--color-text-inverse);border:1px solid var(--brand-primary);cursor:pointer;';
-            loadSeatsByTime();
-          };
+          btn.textContent = sd.start + '-' + sd.end;
+          btn.dataset.start = sd.start;
+          btn.dataset.end = sd.end;
+          btn.dataset.hour = sd.hour;
+          btn.onclick = function() { toggleSlot(this, slotData); };
           container.appendChild(btn);
+        });
+      }
+
+      function toggleSlot(btn, slotData) {
+        var start = btn.dataset.start;
+        var end = btn.dataset.end;
+        var idx = selectedSlots.findIndex(function(s) { return s.startTime === start; });
+
+        if (idx >= 0) {
+          // 取消选中此时段
+          selectedSlots.splice(idx, 1);
+        } else {
+          // 选中此时段
+          selectedSlots.push({ startTime: start, endTime: end });
         }
 
-        if (container.children.length === 0) {
-          document.getElementById('slot-empty').classList.remove('hidden');
-          document.getElementById('slot-empty').textContent = '今日可选时段已结束，请选择其他日期';
+        // 确保选中的时段是连续的：如果不连续，只保留最新点击的
+        if (selectedSlots.length > 1) {
+          selectedSlots.sort(function(a, b) { return a.startTime.localeCompare(b.startTime); });
+          var continuous = true;
+          for (var i = 1; i < selectedSlots.length; i++) {
+            if (selectedSlots[i].startTime !== selectedSlots[i-1].endTime) {
+              continuous = false;
+              break;
+            }
+          }
+          if (!continuous) {
+            // 只保留最新点击的时段
+            selectedSlots = [{ startTime: start, endTime: end }];
+          }
+        }
+
+        // 更新按钮样式
+        updateSlotButtons();
+
+        // 更新提示
+        var hintEl = document.getElementById('slot-hint');
+        if (selectedSlots.length > 1) {
+          hintEl.classList.remove('hidden');
+        } else {
+          hintEl.classList.add('hidden');
+        }
+
+        // 加载座位状态
+        if (selectedSlots.length > 0) {
+          loadSeatsByTime();
+        } else {
+          document.getElementById('seat-grid-container').classList.add('hidden');
+          document.getElementById('seat-loading').classList.remove('hidden');
+          document.getElementById('seat-loading').textContent = '请选择时段';
         }
       }
 
+      function updateSlotButtons() {
+        var container = document.getElementById('slot-list');
+        Array.from(container.children).forEach(function(btn) {
+          var isSelected = selectedSlots.some(function(s) { return s.startTime === btn.dataset.start; });
+          if (isSelected) {
+            btn.style.cssText = 'background:var(--brand-primary);color:var(--color-text-inverse);border:1px solid var(--brand-primary);cursor:pointer;';
+          } else {
+            btn.style.cssText = 'background:var(--color-bg-secondary);color:var(--color-text-secondary);border:1px solid var(--color-border);cursor:pointer;';
+          }
+        });
+      }
+
       function loadSeatsByTime() {
-        if (!currentRoomId || !selectedDate || !selectedSlot) return;
+        if (!currentRoomId || !selectedDate || selectedSlots.length === 0) return;
 
         document.getElementById('seat-loading').classList.remove('hidden');
         document.getElementById('seat-loading').textContent = '加载中...';
@@ -516,7 +579,11 @@
         document.getElementById('seat-detail').classList.add('hidden');
         selectedSeat = null;
 
-        SpaceAPI.getSeatStatusByTime(currentRoomId, selectedDate, selectedSlot.startTime, selectedSlot.endTime)
+        // 用第一个时段的开始和最后一个时段的结束来查询座位状态
+        var firstSlot = selectedSlots[0];
+        var lastSlot = selectedSlots[selectedSlots.length - 1];
+
+        SpaceAPI.getSeatStatusByTime(currentRoomId, selectedDate, firstSlot.startTime, lastSlot.endTime)
           .then(function(data) {
             document.getElementById('seat-loading').classList.add('hidden');
             document.getElementById('seat-grid-container').classList.remove('hidden');
@@ -566,22 +633,38 @@
         var tagText = (seat.tags || []).join('、') || '无特殊标签';
         document.getElementById('detail-tags').textContent = '标签：' + tagText;
         document.getElementById('detail-date').textContent = selectedDate;
-        document.getElementById('detail-slot').textContent = selectedSlot.startTime + ' - ' + selectedSlot.endTime;
+        // 显示选中时段范围
+        if (selectedSlots.length > 1) {
+          document.getElementById('detail-slot').textContent = selectedSlots[0].startTime + ' - ' + selectedSlots[selectedSlots.length - 1].endTime + '（' + selectedSlots.length + '个时段）';
+        } else {
+          document.getElementById('detail-slot').textContent = selectedSlots[0].startTime + ' - ' + selectedSlots[0].endTime;
+        }
       }
 
       window.makeReservation = function() {
-        if (!selectedSeat || !selectedSlot || !selectedDate) {
+        if (!selectedSeat || selectedSlots.length === 0 || !selectedDate) {
           Utils.showToast('请选择座位和时段', 'warning');
           return;
         }
-        var startTime = selectedDate + ' ' + selectedSlot.startTime + ':00';
-        var endTime = selectedDate + ' ' + selectedSlot.endTime + ':00';
-        ReservationAPI.createReservation({
+
+        // 构建多时段预约请求
+        var timeSlots = selectedSlots.map(function(slot) {
+          return {
+            startTime: selectedDate + ' ' + slot.startTime + ':00',
+            endTime: selectedDate + ' ' + slot.endTime + ':00'
+          };
+        });
+
+        var requestData = {
           seatId: selectedSeat.seatId,
-          startTime: startTime,
-          endTime: endTime
-        }).then(function() {
-          Utils.showToast('预约成功！', 'success');
+          timeSlots: timeSlots
+        };
+
+        ReservationAPI.createReservation(requestData).then(function() {
+          var slotDesc = selectedSlots.length > 1
+            ? selectedSlots[0].startTime + '-' + selectedSlots[selectedSlots.length - 1].endTime + '（' + selectedSlots.length + '个时段）'
+            : selectedSlots[0].startTime + '-' + selectedSlots[0].endTime;
+          Utils.showToast('预约成功！' + slotDesc, 'success');
           loadSeatsByTime();
           document.getElementById('seat-detail').classList.add('hidden');
         }).catch(function(err) {

@@ -32,8 +32,8 @@ public class BookingController {
 
     @PostMapping("/reservations")
     @RequireRole("STUDENT")
-    @Operation(summary = "创建预约", description = "学生选择座位和时间段创建预约，系统自动校验预约规则")
-    public Result<BookingVO> create(@Valid @RequestBody CreateBookingRequest request) {
+    @Operation(summary = "创建预约", description = "学生选择座位和时间段创建预约，支持多时段，系统自动校验预约规则")
+    public Result<List<BookingVO>> create(@Valid @RequestBody CreateBookingRequest request) {
         return Result.success("预约成功", bookingService.createBooking(request));
     }
 

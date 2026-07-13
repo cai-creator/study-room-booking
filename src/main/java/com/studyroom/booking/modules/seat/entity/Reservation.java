@@ -52,6 +52,10 @@ public class Reservation implements Serializable {
     @TableField("temporary_leave_time")
     private LocalDateTime temporaryLeaveTime;
 
+    /** 预约分组ID，同一组多时段预约共享此ID */
+    @TableField("group_id")
+    private String groupId;
+
     /** 乐观锁版本号 */
     @Version
     @TableField("version")

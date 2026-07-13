@@ -4,8 +4,13 @@
  *
  * @typedef {Object} CreateBookingRequest
  * @property {number} seatId    - 座位ID (必填)
- * @property {string} startTime - 预约开始时间 (必填，yyyy-MM-dd HH:mm:ss)
- * @property {string} endTime   - 预约结束时间 (必填，yyyy-MM-dd HH:mm:ss)
+ * @property {string} [startTime] - 预约开始时间 (单时段时使用，yyyy-MM-dd HH:mm:ss)
+ * @property {string} [endTime]   - 预约结束时间 (单时段时使用，yyyy-MM-dd HH:mm:ss)
+ * @property {TimeSlotDTO[]} [timeSlots] - 多时段预约列表 (多时段时使用)
+ *
+ * @typedef {Object} TimeSlotDTO
+ * @property {string} startTime - 时段开始时间 (yyyy-MM-dd HH:mm:ss)
+ * @property {string} endTime   - 时段结束时间 (yyyy-MM-dd HH:mm:ss)
  *
  * @typedef {Object} BookingVO
  * @property {number} id            - 预约ID
@@ -39,9 +44,9 @@
   var ReservationAPI = {};
 
   /**
-   * 创建预约（学生选择座位和时间段）
+   * 创建预约（学生选择座位和时间段，支持多时段）
    * @param {CreateBookingRequest} data
-   * @returns {Promise<BookingVO>}
+   * @returns {Promise<BookingVO[]>}
    */
   ReservationAPI.createReservation = function (data) { return Request.post('/reservations', data); };
 

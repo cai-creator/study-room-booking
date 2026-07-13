@@ -33,6 +33,7 @@ public class SeatScheduledService {
     private final ReservationMapper reservationMapper;
     private final NoShowRecordService noShowRecordService;
     private final BlacklistService blacklistService;
+    private final CheckinService checkinService;
 
     /** 签到宽限时间（分钟），开始时间后多久判定爽约，默认50 */
     @Value("${booking.rules.checkin-grace-minutes:50}")
@@ -82,6 +83,20 @@ public class SeatScheduledService {
         }
 
         for (Reservation reservation : allExpired) {
+            // 如果属于分组预约且有同组更早的预约已签到，跳过（由自动延续逻辑处理）
+            if (reservation.getGroupId() != null) {
+                Long earlierCheckedIn = reservationMapper.selectCount(
+                        new LambdaQueryWrapper<Reservation>()
+                                .eq(Reservation::getGroupId, reservation.getGroupId())
+                                .in(Reservation::getStatus, "CHECKED_IN", "TEMPORARY_LEAVE")
+                                .lt(Reservation::getStartTime, reservation.getStartTime())
+                );
+                if (earlierCheckedIn > 0) {
+                    // 同组前序预约已签到，此预约由自动延续逻辑处理，不算爽约
+                    continue;
+                }
+            }
+
             // 标记为爽约
             reservation.setStatus("NO_SHOW");
             reservation.setUpdatedAt(LocalDateTime.now());
@@ -93,6 +108,9 @@ public class SeatScheduledService {
                     reservation.getId(),
                     "NO_CHECKIN"
             );
+
+            // 如果属于分组预约，级联取消后续 RESERVED 预约
+            checkinService.cancelSubsequentGroupReservations(reservation);
 
             log.info("预约 {} 超时未签到，已标记为爽约。用户: {}, 座位: {}",
                     reservation.getId(), reservation.getUserId(), reservation.getSeatId());
@@ -132,6 +150,9 @@ public class SeatScheduledService {
                     "TEMPORARY_LEAVE_TIMEOUT"
             );
 
+            // 如果属于分组预约，级联取消后续 RESERVED 预约
+            checkinService.cancelSubsequentGroupReservations(reservation);
+
             log.info("预约 {} 暂离超时（{}分钟），已标记为爽约。用户: {}",
                     reservation.getId(), temporaryAbsenceMinutes, reservation.getUserId());
         }
@@ -147,20 +168,52 @@ public class SeatScheduledService {
     @Scheduled(fixedRate = 120000)
     @Transactional
     public void autoCompleteExpiredReservations() {
+        LocalDateTime now = LocalDateTime.now();
+
         // 查找已到结束时间但仍在使用中的预约
         List<Reservation> expiredReservations = reservationMapper.selectList(
                 new LambdaQueryWrapper<Reservation>()
                         .in(Reservation::getStatus, "CHECKED_IN", "TEMPORARY_LEAVE")
-                        .lt(Reservation::getEndTime, LocalDateTime.now())
+                        .lt(Reservation::getEndTime, now)
         );
 
         for (Reservation reservation : expiredReservations) {
-            reservation.setStatus("COMPLETED");
-            reservation.setCheckoutTime(reservation.getEndTime());
-            reservation.setUpdatedAt(LocalDateTime.now());
-            reservationMapper.updateById(reservation);
+            // 检查是否属于分组预约，且同组有下一个 RESERVED 的时段
+            boolean autoContinued = false;
+            if (reservation.getGroupId() != null && "CHECKED_IN".equals(reservation.getStatus())) {
+                Reservation nextSlot = reservationMapper.selectOne(
+                        new LambdaQueryWrapper<Reservation>()
+                                .eq(Reservation::getGroupId, reservation.getGroupId())
+                                .eq(Reservation::getStatus, "RESERVED")
+                                .eq(Reservation::getStartTime, reservation.getEndTime())
+                                .last("LIMIT 1")
+                );
+                if (nextSlot != null) {
+                    // 自动延续：当前时段完成，下一时段自动签到
+                    reservation.setStatus("COMPLETED");
+                    reservation.setCheckoutTime(reservation.getEndTime());
+                    reservation.setUpdatedAt(now);
+                    reservationMapper.updateById(reservation);
 
-            log.info("预约 {} 已到结束时间，自动标记为已完成。用户: {}", reservation.getId(), reservation.getUserId());
+                    nextSlot.setStatus("CHECKED_IN");
+                    nextSlot.setCheckinTime(nextSlot.getStartTime());
+                    nextSlot.setUpdatedAt(now);
+                    reservationMapper.updateById(nextSlot);
+
+                    autoContinued = true;
+                    log.info("分组预约自动延续：预约 {} → 完成，预约 {} → 自动签到。用户: {}",
+                            reservation.getId(), nextSlot.getId(), reservation.getUserId());
+                }
+            }
+
+            if (!autoContinued) {
+                reservation.setStatus("COMPLETED");
+                reservation.setCheckoutTime(reservation.getEndTime());
+                reservation.setUpdatedAt(now);
+                reservationMapper.updateById(reservation);
+
+                log.info("预约 {} 已到结束时间，自动标记为已完成。用户: {}", reservation.getId(), reservation.getUserId());
+            }
         }
     }
 

@@ -201,7 +201,7 @@ class CoreBusinessIntegrationTest {
             req.setStartTime(future.format(FORMATTER));
             req.setEndTime(future.plusHours(1).format(FORMATTER));
 
-            BookingVO result = bookingService.createBooking(req);
+            BookingVO result = bookingService.createBooking(req).get(0);
             assertNotNull(result);
             assertNotNull(result.getId());
             assertEquals("RESERVED", result.getStatus());
@@ -321,7 +321,7 @@ class CoreBusinessIntegrationTest {
             LocalDateTime future = LocalDateTime.now().plusHours(4).withMinute(0).withSecond(0);
             req.setStartTime(future.format(FORMATTER));
             req.setEndTime(future.plusHours(1).format(FORMATTER));
-            BookingVO created = bookingService.createBooking(req);
+            BookingVO created = bookingService.createBooking(req).get(0);
 
             var page = bookingService.getMyBookings(1, 10, null, null);
             assertTrue(page.getTotal() > 0);
@@ -346,7 +346,7 @@ class CoreBusinessIntegrationTest {
             LocalDateTime future = LocalDateTime.now().plusHours(2).withMinute(0).withSecond(0);
             req.setStartTime(future.format(FORMATTER));
             req.setEndTime(future.plusHours(1).format(FORMATTER));
-            BookingVO created = bookingService.createBooking(req);
+            BookingVO created = bookingService.createBooking(req).get(0);
 
             bookingService.cancelBooking(created.getId(), 1L, "SUPER_ADMIN");
             BookingVO after = bookingService.getBookingById(created.getId());
@@ -371,7 +371,7 @@ class CoreBusinessIntegrationTest {
             LocalDateTime future = LocalDateTime.now().plusHours(2).withMinute(0).withSecond(0);
             req.setStartTime(future.format(FORMATTER));
             req.setEndTime(future.plusHours(1).format(FORMATTER));
-            BookingVO created = bookingService.createBooking(req);
+            BookingVO created = bookingService.createBooking(req).get(0);
 
             BusinessException ex = assertThrows(BusinessException.class,
                     () -> bookingService.cancelBooking(created.getId(), 999L, "STUDENT"));

@@ -52,4 +52,7 @@ public class BookingVO implements Serializable {
 
     @Schema(description = "创建时间")
     private String createdAt;
+
+    @Schema(description = "预约分组ID，同一组多时段预约共享此ID")
+    private String groupId;
 }

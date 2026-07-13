@@ -64,11 +64,8 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
     // ==================== 创建预约 ====================
 
     @Transactional
-    public BookingVO createBooking(CreateBookingRequest request) {
+    public List<BookingVO> createBooking(CreateBookingRequest request) {
         Long userId = UserContext.getUserId();
-
-        LocalDateTime startTime = parseDateTime(request.getStartTime());
-        LocalDateTime endTime = parseDateTime(request.getEndTime());
 
         // 黑名单检查
         if (blacklistService.isUserBlacklisted(userId)) {
@@ -93,82 +90,123 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
             throw new BusinessException(ResultCode.ROOM_CLOSED);
         }
 
-        // 时间合法性
-        if (!endTime.isAfter(startTime)) {
-            throw new BusinessException(ResultCode.RESERVATION_TIME_INVALID);
+        // 构建时段列表
+        List<LocalDateTime[]> slots = new ArrayList<>();
+        if (request.getTimeSlots() != null && !request.getTimeSlots().isEmpty()) {
+            // 多时段预约
+            for (CreateBookingRequest.TimeSlotDTO ts : request.getTimeSlots()) {
+                slots.add(new LocalDateTime[]{parseDateTime(ts.getStartTime()), parseDateTime(ts.getEndTime())});
+            }
+        } else {
+            // 单时段预约
+            if (request.getStartTime() == null || request.getEndTime() == null) {
+                throw new BusinessException(ResultCode.RESERVATION_TIME_INVALID);
+            }
+            slots.add(new LocalDateTime[]{parseDateTime(request.getStartTime()), parseDateTime(request.getEndTime())});
         }
 
-        // 预约窗口检查
+        // 验证所有时段
         LocalDateTime now = LocalDateTime.now();
-        if (startTime.isAfter(now.plusHours(advanceBookingHours))) {
-            throw new BusinessException(ResultCode.RESERVATION_TOO_EARLY);
-        }
-        // 允许时段开始后一定时间内仍可预约（min-advance-minutes 配置为负数表示允许已开始的时段）
-        if (startTime.isBefore(now.plusMinutes(minAdvanceMinutes))) {
-            throw new BusinessException(ResultCode.RESERVATION_TOO_LATE);
+        LocalDateTime overallStart = slots.get(0)[0];
+        LocalDateTime overallEnd = slots.get(slots.size() - 1)[1];
+
+        for (int i = 0; i < slots.size(); i++) {
+            LocalDateTime[] slot = slots.get(i);
+            // 时间合法性
+            if (!slot[1].isAfter(slot[0])) {
+                throw new BusinessException(ResultCode.RESERVATION_TIME_INVALID);
+            }
+            // 相邻性检查（多时段时，后一时段开始 = 前一时段结束）
+            if (i > 0 && !slot[0].equals(slots.get(i - 1)[1])) {
+                throw new BusinessException(ResultCode.RESERVATION_TIME_INVALID.getCode(), "多时段预约的时段必须相邻");
+            }
+            // 预约窗口检查
+            if (slot[0].isAfter(now.plusHours(advanceBookingHours))) {
+                throw new BusinessException(ResultCode.RESERVATION_TOO_EARLY);
+            }
+            if (slot[0].isBefore(now.plusMinutes(minAdvanceMinutes))) {
+                throw new BusinessException(ResultCode.RESERVATION_TOO_LATE);
+            }
+            // 自习室开放时间检查
+            if (room.getOpenTime() != null && slot[0].toLocalTime().isBefore(room.getOpenTime())) {
+                throw new BusinessException(ResultCode.RESERVATION_TIME_INVALID.getCode(), "预约开始时间早于自习室开放时间(" + room.getOpenTime() + ")");
+            }
+            if (room.getCloseTime() != null && slot[1].toLocalTime().isAfter(room.getCloseTime())) {
+                throw new BusinessException(ResultCode.RESERVATION_TIME_INVALID.getCode(), "预约结束时间晚于自习室关闭时间(" + room.getCloseTime() + ")");
+            }
         }
 
-        // 时长检查
-        long durationMinutes = ChronoUnit.MINUTES.between(startTime, endTime);
-        if (durationMinutes > (long) maxDurationHours * 60) {
+        // 总时长检查
+        long totalDurationMinutes = ChronoUnit.MINUTES.between(overallStart, overallEnd);
+        if (totalDurationMinutes > (long) maxDurationHours * 60) {
             throw new BusinessException(ResultCode.RESERVATION_DURATION_EXCEEDED);
         }
 
-        // 自习室开放时间检查
-        if (room.getOpenTime() != null && startTime.toLocalTime().isBefore(room.getOpenTime())) {
-            throw new BusinessException(ResultCode.RESERVATION_TIME_INVALID.getCode(), "预约开始时间早于自习室开放时间(" + room.getOpenTime() + ")");
-        }
-        if (room.getCloseTime() != null && endTime.toLocalTime().isAfter(room.getCloseTime())) {
-            throw new BusinessException(ResultCode.RESERVATION_TIME_INVALID.getCode(), "预约结束时间晚于自习室关闭时间(" + room.getCloseTime() + ")");
-        }
-
-        // 当日预约次数检查
-        LocalDateTime dayStart = LocalDate.now().atStartOfDay();
+        // 当日预约次数检查（同组预约算1次）
+        LocalDateTime dayStart = overallStart.toLocalDate().atStartOfDay();
         LocalDateTime dayEnd = dayStart.plusDays(1);
         long todayCount = baseMapper.selectCount(new LambdaQueryWrapper<Booking>()
                 .eq(Booking::getUserId, userId)
                 .ge(Booking::getStartTime, dayStart)
                 .lt(Booking::getStartTime, dayEnd)
-                .in(Booking::getStatus, "RESERVED", "CHECKED_IN", "TEMPORARY_LEAVE"));
-        if (todayCount >= maxDailyReservations) {
+                .in(Booking::getStatus, "RESERVED", "CHECKED_IN", "TEMPORARY_LEAVE")
+                .isNull(Booking::getGroupId));
+        // 对有group_id的记录按group_id去重计数
+        List<Booking> groupedToday = baseMapper.selectList(new LambdaQueryWrapper<Booking>()
+                .eq(Booking::getUserId, userId)
+                .ge(Booking::getStartTime, dayStart)
+                .lt(Booking::getStartTime, dayEnd)
+                .in(Booking::getStatus, "RESERVED", "CHECKED_IN", "TEMPORARY_LEAVE")
+                .isNotNull(Booking::getGroupId));
+        long groupCount = groupedToday.stream().map(Booking::getGroupId).distinct().count();
+        if (todayCount + groupCount >= maxDailyReservations) {
             throw new BusinessException(ResultCode.RESERVATION_DAILY_LIMIT_EXCEEDED);
         }
 
-        // 用户时段冲突检查：同一用户在同一时段不能有多个预约
+        // 用户时段冲突检查
         Long userConflictCount = baseMapper.selectCount(new LambdaQueryWrapper<Booking>()
                 .eq(Booking::getUserId, userId)
                 .in(Booking::getStatus, "RESERVED", "CHECKED_IN", "TEMPORARY_LEAVE")
-                .lt(Booking::getStartTime, endTime)
-                .gt(Booking::getEndTime, startTime));
+                .lt(Booking::getStartTime, overallEnd)
+                .gt(Booking::getEndTime, overallStart));
         if (userConflictCount > 0) {
             throw new BusinessException(ResultCode.RESERVATION_USER_CONFLICT);
         }
 
-        // 座位时段冲突检查（高并发下存在TOCTOU窗口，生产环境应加分布式锁或数据库约束）
+        // 座位时段冲突检查
         Long conflictCount = baseMapper.selectCount(new LambdaQueryWrapper<Booking>()
                 .eq(Booking::getSeatId, request.getSeatId())
                 .in(Booking::getStatus, "RESERVED", "CHECKED_IN", "TEMPORARY_LEAVE")
-                .lt(Booking::getStartTime, endTime)
-                .gt(Booking::getEndTime, startTime));
+                .lt(Booking::getStartTime, overallEnd)
+                .gt(Booking::getEndTime, overallStart));
         if (conflictCount > 0) {
             throw new BusinessException(ResultCode.RESERVATION_CONFLICT);
         }
 
+        // 生成 groupId（多时段时使用）
+        String groupId = slots.size() > 1 ? UUID.randomUUID().toString() : null;
+
         // 写入数据库
-        Booking booking = new Booking();
-        booking.setUserId(userId);
-        booking.setSeatId(request.getSeatId());
-        booking.setRoomId(seat.getRoomId());
-        booking.setStartTime(startTime);
-        booking.setEndTime(endTime);
-        booking.setStatus("RESERVED");
-        booking.setVersion(0);
-        baseMapper.insert(booking);
+        List<BookingVO> result = new ArrayList<>();
+        for (LocalDateTime[] slot : slots) {
+            Booking booking = new Booking();
+            booking.setUserId(userId);
+            booking.setSeatId(request.getSeatId());
+            booking.setRoomId(seat.getRoomId());
+            booking.setStartTime(slot[0]);
+            booking.setEndTime(slot[1]);
+            booking.setStatus("RESERVED");
+            booking.setGroupId(groupId);
+            booking.setVersion(0);
+            baseMapper.insert(booking);
 
-        log.info("用户 {} 创建预约成功，预约ID: {}, 座位: {}, 时间: {} ~ {}",
-                userId, booking.getId(), seat.getSeatCode(), startTime, endTime);
+            log.info("用户 {} 创建预约成功，预约ID: {}, 座位: {}, 时间: {} ~ {}, 分组: {}",
+                    userId, booking.getId(), seat.getSeatCode(), slot[0], slot[1], groupId);
 
-        return buildBookingVO(booking, seat, room);
+            result.add(buildBookingVO(booking, seat, room));
+        }
+
+        return result;
     }
 
     // ==================== 取消预约 ====================
@@ -358,6 +396,7 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
         vo.setCheckinCode("QR" + datePart + String.format("%04d", booking.getId() != null ? booking.getId() : 0));
 
         vo.setCreatedAt(booking.getCreatedAt() != null ? booking.getCreatedAt().format(FORMATTER) : null);
+        vo.setGroupId(booking.getGroupId());
         return vo;
     }
 
@@ -428,6 +467,7 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
                     : LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
             vo.setCheckinCode("QR" + datePart + String.format("%04d", booking.getId() != null ? booking.getId() : 0));
             vo.setCreatedAt(booking.getCreatedAt() != null ? booking.getCreatedAt().format(FORMATTER) : null);
+            vo.setGroupId(booking.getGroupId());
 
             return vo;
         }).collect(Collectors.toList());

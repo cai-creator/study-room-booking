@@ -158,6 +158,7 @@ CREATE TABLE reservation (
     checkin_time DATETIME DEFAULT NULL COMMENT '签到时间',
     checkout_time DATETIME DEFAULT NULL COMMENT '签退时间',
     temporary_leave_time DATETIME DEFAULT NULL COMMENT '暂离开始时间',
+    group_id VARCHAR(36) DEFAULT NULL COMMENT '预约分组ID，同一组多时段预约共享此ID',
     version INT NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
     deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -168,7 +169,8 @@ CREATE TABLE reservation (
     KEY idx_status (status),
     KEY idx_start_time (start_time),
     KEY idx_end_time (end_time),
-    KEY idx_user_date (user_id, start_time)
+    KEY idx_user_date (user_id, start_time),
+    KEY idx_group_id (group_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预约记录表';
 
 -- =====================================================
