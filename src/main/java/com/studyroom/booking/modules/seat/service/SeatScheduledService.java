@@ -150,9 +150,6 @@ public class SeatScheduledService {
                     "TEMPORARY_LEAVE_TIMEOUT"
             );
 
-            // 如果属于分组预约，级联取消后续 RESERVED 预约
-            checkinService.cancelSubsequentGroupReservations(reservation);
-
             log.info("预约 {} 暂离超时（{}分钟），已标记为爽约。用户: {}",
                     reservation.getId(), temporaryAbsenceMinutes, reservation.getUserId());
         }

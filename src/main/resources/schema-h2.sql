@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS reservation (
     checkin_time DATETIME,
     checkout_time DATETIME,
     temporary_leave_time DATETIME,
+    group_id VARCHAR(36) DEFAULT NULL,
     version INT NOT NULL DEFAULT 0,
     deleted TINYINT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
