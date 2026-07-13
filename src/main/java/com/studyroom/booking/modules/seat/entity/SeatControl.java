@@ -26,10 +26,10 @@ public class SeatControl implements Serializable {
     @TableField("seat_code")
     private String seatCode;
 
-    @TableField("row_number")
+    @TableField("`row_number`")
     private Integer rowNumber;
 
-    @TableField("col_number")
+    @TableField("`col_number`")
     private Integer colNumber;
 
     @TableField("tags")

@@ -34,9 +34,13 @@ public class SeatScheduledService {
     private final NoShowRecordService noShowRecordService;
     private final BlacklistService blacklistService;
 
-    /** 签到宽限时间（分钟），默认15 */
-    @Value("${booking.rules.checkin-grace-minutes:15}")
+    /** 签到宽限时间（分钟），开始时间后多久判定爽约，默认50 */
+    @Value("${booking.rules.checkin-grace-minutes:50}")
     private int checkinGraceMinutes;
+
+    /** 签到截止时间（分钟），预约创建后必须在此时间内签到，默认10 */
+    @Value("${booking.rules.checkin-deadline-minutes:10}")
+    private int checkinDeadlineMinutes;
 
     /** 暂离保留时间（分钟），默认30 */
     @Value("${booking.rules.temporary-absence-minutes:30}")
@@ -48,24 +52,36 @@ public class SeatScheduledService {
      * 处理超时未签到的预约
      * <p>
      * 每分钟执行一次。
-     * 查找状态为 RESERVED 且已超过「开始时间 + 宽限时间」的预约，
-     * 将其标记为 NO_SHOW（爽约），并创建爽约记录。
+     * 提前预约（创建时间 < 开始时间）：开始时间+checkinGraceMinutes未签到 → 爽约
+     * 开始后预约（创建时间 >= 开始时间）：创建时间+checkinGraceMinutes未签到 → 爽约
      */
     @Scheduled(fixedRate = 60000)
     @Transactional
     public void processNoShowReservations() {
-        LocalDateTime deadline = LocalDateTime.now().minusMinutes(checkinGraceMinutes);
+        LocalDateTime now = LocalDateTime.now();
 
-        // 查找已超过签到截止时间但仍未签到的预约
-        // 条件：status = RESERVED 且 start_time + checkinGraceMinutes < now
-        // 即：start_time < now - checkinGraceMinutes
-        List<Reservation> expiredReservations = reservationMapper.selectList(
+        // 查询所有未签到的预约，在 Java 中按两种情况过滤
+        List<Reservation> allReserved = reservationMapper.selectList(
                 new LambdaQueryWrapper<Reservation>()
                         .eq(Reservation::getStatus, "RESERVED")
-                        .lt(Reservation::getStartTime, deadline)
         );
 
-        for (Reservation reservation : expiredReservations) {
+        List<Reservation> allExpired = new java.util.ArrayList<>();
+        for (Reservation r : allReserved) {
+            LocalDateTime deadline;
+            if (r.getCreatedAt().isBefore(r.getStartTime())) {
+                // 提前预约：爽约判定 = 开始时间 + checkinGraceMinutes
+                deadline = r.getStartTime().plusMinutes(checkinGraceMinutes);
+            } else {
+                // 开始后预约：爽约判定 = 创建时间 + checkinGraceMinutes
+                deadline = r.getCreatedAt().plusMinutes(checkinGraceMinutes);
+            }
+            if (now.isAfter(deadline)) {
+                allExpired.add(r);
+            }
+        }
+
+        for (Reservation reservation : allExpired) {
             // 标记为爽约
             reservation.setStatus("NO_SHOW");
             reservation.setUpdatedAt(LocalDateTime.now());

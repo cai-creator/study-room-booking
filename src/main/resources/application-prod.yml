@@ -16,8 +16,9 @@ booking:
     max-daily-reservations: 3
     max-duration-hours: 8
     advance-booking-hours: 24
-    min-advance-minutes: 15
-    checkin-grace-minutes: 15
+    min-advance-minutes: -50
+    checkin-grace-minutes: 50
+    checkin-deadline-minutes: 10
     temporary-absence-minutes: 30
     blacklist-threshold: 3
     blacklist-days: 7

@@ -103,6 +103,7 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
         if (startTime.isAfter(now.plusHours(advanceBookingHours))) {
             throw new BusinessException(ResultCode.RESERVATION_TOO_EARLY);
         }
+        // 允许时段开始后一定时间内仍可预约（min-advance-minutes 配置为负数表示允许已开始的时段）
         if (startTime.isBefore(now.plusMinutes(minAdvanceMinutes))) {
             throw new BusinessException(ResultCode.RESERVATION_TOO_LATE);
         }

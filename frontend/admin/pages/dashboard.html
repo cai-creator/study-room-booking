@@ -213,10 +213,16 @@
                 return Promise.all(rps);
             }).then(function (rRes) {
                 state.spaceRooms = [];
+                // 建立 floorId -> buildingId 映射
+                var floorToBuilding = {};
+                state.spaceFloors.forEach(function (f) { floorToBuilding[f.id] = f.buildingId; });
                 rRes.forEach(function (rp) {
                     if (rp) {
                         var arr = rp.records || rp.list || [];
                         if (Array.isArray(rp)) arr = rp;
+                        arr.forEach(function (r) {
+                            r.buildingId = floorToBuilding[r.floorId];
+                        });
                         state.spaceRooms = state.spaceRooms.concat(arr);
                     }
                 });

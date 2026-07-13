@@ -31,9 +31,13 @@ public class CheckinService {
     private final ReservationMapper reservationMapper;
     private final SeatControlMapper seatMapper;
 
-    /** 签到宽限时间（分钟），默认15分钟 */
-    @Value("${booking.rules.checkin-grace-minutes:15}")
+    /** 签到宽限时间（分钟），开始时间后多久判定爽约，默认50 */
+    @Value("${booking.rules.checkin-grace-minutes:50}")
     private int checkinGraceMinutes;
+
+    /** 签到截止时间（分钟），预约创建后必须在此时间内签到，默认10 */
+    @Value("${booking.rules.checkin-deadline-minutes:10}")
+    private int checkinDeadlineMinutes;
 
     /** 暂离保留时间（分钟），默认30分钟 */
     @Value("${booking.rules.temporary-absence-minutes:30}")
@@ -83,9 +87,19 @@ public class CheckinService {
         }
 
         // 3. 验证签到时间
+        // 提前预约（创建时间 < 开始时间）：签到窗口为开始时间 ~ 开始时间+checkinGraceMinutes
+        // 开始后预约（创建时间 >= 开始时间）：签到窗口为创建时间 ~ 创建时间+checkinGraceMinutes
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime earliestCheckin = reservation.getStartTime().minusMinutes(checkinGraceMinutes);
-        LocalDateTime latestCheckin = reservation.getStartTime().plusMinutes(checkinGraceMinutes);
+        LocalDateTime earliestCheckin;
+        LocalDateTime latestCheckin;
+
+        if (reservation.getCreatedAt().isBefore(reservation.getStartTime())) {
+            earliestCheckin = reservation.getStartTime();
+            latestCheckin = reservation.getStartTime().plusMinutes(checkinGraceMinutes);
+        } else {
+            earliestCheckin = reservation.getCreatedAt();
+            latestCheckin = reservation.getCreatedAt().plusMinutes(checkinGraceMinutes);
+        }
 
         if (now.isBefore(earliestCheckin)) {
             throw new BusinessException(ResultCode.CHECKIN_TOO_EARLY);
