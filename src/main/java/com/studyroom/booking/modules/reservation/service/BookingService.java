@@ -383,7 +383,6 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
         vo.setCheckinCode("QR" + datePart + String.format("%04d", booking.getId() != null ? booking.getId() : 0));
 
         vo.setCreatedAt(booking.getCreatedAt() != null ? booking.getCreatedAt().format(FORMATTER) : null);
-        vo.setGroupId(booking.getGroupId());
         return vo;
     }
 
@@ -454,7 +453,6 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
                     : LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
             vo.setCheckinCode("QR" + datePart + String.format("%04d", booking.getId() != null ? booking.getId() : 0));
             vo.setCreatedAt(booking.getCreatedAt() != null ? booking.getCreatedAt().format(FORMATTER) : null);
-            vo.setGroupId(booking.getGroupId());
 
             return vo;
         }).collect(Collectors.toList());
