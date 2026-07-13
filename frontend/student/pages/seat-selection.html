@@ -214,28 +214,27 @@
         };
       }
 
-      // 加载校区
-      SpaceAPI.getCampuses().then(function(list) {
-        campuses = list || [];
-        var sel = document.getElementById('filter-campus');
-        campuses.forEach(function(c) {
-          var opt = document.createElement('option');
-          opt.value = c.id; opt.textContent = c.name;
-          sel.appendChild(opt);
-        });
-      });
-
-      // 加载楼栋 + 所有楼层
-      SpaceAPI.getBuildings().then(function(list) {
-        buildings = list || [];
-        var fps = buildings.map(function(b) {
-          return SpaceAPI.getFloors(b.id).catch(function() { return []; });
-        });
-        Promise.all(fps).then(function(res) {
-          floors = [];
-          res.forEach(function(f) { floors = floors.concat(f || []); });
-        });
-      });
+      // 加载校区、楼栋、楼层（确保数据就绪后再渲染自习室列表）
+      var spaceDataReady = Promise.all([
+        SpaceAPI.getCampuses().then(function(list) {
+          campuses = list || [];
+          var sel = document.getElementById('filter-campus');
+          campuses.forEach(function(c) {
+            var opt = document.createElement('option');
+            opt.value = c.id; opt.textContent = c.name;
+            sel.appendChild(opt);
+          });
+        }),
+        SpaceAPI.getBuildings().then(function(list) {
+          buildings = list || [];
+          return Promise.all(buildings.map(function(b) {
+            return SpaceAPI.getFloors(b.id).catch(function() { return []; });
+          })).then(function(res) {
+            floors = [];
+            res.forEach(function(f) { floors = floors.concat(f || []); });
+          });
+        })
+      ]);
 
       // 校区变化加载楼栋
       document.getElementById('filter-campus').addEventListener('change', function() {
@@ -310,6 +309,10 @@
               return { records: [], list: [], total: 0, _softFail: err.code };
             }
             throw err;
+          })
+          .then(function(result) {
+            // 确保校区/楼栋/楼层数据已加载，再渲染位置信息
+            return spaceDataReady.then(function() { return result; });
           })
           .then(function(result) {
             document.getElementById('rooms-loading').classList.add('hidden');
@@ -409,7 +412,8 @@
         SpaceAPI.getRoom(roomId).then(function(room) {
           currentRoom = room;
           document.getElementById('room-name').textContent = room.name;
-          document.getElementById('room-location').textContent = room.campusName + ' · ' + room.buildingName + ' · ' + room.floorNumber + '层';
+          var loc = resolveRoomLocation(room);
+          document.getElementById('room-location').textContent = loc.campusName + ' · ' + loc.buildingName + ' · ' + loc.floorNumber + '层';
           document.getElementById('room-hours').textContent = (room.openTime || '08:00:00').slice(0, 5) + ' - ' + (room.closeTime || '22:00:00').slice(0, 5);
 
           // 初始化日期选择器（今天到后天，共3天）
