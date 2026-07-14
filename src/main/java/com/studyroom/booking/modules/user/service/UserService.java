@@ -193,13 +193,25 @@ public class UserService {
 
     /**
      * 分页查询用户列表
+     * <p>
+     * 普通管理员(ADMIN)：只能看所有学生和自己
+     * 超级管理员(SUPER_ADMIN)：可看所有普通管理员和学生
      */
-    public Page<UserVO> getUserList(Integer pageNum, Integer pageSize, String keyword, String role, Integer status) {
+    public Page<UserVO> getUserList(Integer pageNum, Integer pageSize, String keyword, String role, Integer status, Long currentUserId, String currentRole) {
         pageSize = Math.min(pageSize, 100);
         Page<User> page = new Page<>(pageNum, pageSize);
 
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getDeleted, 0);
+
+        // 根据当前角色过滤可见用户范围
+        if ("ADMIN".equals(currentRole)) {
+            // 普通管理员：只能看学生 + 自己
+            wrapper.and(w -> w.eq(User::getRole, "STUDENT").or().eq(User::getId, currentUserId));
+        } else if ("SUPER_ADMIN".equals(currentRole)) {
+            // 超级管理员：可看所有普通管理员和学生
+            wrapper.in(User::getRole, "ADMIN", "STUDENT");
+        }
 
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.and(w -> w

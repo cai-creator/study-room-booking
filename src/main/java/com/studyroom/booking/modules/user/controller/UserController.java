@@ -27,15 +27,17 @@ public class UserController {
 
     @GetMapping
     @RequireRole({"ADMIN", "SUPER_ADMIN"})
-    @Operation(summary = "用户列表", description = "分页查询用户列表")
+    @Operation(summary = "用户列表", description = "分页查询用户列表。普通管理员只能看学生和自己；超级管理员可看所有管理员和学生")
     @SecurityRequirement(name = "BearerAuth")
     public Result<Page<UserVO>> getUserList(
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer pageNum,
             @Parameter(description = "每页条数") @RequestParam(defaultValue = "20") Integer pageSize,
             @Parameter(description = "关键词") @RequestParam(required = false) String keyword,
             @Parameter(description = "角色") @RequestParam(required = false) String role,
-            @Parameter(description = "状态") @RequestParam(required = false) Integer status) {
-        return Result.success(userService.getUserList(pageNum, pageSize, keyword, role, status));
+            @Parameter(description = "状态") @RequestParam(required = false) Integer status,
+            @Parameter(hidden = true) @RequestAttribute("userId") Long currentUserId,
+            @Parameter(hidden = true) @RequestAttribute("role") String currentRole) {
+        return Result.success(userService.getUserList(pageNum, pageSize, keyword, role, status, currentUserId, currentRole));
     }
 
     @GetMapping("/{id}")

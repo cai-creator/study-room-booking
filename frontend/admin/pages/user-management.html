@@ -320,6 +320,20 @@
 
         document.getElementById('kw-input').addEventListener('input', applySearchDebounced);
         if (!Utils.requireRole(['ADMIN', 'SUPER_ADMIN'])) return;
+
+        // 根据当前角色调整筛选选项：普通管理员只看学生，超级管理员看管理员和学生
+        var curUser = Utils.getUser();
+        var curRole = curUser ? curUser.role : '';
+        if (curRole !== 'SUPER_ADMIN') {
+            var roleSelect = document.getElementById('role-select');
+            // 移除"超级管理员"选项
+            var saOpt = roleSelect.querySelector('option[value="SUPER_ADMIN"]');
+            if (saOpt) roleSelect.removeChild(saOpt);
+            // 移除"管理员"选项（普通管理员看不到其他管理员）
+            var aOpt = roleSelect.querySelector('option[value="ADMIN"]');
+            if (aOpt) roleSelect.removeChild(aOpt);
+        }
+
         loadNavbar();
         loadUsers();
     })();

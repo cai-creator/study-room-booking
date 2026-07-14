@@ -411,7 +411,7 @@ class CoreBusinessIntegrationTest {
         @Test
         @DisplayName("分页查询用户列表")
         void getUserList() {
-            var page = userService.getUserList(1, 10, null, null, null);
+            var page = userService.getUserList(1, 10, null, null, null, 1L, "SUPER_ADMIN");
             assertNotNull(page);
             assertTrue(page.getTotal() >= 1); // admin 用户
             assertFalse(page.getRecords().isEmpty());
@@ -420,7 +420,7 @@ class CoreBusinessIntegrationTest {
         @Test
         @DisplayName("按角色筛选用户")
         void getUserList_ByRole() {
-            var page = userService.getUserList(1, 10, null, "SUPER_ADMIN", null);
+            var page = userService.getUserList(1, 10, null, "SUPER_ADMIN", null, 1L, "SUPER_ADMIN");
             assertNotNull(page);
             page.getRecords().forEach(u -> assertEquals("SUPER_ADMIN", u.getRole()));
         }
@@ -428,7 +428,7 @@ class CoreBusinessIntegrationTest {
         @Test
         @DisplayName("按关键词搜索用户")
         void getUserList_ByKeyword() {
-            var page = userService.getUserList(1, 10, "admin", null, null);
+            var page = userService.getUserList(1, 10, "admin", null, null, 1L, "SUPER_ADMIN");
             assertNotNull(page);
             assertTrue(page.getTotal() > 0);
         }
@@ -763,11 +763,11 @@ class CoreBusinessIntegrationTest {
             // 先禁用一个用户
             userService.updateStatus(studentId, 0, 1L, "SUPER_ADMIN");
 
-            var disabled = userService.getUserList(1, 10, null, null, 0);
+            var disabled = userService.getUserList(1, 10, null, null, 0, 1L, "SUPER_ADMIN");
             assertTrue(disabled.getTotal() >= 1);
             disabled.getRecords().forEach(u -> assertEquals(0, u.getStatus()));
 
-            var active = userService.getUserList(1, 10, null, null, 1);
+            var active = userService.getUserList(1, 10, null, null, 1, 1L, "SUPER_ADMIN");
             assertTrue(active.getTotal() >= 1);
             active.getRecords().forEach(u -> assertEquals(1, u.getStatus()));
         }
