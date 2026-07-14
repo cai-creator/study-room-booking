@@ -13,6 +13,11 @@
       body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); }
     }
   </style>
+  <style>
+    @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .heatmap-cell { transition: all 0.2s ease; }
+    .heatmap-cell:hover { transform: scale(1.04); z-index: 2; box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+  </style>
 </head>
 <body class="min-h-screen" style="background: var(--color-bg-secondary);">
   <div id="navbar-placeholder"></div>
@@ -43,32 +48,44 @@
       <div id="building-list" class="space-y-3 hidden"></div>
     </div>
 
-    <!-- 自习室详情 -->
-    <div class="rounded-xl p-5" style="background: var(--surface-card); border: var(--surface-card-border);">
-      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <h2 class="font-semibold text-base flex items-center gap-2">
-          <i data-lucide="layout-grid" style="width:18px;height:18px;color:var(--brand-primary);"></i>
-          自习室座位实况
-        </h2>
-        <select id="room-select" class="px-3 py-2 rounded-md text-sm outline-none"
-                style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);">
-          <option value="">选择自习室</option>
-        </select>
-      </div>
-      <div id="room-detail-loading" class="py-4 text-center text-sm hidden" style="color:var(--color-text-tertiary);">加载中...</div>
-      <div id="room-detail" class="hidden">
-        <div class="flex items-center gap-4 mb-4 text-xs flex-wrap">
-          <span>总座位: <strong id="detail-total">0</strong></span>
-          <span style="color:var(--seat-available);">空闲: <strong id="detail-available">0</strong></span>
-          <span style="color:var(--seat-reserved);">已预约: <strong id="detail-reserved">0</strong></span>
-          <span style="color:var(--seat-occupied);">使用中: <strong id="detail-occupied">0</strong></span>
+    <!-- 自习室实时热力图 -->
+    <div class="rounded-xl p-5 mb-6" style="background: var(--surface-card); border: var(--surface-card-border);">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div>
+          <h2 class="font-semibold text-base flex items-center gap-2">
+            <i data-lucide="layout-grid" style="width:18px;height:18px;color:#7C3AED;"></i>
+            自习室实时热力图
+          </h2>
+          <p style="color: var(--color-text-tertiary); font-size: var(--text-xs); margin-top: 2px;">点击楼栋查看自习室，再点击自习室查看座位详情</p>
         </div>
-        <div class="flex flex-col items-center gap-1" id="detail-grid"></div>
+        <div class="flex items-center gap-3 text-xs flex-wrap" style="color: var(--color-text-secondary);">
+          <span class="flex items-center gap-1.5"><span style="width:14px;height:14px;background:var(--seat-available-bg);border:1.5px solid var(--seat-available);border-radius:3px;"></span>空闲</span>
+          <span class="flex items-center gap-1.5"><span style="width:14px;height:14px;background:var(--seat-reserved-bg);border:1.5px solid var(--seat-reserved);border-radius:3px;"></span>已预约</span>
+          <span class="flex items-center gap-1.5"><span style="width:14px;height:14px;background:var(--seat-occupied-bg);border:1.5px solid var(--seat-occupied);border-radius:3px;"></span>使用中</span>
+          <span class="flex items-center gap-1.5"><span style="width:14px;height:14px;background:var(--seat-away-bg);border:1.5px solid var(--seat-away);border-radius:3px;"></span>暂离</span>
+          <span class="flex items-center gap-1.5"><span style="width:14px;height:14px;background:#F1F5F9;border:1.5px solid #CBD5E1;border-radius:3px;"></span>不可用</span>
+        </div>
       </div>
-      <div id="room-detail-empty" class="py-8 text-center">
-        <i data-lucide="mouse-pointer-click" style="width:32px;height:32px;color:var(--color-text-tertiary);margin:0 auto 8px;"></i>
-        <p class="text-sm" style="color:var(--color-text-tertiary);">请选择自习室查看座位实况</p>
+
+      <div class="mb-4 flex flex-wrap items-center gap-2" id="breadcrumb"></div>
+      <div id="heatmap-content"></div>
+    </div>
+
+    <!-- 自习室座位详情面板 -->
+    <div id="room-detail-panel" class="hidden rounded-xl p-5" style="background: var(--surface-card); border: var(--surface-card-border);">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="font-semibold text-base flex items-center gap-2">
+            <i data-lucide="door-open" style="width:16px;height:16px;color:var(--brand-primary);"></i>
+            <span id="detail-room-name">自习室座位详情</span>
+          </h3>
+          <p id="detail-room-info" style="color: var(--color-text-tertiary); font-size: var(--text-xs); margin-top: 2px;"></p>
+        </div>
+        <button onclick="closeDetailPanel()" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);">
+          <i data-lucide="x" style="width:14px;height:14px;display:inline;"></i> 关闭
+        </button>
       </div>
+      <div id="detail-seat-grid" class="flex justify-center"></div>
     </div>
   </main>
 
@@ -80,31 +97,72 @@
   <script src="../../public/js/navbar.js"></script>
 
   <script>
-    (function() {
-      'use strict';
+  (function() {
+    'use strict';
 
-      if (!Utils.requireRole(['STUDENT'])) return;
+    if (!Utils.requireRole(['STUDENT'])) return;
 
-      fetch('../partials/navbar.html')
-        .then(r => r.text())
-        .then(html => {
-          document.getElementById('navbar-placeholder').innerHTML = html;
-          if (window.initNavbarUI) initNavbarUI();
-          lucide.createIcons();
-        });
+    fetch('../partials/navbar.html')
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        document.getElementById('navbar-placeholder').innerHTML = html;
+        if (window.initNavbarUI) initNavbarUI();
+        lucide.createIcons();
+      });
 
-      var statusColors = {
-        'AVAILABLE': 'var(--seat-available)',
-        'RESERVED': 'var(--seat-reserved)',
-        'OCCUPIED': 'var(--seat-occupied)',
-        'TEMPORARY_LEAVE': 'var(--seat-away)',
-        'UNAVAILABLE': 'var(--color-border)'
-      };
+    // ========== 状态管理 ==========
+    var state = {
+      campusData: [],
+      buildingData: [],
+      spaceBuildings: [],
+      spaceFloors: [],
+      spaceRooms: [],
+      roomOverviewData: [],
+      breadcrumb: []
+    };
 
-      function loadCampusOverview() {
-        DashboardAPI.getCampusOverview()
-          .catch(function () { return []; })
-          .then(function(list) {
+    // ========== 热力图颜色函数 ==========
+
+    function usageColor(rate) {
+      if (rate < 30) return { bg: '#16A34A', text: '#16A34A', bgLight: '#DCFCE7' };
+      if (rate < 60) return { bg: '#2563EB', text: '#2563EB', bgLight: '#DBEAFE' };
+      if (rate < 85) return { bg: '#F59E0B', text: '#D97706', bgLight: '#FEF3C7' };
+      return { bg: '#DC2626', text: '#DC2626', bgLight: '#FEE2E2' };
+    }
+
+    function usageHeatColor(rate) {
+      if (rate < 20) return { bg: '#DCFCE7', text: '#166534' };
+      if (rate < 40) return { bg: '#BBF7D0', text: '#15803D' };
+      if (rate < 60) return { bg: '#FEF08A', text: '#A16207' };
+      if (rate < 80) return { bg: '#FED7AA', text: '#C2410C' };
+      return { bg: '#FECACA', text: '#B91C1C' };
+    }
+
+    // ========== 面包屑 ==========
+
+    function renderBreadcrumb() {
+      var bc = document.getElementById('breadcrumb');
+      var parts = [{ label: '全部校区', action: 'resetDrillDown()' }].concat(state.breadcrumb);
+      var h = '';
+      parts.forEach(function(p, i) {
+        var isLast = i === parts.length - 1;
+        if (p.action) {
+          h += '<button onclick="' + p.action + '" class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors" style="' + (isLast ? 'background:var(--brand-primary);color:white;' : 'background:var(--color-bg-tertiary);color:var(--color-text-secondary);') + '">' + Utils.escapeHtml(p.label) + '</button>';
+        } else {
+          h += '<span class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium" style="background:var(--brand-primary);color:white;">' + Utils.escapeHtml(p.label) + '</span>';
+        }
+        if (!isLast) h += '<i data-lucide="chevron-right" style="width:14px;height:14px;color:var(--color-text-tertiary);"></i>';
+      });
+      bc.innerHTML = h;
+      lucide.createIcons();
+    }
+
+    // ========== 校区概览 ==========
+
+    function loadCampusOverview() {
+      DashboardAPI.getCampusOverview()
+        .catch(function() { return []; })
+        .then(function(list) {
           document.getElementById('campus-loading').classList.add('hidden');
           var container = document.getElementById('campus-overview');
           container.classList.remove('hidden');
@@ -142,12 +200,14 @@
         }).catch(function() {
           document.getElementById('campus-loading').classList.add('hidden');
         });
-      }
+    }
 
-      function loadBuildingOverview() {
-        DashboardAPI.getBuildingOverview()
-          .catch(function () { return []; })
-          .then(function(list) {
+    // ========== 楼栋概览 ==========
+
+    function loadBuildingOverview() {
+      DashboardAPI.getBuildingOverview()
+        .catch(function() { return []; })
+        .then(function(list) {
           document.getElementById('building-loading').classList.add('hidden');
           var container = document.getElementById('building-list');
           container.classList.remove('hidden');
@@ -181,78 +241,271 @@
         }).catch(function() {
           document.getElementById('building-loading').classList.add('hidden');
         });
-      }
+    }
 
-      function loadRoomList() {
-        SpaceAPI.getRooms({ pageSize: 100 })
-          .catch(function () { return { records: [], list: [] }; })
-          .then(function(result) {
-          var sel = document.getElementById('room-select');
-          sel.innerHTML = '<option value="">选择自习室</option>';
-          var list = result.records || result.list || [];
-          list.forEach(function(r) {
-            var opt = document.createElement('option');
-            opt.value = r.id; opt.textContent = r.name;
-            sel.appendChild(opt);
-          });
-          sel.addEventListener('change', function() {
-            if (this.value) loadRoomDetail(Number(this.value));
-          });
+    // ========== 空间数据加载（用于热力图下钻） ==========
+
+    function loadSpaceData() {
+      return SpaceAPI.getBuildings({}).catch(function() { return []; }).then(function(buildings) {
+        state.spaceBuildings = buildings || [];
+        var fps = state.spaceBuildings.map(function(b) { return SpaceAPI.getFloors(b.id).catch(function() { return []; }); });
+        return Promise.all(fps);
+      }).then(function(fRes) {
+        state.spaceFloors = [];
+        (fRes || []).forEach(function(f) { state.spaceFloors = state.spaceFloors.concat(f || []); });
+        var rps = state.spaceFloors.map(function(f) { return SpaceAPI.getRooms({ floorId: f.id }).catch(function() { return { records: [] }; }); });
+        return Promise.all(rps);
+      }).then(function(rRes) {
+        state.spaceRooms = [];
+        var floorToBuilding = {};
+        state.spaceFloors.forEach(function(f) { floorToBuilding[f.id] = f.buildingId; });
+        (rRes || []).forEach(function(rp) {
+          if (!rp) return;
+          var arr = rp.records || rp.list || [];
+          if (Array.isArray(rp)) arr = rp;
+          arr.forEach(function(r) { r.buildingId = floorToBuilding[r.floorId]; });
+          state.spaceRooms = state.spaceRooms.concat(arr);
         });
+      }).catch(function() {});
+    }
+
+    function loadRoomOverview() {
+      return DashboardAPI.getRoomOverview().catch(function() { return []; }).then(function(data) {
+        state.roomOverviewData = data || [];
+      });
+    }
+
+    // ========== 热力图渲染 ==========
+
+    /**
+     * 默认视图：按校区→楼栋显示，每个楼栋卡片内自习室用热力色
+     */
+    function renderCampusHeatmap() {
+      var container = document.getElementById('heatmap-content');
+      // 将楼栋数据与空间楼栋关联
+      var buildings = state.buildingData;
+      if (!buildings.length) {
+        container.innerHTML = '<div class="py-12 text-center text-sm" style="color:var(--color-text-tertiary);">暂无楼栋数据，请先创建校区和楼栋</div>';
+        return;
       }
 
-      function loadRoomDetail(roomId) {
-        document.getElementById('room-detail-empty').classList.add('hidden');
-        document.getElementById('room-detail').classList.add('hidden');
-        document.getElementById('room-detail-loading').classList.remove('hidden');
+      // 建立自习室 useRate 索引: roomId -> roomOverview
+      var roomIdx = {};
+      state.roomOverviewData.forEach(function(r) { roomIdx[String(r.roomId)] = r; });
 
-        DashboardAPI.getRoomDetail(roomId).then(function(data) {
-          document.getElementById('room-detail-loading').classList.add('hidden');
-          document.getElementById('room-detail').classList.remove('hidden');
-          document.getElementById('detail-total').textContent = data.totalSeats;
-          document.getElementById('detail-available').textContent = data.availableSeats;
-          document.getElementById('detail-reserved').textContent = data.reservedSeats;
-          document.getElementById('detail-occupied').textContent = data.occupiedSeats;
+      // 按 campusName 分组楼栋
+      var byCampus = {};
+      buildings.forEach(function(b) {
+        var cn = b.campusName || '未知校区';
+        if (!byCampus[cn]) byCampus[cn] = [];
+        byCampus[cn].push(b);
+      });
 
-          var grid = document.getElementById('detail-grid');
-          grid.innerHTML = '<div class="text-xs mb-2" style="color:var(--color-text-tertiary);">讲台</div>';
-          var seatsByRow = {};
-          (data.seats || []).forEach(function(s) {
-            if (!seatsByRow[s.rowNumber]) seatsByRow[s.rowNumber] = [];
-            seatsByRow[s.rowNumber].push(s);
-          });
-          Object.keys(seatsByRow).sort(function(a,b){return a-b;}).forEach(function(rowNum) {
-            var rowDiv = document.createElement('div');
-            rowDiv.className = 'flex gap-1';
-            seatsByRow[rowNum].forEach(function(seat) {
-              var span = document.createElement('span');
-              span.className = 'w-7 h-7 rounded-sm text-[10px] flex items-center justify-center';
-              var color = statusColors[seat.status] || statusColors['UNAVAILABLE'];
-              span.style.cssText = 'background:' + color + ';color:#fff;';
-              span.textContent = seat.seatCode.split('-')[1];
-              span.title = seat.seatCode + ' - ' + (seat.status === 'AVAILABLE' ? '空闲' : seat.status === 'RESERVED' ? '已预约' : seat.status === 'OCCUPIED' ? '使用中' : seat.status === 'TEMPORARY_LEAVE' ? '暂离' : '不可用');
-              rowDiv.appendChild(span);
+      var h = '';
+      Object.keys(byCampus).forEach(function(campusName) {
+        var campusBuildings = byCampus[campusName];
+        h += '<div class="mb-5"><h3 class="text-sm font-semibold mb-3 flex items-center gap-2" style="color:var(--color-text-primary);"><i data-lucide="map-pin" style="width:16px;height:16px;color:var(--brand-primary);"></i>' + Utils.escapeHtml(campusName) + '</h3>';
+        h += '<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">';
+        campusBuildings.forEach(function(b) {
+          var rooms = state.spaceRooms.filter(function(r) { return String(r.buildingId) === String(b.buildingId); });
+          h += '<div class="rounded-lg p-4" style="background:var(--color-bg-secondary);border:1px solid var(--color-border-light);">';
+          h += '<div class="flex items-center justify-between mb-3" style="cursor:pointer;" onclick="drillToBuilding(\'' + Utils.escapeHtml(b.buildingName) + '\', ' + (b.buildingId || 0) + ')">';
+          h += '<div class="flex items-center gap-2 min-w-0"><i data-lucide="building" style="width:16px;height:16px;color:var(--brand-primary);"></i><span class="font-semibold truncate text-sm hover:underline" style="color:var(--color-text-primary);">' + Utils.escapeHtml(b.buildingName) + '</span></div>';
+          var col = usageColor(b.usageRate || 0);
+          h += '<span class="px-2 py-0.5 rounded text-xs font-bold" style="background:' + col.bgLight + ';color:' + col.text + ';">' + (b.usageRate || 0) + '%</span>';
+          h += '</div>';
+          if (!rooms.length) {
+            h += '<div class="text-xs py-4 text-center rounded" style="color:var(--color-text-tertiary);background:var(--color-bg-tertiary);">暂无自习室</div>';
+          } else {
+            h += '<div class="grid grid-cols-2 gap-2">';
+            rooms.forEach(function(r) {
+              var ri = roomIdx[String(r.id)];
+              var rate = ri ? Math.round(ri.usageRate || 0) : 0;
+              var total = ri ? (ri.totalSeats || 0) : (r.totalSeats || 0);
+              var color = usageHeatColor(rate);
+              h += '<div onclick="drillToRoom(\'' + Utils.escapeHtml(r.name) + '\', ' + r.id + ')" class="heatmap-cell cursor-pointer rounded-lg p-3 border" style="background:' + color.bg + ';border-color:var(--color-border-light);">';
+              h += '<div class="text-xs font-semibold truncate mb-1" style="color:#0F172A;">' + Utils.escapeHtml(r.name) + '</div>';
+              h += '<div class="flex items-center justify-between"><div class="text-[10px]" style="color:#334155;">' + total + '座</div><div class="text-xs font-bold" style="color:#0F172A;">' + rate + '%</div></div>';
+              h += '</div>';
             });
-            grid.appendChild(rowDiv);
-          });
-        }).catch(function() {
-          document.getElementById('room-detail-loading').textContent = '加载失败';
+            h += '</div>';
+          }
+          h += '</div>';
         });
+        h += '</div></div>';
+      });
+      container.innerHTML = h;
+      lucide.createIcons();
+    }
+
+    /**
+     * 楼栋视角：显示该楼栋下所有自习室的卡片热力图
+     */
+    function renderBuildingHeatmap(buildingName) {
+      var targetBuilding = state.buildingData.find(function(x) { return x.buildingName === buildingName; });
+      var buildingId = targetBuilding ? targetBuilding.buildingId : null;
+      var rooms = buildingId ? state.spaceRooms.filter(function(r) { return String(r.buildingId) === String(buildingId); }) : [];
+      var roomIdx = {};
+      state.roomOverviewData.forEach(function(r) { roomIdx[String(r.roomId)] = r; });
+
+      var container = document.getElementById('heatmap-content');
+      if (!rooms.length) {
+        container.innerHTML = '<div class="py-12 text-center text-sm" style="color:var(--color-text-tertiary);">该楼栋下暂无自习室数据</div>';
+        return;
       }
 
-      // 加载所有数据
+      var h = '<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">';
+      rooms.forEach(function(r) {
+        var ri = roomIdx[String(r.id)];
+        var total = ri ? (ri.totalSeats || 0) : (r.totalSeats || 0);
+        var avail = ri ? (ri.availableSeats || 0) : total;
+        var occupied = ri ? ((ri.reservedSeats || 0) + (ri.occupiedSeats || 0)) : 0;
+        var rate = ri ? Math.round(ri.usageRate || 0) : 0;
+        var col = usageColor(rate);
+        h += '<div onclick="drillToRoom(\'' + Utils.escapeHtml(r.name) + '\', ' + r.id + ')" class="heatmap-cell cursor-pointer rounded-xl p-4" style="background:var(--surface-card);border:1px solid var(--color-border-light);box-shadow:var(--shadow-sm);">';
+        h += '<div class="flex items-center justify-between mb-3"><div class="flex items-center gap-1.5 min-w-0"><i data-lucide="door-open" style="width:15px;height:15px;color:var(--brand-primary);"></i><span class="font-semibold text-sm truncate" style="color:var(--color-text-primary);">' + Utils.escapeHtml(r.name) + '</span></div>';
+        h += '<span class="px-2 py-0.5 rounded text-xs font-bold" style="background:' + col.bgLight + ';color:' + col.text + ';">' + rate + '%</span></div>';
+        h += '<div class="w-full rounded-full h-2 mb-3 overflow-hidden" style="background:var(--color-bg-tertiary);"><div class="h-full rounded-full" style="width:' + rate + '%;background:' + col.bg + ';"></div></div>';
+        h += '<div class="flex items-center justify-between text-xs" style="color:var(--color-text-secondary);"><span><i data-lucide="check" style="width:11px;height:11px;display:inline;color:var(--state-success);"></i> 空闲 <strong style="color:var(--state-success);">' + avail + '</strong></span><span><i data-lucide="users" style="width:11px;height:11px;display:inline;color:' + col.text + ';"></i> 使用 <strong style="color:' + col.text + ';">' + occupied + '</strong></span><span>共 ' + total + '</span></div>';
+        h += '</div>';
+      });
+      h += '</div>';
+      container.innerHTML = h;
+      lucide.createIcons();
+    }
+
+    /**
+     * 自习室座位详情面板（大格子渲染，参考管理端样式）
+     */
+    function renderRoomDetail(name, roomId, data) {
+      document.getElementById('detail-room-name').textContent = name;
+
+      var infoEl = document.getElementById('detail-room-info');
+      var total = data.totalSeats || (data.seats || []).length;
+      var avail = data.availableSeats || 0;
+      var reserved = data.reservedSeats || 0;
+      var occupied = data.occupiedSeats || 0;
+      var used = reserved + occupied;
+      var rate = total > 0 ? Math.round(used / total * 100) : 0;
+      infoEl.innerHTML = '共 <strong>' + total + '</strong> 座 · 空闲 <strong style="color:var(--seat-available);">' + avail + '</strong> · 已预约 <strong style="color:var(--seat-reserved);">' + reserved + '</strong> · 使用中 <strong style="color:var(--seat-occupied);">' + occupied + '</strong> · 使用率 <strong>' + rate + '%</strong>';
+
+      var seats = data.seats || [];
+      var rows = {}, maxCol = 0;
+      seats.forEach(function(s) {
+        if (!rows[s.rowNumber]) rows[s.rowNumber] = {};
+        rows[s.rowNumber][s.colNumber] = s;
+        if (s.colNumber > maxCol) maxCol = s.colNumber;
+      });
+
+      var colorMap = {
+        'AVAILABLE':    { bg: 'var(--seat-available-bg)', fg: 'var(--seat-available)', border: 'var(--seat-available)' },
+        'RESERVED':     { bg: 'var(--seat-reserved-bg)',  fg: 'var(--seat-reserved)',  border: 'var(--seat-reserved)' },
+        'OCCUPIED':     { bg: 'var(--seat-occupied-bg)',  fg: 'var(--seat-occupied)',  border: 'var(--seat-occupied)' },
+        'TEMPORARY_LEAVE': { bg: 'var(--seat-away-bg)',   fg: 'var(--seat-away)',      border: 'var(--seat-away)' },
+        'UNAVAILABLE':  { bg: '#F1F5F9', fg: '#94A3B8', border: '#CBD5E1' }
+      };
+
+      var labels = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+      var h = '<div class="inline-block">';
+      // 讲台
+      h += '<div class="mb-5 flex justify-center"><div style="padding:1.2rem 3rem;border-bottom:3px solid var(--color-border);border-radius:0 0 var(--radius-lg) var(--radius-lg);color:var(--color-text-tertiary);font-size:var(--text-sm);text-align:center;background:var(--color-bg-secondary);"><i data-lucide="monitor-play" style="width:16px;height:16px;display:inline;margin-right:4px;"></i>讲台 / 投影屏幕</div></div>';
+
+      Object.keys(rows).sort(function(a, b) { return Number(a) - Number(b); }).forEach(function(rn) {
+        var row = rows[rn];
+        h += '<div class="flex items-center gap-2 mb-2">';
+        h += '<div style="width:28px;color:var(--color-text-tertiary);font-size:var(--text-xs);font-weight:600;text-align:center;">' + (labels.charAt(Number(rn) - 1) || rn) + '</div>';
+        for (var c = 1; c <= maxCol; c++) {
+          var s = row[c];
+          if (!s) { h += '<div style="width:44px;height:44px;"></div>'; continue; }
+          var cm = colorMap[s.status] || colorMap['AVAILABLE'];
+          var tags = s.tags && s.tags.length ? ' [' + s.tags.join('/') + ']' : '';
+          h += '<div class="seat-btn rounded-md flex items-center justify-center text-xs font-semibold" title="' + s.seatCode + tags + ' · ' + Utils.getStatusLabel(s.status, 'seat') + '" style="width:44px;height:44px;background:' + cm.bg + ';color:' + cm.fg + ';border:1.5px solid ' + cm.border + ';cursor:default;">' + String(c).padStart(2, '0') + '</div>';
+        }
+        h += '</div>';
+      });
+      h += '</div>';
+
+      document.getElementById('detail-seat-grid').innerHTML = h;
+      lucide.createIcons();
+    }
+
+    // ========== 下钻交互 ==========
+
+    window.drillToBuilding = function(name, id) {
+      var campus = state.buildingData.find(function(b) { return b.buildingName === name; });
+      state.breadcrumb = [
+        { label: (campus ? campus.campusName : '校区') + ' · ' + name + ' 自习室', action: '' }
+      ];
+      renderBreadcrumb();
+      renderBuildingHeatmap(name);
+      document.getElementById('room-detail-panel').classList.add('hidden');
+    };
+
+    window.drillToRoom = function(name, id) {
+      document.getElementById('room-detail-panel').classList.remove('hidden');
+      document.getElementById('detail-room-name').textContent = name;
+      document.getElementById('detail-room-info').textContent = '加载中...';
+
+      DashboardAPI.getRoomDetail(id).then(function(data) {
+        renderRoomDetail(name, id, data);
+      }).catch(function() {
+        document.getElementById('detail-room-info').textContent = '加载失败，请刷新重试';
+      });
+      document.getElementById('room-detail-panel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    window.resetDrillDown = function() {
+      state.breadcrumb = [];
+      renderBreadcrumb();
+      renderCampusHeatmap();
+      document.getElementById('room-detail-panel').classList.add('hidden');
+    };
+
+    window.closeDetailPanel = function() {
+      document.getElementById('room-detail-panel').classList.add('hidden');
+    };
+
+    // ========== 初始加载 ==========
+
+    function loadAllData() {
+      Promise.all([
+        DashboardAPI.getCampusOverview().catch(function() { return []; }),
+        DashboardAPI.getBuildingOverview().catch(function() { return []; }),
+        loadRoomOverview(),
+        loadSpaceData()
+      ]).then(function(res) {
+        state.campusData = res[0] || [];
+        state.buildingData = res[1] || [];
+        renderBreadcrumb();
+        renderCampusHeatmap();
+        lucide.createIcons();
+      });
+    }
+
+    // 加载所有数据
+    loadCampusOverview();
+    loadBuildingOverview();
+    loadAllData();
+
+    // 自动刷新
+    setInterval(function() {
       loadCampusOverview();
       loadBuildingOverview();
-      loadRoomList();
-
-      // 自动刷新
-      setInterval(function() {
-        loadCampusOverview();
-        loadBuildingOverview();
-        var sel = document.getElementById('room-select');
-        if (sel.value) loadRoomDetail(Number(sel.value));
-      }, AppConfig.dashboardRefreshInterval || 30000);
-    })();
+      // 刷新热力图数据
+      Promise.all([
+        DashboardAPI.getBuildingOverview().catch(function() { return []; }),
+        loadRoomOverview()
+      ]).then(function(res) {
+        state.buildingData = res[0] || [];
+        if (state.breadcrumb.length === 0) {
+          renderCampusHeatmap();
+        } else if (state.breadcrumb.length === 1) {
+          renderBuildingHeatmap(state.breadcrumb[0].label.split(' · ')[0]);
+        }
+        lucide.createIcons();
+      });
+    }, AppConfig.dashboardRefreshInterval || 30000);
+  })();
   </script>
 </body>
 </html>

@@ -145,8 +145,6 @@ public class BlacklistService {
         blacklist.setEndTime(endTime);
         blacklist.setStatus(1);
         blacklist.setOperatorId(operatorId);
-        blacklist.setCreatedAt(LocalDateTime.now());
-        blacklist.setUpdatedAt(LocalDateTime.now());
 
         blacklistMapper.insert(blacklist);
 
@@ -166,7 +164,6 @@ public class BlacklistService {
         }
 
         blacklist.setStatus(0);
-        blacklist.setUpdatedAt(LocalDateTime.now());
         blacklistMapper.updateById(blacklist);
 
         log.info("管理员 {} 将黑名单记录 {} 解除", UserContext.getUserId(), id);
@@ -218,8 +215,6 @@ public class BlacklistService {
                     blacklist.setEndTime(LocalDateTime.now().plusDays(blacklistDays));
                     blacklist.setStatus(1);
                     blacklist.setOperatorId(null); // 系统自动操作，无操作人
-                    blacklist.setCreatedAt(LocalDateTime.now());
-                    blacklist.setUpdatedAt(LocalDateTime.now());
 
                     blacklistMapper.insert(blacklist);
 
@@ -245,7 +240,6 @@ public class BlacklistService {
 
         for (Blacklist blacklist : expiredList) {
             blacklist.setStatus(0);
-            blacklist.setUpdatedAt(LocalDateTime.now());
             blacklistMapper.updateById(blacklist);
 
             log.info("用户 {} 的黑名单已到期自动解除", blacklist.getUserId());

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人设置 - 智约自习</title>
+  <link rel="stylesheet" href="colors_and_type.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+  <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+  <style type="text/tailwindcss">
+    @theme inline { --color-primary: var(--brand-primary); }
+    @layer base {
+      body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); }
+    }
+  </style>
+  <style>
+    .tab-btn.active { color: var(--brand-primary) !important; border-bottom: 2px solid var(--brand-primary); }
+    .tab-btn:not(.active):hover { color: var(--color-text-primary); }
+  </style>
+</head>
+<body class="min-h-screen" style="background: var(--color-bg-secondary);">
+  <div id="navbar-placeholder"></div>
+
+  <main class="mx-auto px-4 sm:px-6 py-6" style="max-width: 800px;">
+    <div class="flex items-center gap-3 mb-6">
+      <button onclick="history.back()" class="flex items-center gap-1 text-sm transition-colors" style="color:var(--brand-primary);background:none;border:none;cursor:pointer;">
+        <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> 返回
+      </button>
+      <span class="text-sm" style="color:var(--color-text-tertiary);">/</span>
+      <h1 class="text-xl font-bold">个人设置</h1>
+    </div>
+
+    <!-- Tab 切换 -->
+    <div class="flex gap-6 mb-6 border-b" style="border-color:var(--color-border);">
+      <button class="tab-btn active pb-3 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="profile" onclick="switchTab('profile')">
+        <i data-lucide="user" style="width:15px;height:15px;display:inline;margin-right:4px;"></i>个人信息
+      </button>
+      <button class="tab-btn pb-3 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="password" onclick="switchTab('password')" style="color:var(--color-text-tertiary);">
+        <i data-lucide="lock" style="width:15px;height:15px;display:inline;margin-right:4px;"></i>修改密码
+      </button>
+    </div>
+
+    <!-- 个人信息 Tab -->
+    <div id="tab-profile" class="rounded-xl p-6" style="background: var(--surface-card); border: var(--surface-card-border);">
+      <div id="profile-loading" class="py-4 text-center text-sm" style="color:var(--color-text-tertiary);">加载中...</div>
+      <form id="profile-form" class="hidden space-y-5" onsubmit="return false;">
+        <!-- 只读字段 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">用户名 / 学号</label>
+            <input type="text" id="profile-username" readonly class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg-secondary);color:var(--color-text-tertiary);">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">角色</label>
+            <input type="text" id="profile-role" readonly class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg-secondary);color:var(--color-text-tertiary);">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">真实姓名 <span style="color:var(--state-error);">*</span></label>
+          <input type="text" id="profile-realname" placeholder="请输入真实姓名" maxlength="50" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors" style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);" onfocus="this.style.borderColor='var(--brand-primary)'" onblur="this.style.borderColor='var(--color-border)'">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">邮箱</label>
+            <input type="email" id="profile-email" placeholder="请输入邮箱" maxlength="100" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors" style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);" onfocus="this.style.borderColor='var(--brand-primary)'" onblur="this.style.borderColor='var(--color-border)'">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">手机号</label>
+            <input type="tel" id="profile-phone" placeholder="请输入手机号" maxlength="20" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors" style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);" onfocus="this.style.borderColor='var(--brand-primary)'" onblur="this.style.borderColor='var(--color-border)'">
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit" id="profile-save-btn" class="px-6 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2" style="background:var(--brand-primary);color:white;border:none;cursor:pointer;" onclick="saveProfile()">
+            <i data-lucide="check" style="width:15px;height:15px;"></i> 保存修改
+          </button>
+          <span id="profile-save-msg" class="text-xs hidden"></span>
+        </div>
+      </form>
+    </div>
+
+    <!-- 修改密码 Tab -->
+    <div id="tab-password" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border);">
+      <form id="password-form" class="space-y-5" onsubmit="return false;">
+        <div>
+          <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">当前密码 <span style="color:var(--state-error);">*</span></label>
+          <input type="password" id="pwd-old" placeholder="请输入当前密码" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors" style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);" onfocus="this.style.borderColor='var(--brand-primary)'" onblur="this.style.borderColor='var(--color-border)'">
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">新密码 <span style="color:var(--state-error);">*</span></label>
+          <input type="password" id="pwd-new" placeholder="至少6位，含大小写字母和数字" minlength="6" maxlength="100" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors" style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);" onfocus="this.style.borderColor='var(--brand-primary)'" onblur="this.style.borderColor='var(--color-border)'">
+          <div class="mt-2 flex flex-wrap gap-2" id="pwd-strength-hints">
+            <span class="text-xs px-2 py-0.5 rounded" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);" data-rule="length">≥6位</span>
+            <span class="text-xs px-2 py-0.5 rounded" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);" data-rule="upper">含大写字母</span>
+            <span class="text-xs px-2 py-0.5 rounded" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);" data-rule="lower">含小写字母</span>
+            <span class="text-xs px-2 py-0.5 rounded" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);" data-rule="digit">含数字</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">确认新密码 <span style="color:var(--state-error);">*</span></label>
+          <input type="password" id="pwd-confirm" placeholder="请再次输入新密码" minlength="6" maxlength="100" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors" style="border:1px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);" onfocus="this.style.borderColor='var(--brand-primary)'" onblur="this.style.borderColor='var(--color-border)'">
+          <p id="pwd-match-msg" class="text-xs mt-1 hidden" style="color:var(--state-error);">两次输入的密码不一致</p>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit" id="pwd-save-btn" class="px-6 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2" style="background:var(--brand-primary);color:white;border:none;cursor:pointer;" onclick="changePassword()">
+            <i data-lucide="key" style="width:15px;height:15px;"></i> 修改密码
+          </button>
+          <span id="pwd-save-msg" class="text-xs hidden"></span>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/request.js"></script>
+  <script src="api/auth.js"></script>
+  <script src="api/user.js"></script>
+  <script src="js/navbar.js"></script>
+
+  <script>
+  (function() {
+    'use strict';
+
+    // 无需角色守卫 — 学生和管理员都可以访问
+    var user = Utils.getUser();
+    var token = Utils.getToken();
+    if (!token || !user) {
+      window.location.replace(AppConfig.loginUrl || (BasePath ? BasePath.public + '/login.html' : '/public/login.html'));
+      return;
+    }
+
+    // 根据角色加载对应导航栏
+    var isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+    var navbarUrl = isAdmin ? '../admin/partials/navbar.html' : '../student/partials/navbar.html';
+    fetch(navbarUrl).then(function(r) { return r.text(); }).then(function(html) {
+      document.getElementById('navbar-placeholder').innerHTML = html;
+      if (window.initNavbarUI) initNavbarUI();
+      lucide.createIcons();
+    });
+
+    // Tab 切换
+    window.switchTab = function(tab) {
+      document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        var isActive = btn.getAttribute('data-tab') === tab;
+        btn.classList.toggle('active', isActive);
+        btn.style.color = isActive ? 'var(--brand-primary)' : 'var(--color-text-tertiary)';
+      });
+      document.getElementById('tab-profile').classList.toggle('hidden', tab !== 'profile');
+      document.getElementById('tab-password').classList.toggle('hidden', tab !== 'password');
+      if (tab === 'profile') loadProfile();
+    };
+
+    // ========== 个人信息 ==========
+
+    function loadProfile() {
+      AuthAPI.getCurrentUser().then(function(data) {
+        document.getElementById('profile-loading').classList.add('hidden');
+        document.getElementById('profile-form').classList.remove('hidden');
+
+        document.getElementById('profile-username').value = data.username || '';
+        document.getElementById('profile-role').value = Utils.getStatusLabel(data.role, 'role');
+        document.getElementById('profile-realname').value = data.realName || '';
+        document.getElementById('profile-email').value = data.email || '';
+        document.getElementById('profile-phone').value = data.phone || '';
+
+        // 更新本地缓存
+        Utils.setUser({
+          id: data.id, username: data.username, realName: data.realName,
+          role: data.role, email: data.email, phone: data.phone, status: data.status
+        });
+      }).catch(function() {
+        // API 失败时用 localStorage 数据回退
+        document.getElementById('profile-loading').classList.add('hidden');
+        document.getElementById('profile-form').classList.remove('hidden');
+        var u = Utils.getUser() || {};
+        document.getElementById('profile-username').value = u.username || '';
+        document.getElementById('profile-role').value = Utils.getStatusLabel(u.role, 'role');
+        document.getElementById('profile-realname').value = u.realName || '';
+        document.getElementById('profile-email').value = u.email || '';
+        document.getElementById('profile-phone').value = u.phone || '';
+      });
+    }
+
+    window.saveProfile = function() {
+      var msgEl = document.getElementById('profile-save-msg');
+      var btn = document.getElementById('profile-save-btn');
+      var realName = document.getElementById('profile-realname').value.trim();
+      var email = document.getElementById('profile-email').value.trim();
+      var phone = document.getElementById('profile-phone').value.trim();
+
+      if (!realName) {
+        msgEl.textContent = '真实姓名不能为空';
+        msgEl.style.color = 'var(--state-error)';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      msgEl.classList.add('hidden');
+
+      var data = { realName: realName };
+      if (email) data.email = email;
+      if (phone) data.phone = phone;
+
+      UserAPI.updateUser(user.id, data).then(function(updated) {
+        msgEl.textContent = '保存成功';
+        msgEl.style.color = 'var(--state-success)';
+        msgEl.classList.remove('hidden');
+        // 更新本地缓存中的名字
+        var cached = Utils.getUser() || {};
+        cached.realName = realName;
+        if (email) cached.email = email;
+        if (phone) cached.phone = phone;
+        Utils.setUser(cached);
+        // 刷新导航栏显示的名字
+        if (window.initNavbarUI) initNavbarUI();
+        setTimeout(function() { msgEl.classList.add('hidden'); }, 3000);
+      }).catch(function(err) {
+        msgEl.textContent = (err && err.message) || '保存失败，请重试';
+        msgEl.style.color = 'var(--state-error)';
+        msgEl.classList.remove('hidden');
+      }).finally(function() {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      });
+    };
+
+    // ========== 修改密码 ==========
+
+    // 实时密码强度提示
+    var pwdNew = document.getElementById('pwd-new');
+    pwdNew.addEventListener('input', function() {
+      var v = pwdNew.value;
+      var rules = {
+        length: v.length >= 6,
+        upper: /[A-Z]/.test(v),
+        lower: /[a-z]/.test(v),
+        digit: /[0-9]/.test(v)
+      };
+      Object.keys(rules).forEach(function(rule) {
+        var el = document.querySelector('[data-rule="' + rule + '"]');
+        if (!el) return;
+        if (rules[rule]) {
+          el.style.background = 'var(--state-success-bg)';
+          el.style.color = 'var(--state-success)';
+        } else {
+          el.style.background = 'var(--color-bg-tertiary)';
+          el.style.color = 'var(--color-text-tertiary)';
+        }
+      });
+    });
+
+    // 确认密码实时校验
+    var pwdConfirm = document.getElementById('pwd-confirm');
+    pwdConfirm.addEventListener('input', function() {
+      var match = document.getElementById('pwd-match-msg');
+      if (pwdConfirm.value && pwdConfirm.value !== pwdNew.value) {
+        match.classList.remove('hidden');
+      } else {
+        match.classList.add('hidden');
+      }
+    });
+
+    window.changePassword = function() {
+      var msgEl = document.getElementById('pwd-save-msg');
+      var btn = document.getElementById('pwd-save-btn');
+      var oldPwd = document.getElementById('pwd-old').value;
+      var newPwd = pwdNew.value;
+      var confirmPwd = pwdConfirm.value;
+
+      // 清除之前的消息
+      msgEl.classList.add('hidden');
+
+      if (!oldPwd) {
+        msgEl.textContent = '请输入当前密码';
+        msgEl.style.color = 'var(--state-error)';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+      if (newPwd.length < 6) {
+        msgEl.textContent = '新密码至少需要6位';
+        msgEl.style.color = 'var(--state-error)';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+      if (!/[A-Z]/.test(newPwd)) {
+        msgEl.textContent = '新密码需包含大写字母';
+        msgEl.style.color = 'var(--state-error)';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+      if (!/[a-z]/.test(newPwd)) {
+        msgEl.textContent = '新密码需包含小写字母';
+        msgEl.style.color = 'var(--state-error)';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+      if (!/[0-9]/.test(newPwd)) {
+        msgEl.textContent = '新密码需包含数字';
+        msgEl.style.color = 'var(--state-error)';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+      if (newPwd !== confirmPwd) {
+        msgEl.textContent = '两次输入的密码不一致';
+        msgEl.style.color = 'var(--state-error)';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+
+      UserAPI.updatePassword(user.id, { oldPassword: oldPwd, newPassword: newPwd }).then(function() {
+        msgEl.textContent = '密码修改成功，下次登录时请使用新密码';
+        msgEl.style.color = 'var(--state-success)';
+        msgEl.classList.remove('hidden');
+        document.getElementById('pwd-old').value = '';
+        pwdNew.value = '';
+        pwdConfirm.value = '';
+        // 重置强度提示
+        document.querySelectorAll('#pwd-strength-hints span').forEach(function(el) {
+          el.style.background = 'var(--color-bg-tertiary)';
+          el.style.color = 'var(--color-text-tertiary)';
+        });
+        setTimeout(function() { msgEl.classList.add('hidden'); }, 5000);
+      }).catch(function(err) {
+        msgEl.textContent = (err && err.message) || '修改失败，请检查当前密码是否正确';
+        msgEl.style.color = 'var(--state-error)';
+        msgEl.classList.remove('hidden');
+      }).finally(function() {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      });
+    };
+
+    // 初始加载个人信息
+    loadProfile();
+    lucide.createIcons();
+  })();
+  </script>
+</body>
+</html>

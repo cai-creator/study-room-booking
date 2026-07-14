@@ -39,8 +39,7 @@ public class ReportService {
      * 日均使用率统计
      * 统计每天每个自习室的座位使用率 = 已签到/已完成预约数 / 总座位数
      */
-    public List<Map<String, Object>> getUsageRate(String startDate, String endDate,
-                                                    Long campusId, Long buildingId, Long roomId) {
+    public List<Map<String, Object>> getUsageRate(String startDate, String endDate, Long roomId) {
         LocalDateTime start = LocalDate.parse(startDate, DATE_FMT).atStartOfDay();
         LocalDateTime end = LocalDate.parse(endDate, DATE_FMT).plusDays(1).atStartOfDay();
 
@@ -97,8 +96,7 @@ public class ReportService {
      * 24小时时段分布
      * 统计每个小时段内的预约数量
      */
-    public List<Map<String, Object>> getTimeDistribution(String startDate, String endDate,
-                                                           Long campusId, Long buildingId, Long roomId) {
+    public List<Map<String, Object>> getTimeDistribution(String startDate, String endDate, Long roomId) {
         LocalDateTime start = LocalDate.parse(startDate, DATE_FMT).atStartOfDay();
         LocalDateTime end = LocalDate.parse(endDate, DATE_FMT).plusDays(1).atStartOfDay();
 
@@ -133,10 +131,9 @@ public class ReportService {
      * 热门时段 TOP5
      * 按预约开始时间的小时统计，取预约数最多的5个时段
      */
-    public List<Map<String, Object>> getHotPeriods(String startDate, String endDate,
-                                                     Long campusId, Long buildingId, Long roomId) {
+    public List<Map<String, Object>> getHotPeriods(String startDate, String endDate, Long roomId) {
         // 复用时段分布数据，取TOP5
-        List<Map<String, Object>> distribution = getTimeDistribution(startDate, endDate, campusId, buildingId, roomId);
+        List<Map<String, Object>> distribution = getTimeDistribution(startDate, endDate, roomId);
 
         return distribution.stream()
                 .filter(d -> (long) d.get("count") > 0)
@@ -158,7 +155,7 @@ public class ReportService {
      * 导出预约数据到 Excel
      */
     public void exportReport(OutputStream outputStream, String startDate, String endDate,
-                              Long campusId, Long buildingId, Long roomId) throws Exception {
+                              Long roomId) throws Exception {
         LocalDateTime start = LocalDate.parse(startDate, DATE_FMT).atStartOfDay();
         LocalDateTime end = LocalDate.parse(endDate, DATE_FMT).plusDays(1).atStartOfDay();
 

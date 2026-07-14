@@ -37,7 +37,7 @@ public class ReportController {
             @Parameter(description = "校区ID") @RequestParam(required = false) Long campusId,
             @Parameter(description = "楼栋ID") @RequestParam(required = false) Long buildingId,
             @Parameter(description = "自习室ID") @RequestParam(required = false) Long roomId) {
-        return Result.success(reportService.getUsageRate(startDate, endDate, campusId, buildingId, roomId));
+        return Result.success(reportService.getUsageRate(startDate, endDate, roomId));
     }
 
     @GetMapping("/time-distribution")
@@ -49,7 +49,7 @@ public class ReportController {
             @Parameter(description = "校区ID") @RequestParam(required = false) Long campusId,
             @Parameter(description = "楼栋ID") @RequestParam(required = false) Long buildingId,
             @Parameter(description = "自习室ID") @RequestParam(required = false) Long roomId) {
-        return Result.success(reportService.getTimeDistribution(startDate, endDate, campusId, buildingId, roomId));
+        return Result.success(reportService.getTimeDistribution(startDate, endDate, roomId));
     }
 
     @GetMapping("/hot-periods")
@@ -61,7 +61,7 @@ public class ReportController {
             @Parameter(description = "校区ID") @RequestParam(required = false) Long campusId,
             @Parameter(description = "楼栋ID") @RequestParam(required = false) Long buildingId,
             @Parameter(description = "自习室ID") @RequestParam(required = false) Long roomId) {
-        return Result.success(reportService.getHotPeriods(startDate, endDate, campusId, buildingId, roomId));
+        return Result.success(reportService.getHotPeriods(startDate, endDate, roomId));
     }
 
     @GetMapping("/export")
@@ -78,6 +78,6 @@ public class ReportController {
         String filename = URLEncoder.encode("预约数据报表_" + startDate + "_" + endDate + ".xlsx",
                 StandardCharsets.UTF_8);
         response.setHeader("Content-Disposition", "attachment; filename=" + filename);
-        reportService.exportReport(response.getOutputStream(), startDate, endDate, campusId, buildingId, roomId);
+        reportService.exportReport(response.getOutputStream(), startDate, endDate, roomId);
     }
 }

@@ -45,8 +45,6 @@ public class SeatUnavailableService extends ServiceImpl<SeatUnavailableMapper, S
         item.setDayOfMonth(dayOfMonth);
         item.setReason(reason);
         item.setStatus(1);
-        item.setCreatedAt(LocalDateTime.now());
-        item.setUpdatedAt(LocalDateTime.now());
         baseMapper.insert(item);
         log.info("创建座位定时不可用记录: seatId={}, repeatType={}, start={}, end={}", seatId, repeatType, startDateTime, endDateTime);
         return item;
@@ -62,7 +60,6 @@ public class SeatUnavailableService extends ServiceImpl<SeatUnavailableMapper, S
         item.setDayOfWeek(dayOfWeek);
         item.setDayOfMonth(dayOfMonth);
         item.setReason(reason);
-        item.setUpdatedAt(LocalDateTime.now());
         baseMapper.updateById(item);
         log.info("更新座位定时不可用记录: id={}", id);
         return item;
@@ -78,10 +75,6 @@ public class SeatUnavailableService extends ServiceImpl<SeatUnavailableMapper, S
     public boolean isSeatCurrentlyUnavailable(Long seatId) {
         List<SeatUnavailable> list = baseMapper.selectCurrentlyUnavailable(seatId, LocalDateTime.now());
         return !list.isEmpty();
-    }
-
-    public List<SeatUnavailable> getCurrentlyUnavailable(Long seatId) {
-        return baseMapper.selectCurrentlyUnavailable(seatId, LocalDateTime.now());
     }
 
     public boolean isSeatUnavailableInPeriod(Long seatId, LocalDateTime startTime, LocalDateTime endTime) {

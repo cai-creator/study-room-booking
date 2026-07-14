@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -25,7 +24,7 @@ public class RefreshTokenService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    public String generateRefreshToken(Long userId) {
+    private String generateRefreshToken(Long userId) {
         byte[] randomBytes = new byte[32];
         SECURE_RANDOM.nextBytes(randomBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
@@ -76,13 +75,4 @@ public class RefreshTokenService {
         return refreshToken;
     }
 
-    @Transactional
-    public void cleanupExpiredTokens() {
-        int deleted = refreshTokenMapper.deleteExpiredTokens(LocalDateTime.now());
-        log.info("清理过期刷新令牌: {}", deleted);
-    }
-
-    public List<RefreshToken> getUserTokens(Long userId) {
-        return refreshTokenMapper.selectByUserId(userId);
-    }
 }

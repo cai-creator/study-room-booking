@@ -350,17 +350,10 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
     }
 
     /**
-     * 构建 BookingVO，含关联的名称信息
+     * 构建 BookingVO，含关联的名称信息（单条查询路径）
      */
     private BookingVO buildBookingVO(Booking booking, Seat seat, StudyRoom room) {
-        BookingVO vo = new BookingVO();
-        vo.setId(booking.getId());
-        vo.setSeatId(booking.getSeatId());
-        vo.setSeatCode(seat != null ? seat.getSeatCode() : null);
-        vo.setRoomId(booking.getRoomId());
-        vo.setRoomName(room != null ? room.getName() : null);
-
-        // 楼栋和校区名称（从 room → floor → building → campus 链查询）
+        // 从 room → floor → building → campus 链查询名称
         String buildingName = null;
         String campusName = null;
         if (room != null) {
@@ -374,23 +367,41 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
                 }
             }
         }
+        return assembleBookingVO(booking, seat, room, buildingName, campusName);
+    }
+
+    /**
+     * 组装 BookingVO（共享字段填充，单条和批量路径共用）
+     */
+    private BookingVO assembleBookingVO(Booking booking, Seat seat, StudyRoom room,
+                                         String buildingName, String campusName) {
+        BookingVO vo = new BookingVO();
+        vo.setId(booking.getId());
+        vo.setSeatId(booking.getSeatId());
+        vo.setSeatCode(seat != null ? seat.getSeatCode() : null);
+        vo.setRoomId(booking.getRoomId());
+        vo.setRoomName(room != null ? room.getName() : null);
         vo.setBuildingName(buildingName);
         vo.setCampusName(campusName);
-
         vo.setStartTime(booking.getStartTime() != null ? booking.getStartTime().format(FORMATTER) : null);
         vo.setEndTime(booking.getEndTime() != null ? booking.getEndTime().format(FORMATTER) : null);
+        vo.setStatus(translateStatus(booking.getStatus()));
+        vo.setCheckinCode(buildCheckinCode(booking));
+        vo.setCreatedAt(booking.getCreatedAt() != null ? booking.getCreatedAt().format(FORMATTER) : null);
+        return vo;
+    }
 
-        // 状态映射: COMPLETED → CHECKED_OUT（对齐前端）
-        vo.setStatus("COMPLETED".equals(booking.getStatus()) ? "CHECKED_OUT" : booking.getStatus());
+    /** 状态映射: COMPLETED → CHECKED_OUT（对齐前端） */
+    private static String translateStatus(String status) {
+        return "COMPLETED".equals(status) ? "CHECKED_OUT" : status;
+    }
 
-        // 签到码: QR + yyyyMMdd + 4位ID补零
+    /** 签到码: QR + yyyyMMdd + 4位ID补零 */
+    private static String buildCheckinCode(Booking booking) {
         String datePart = booking.getStartTime() != null
                 ? booking.getStartTime().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
                 : LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        vo.setCheckinCode("QR" + datePart + String.format("%04d", booking.getId() != null ? booking.getId() : 0));
-
-        vo.setCreatedAt(booking.getCreatedAt() != null ? booking.getCreatedAt().format(FORMATTER) : null);
-        return vo;
+        return "QR" + datePart + String.format("%04d", booking.getId() != null ? booking.getId() : 0);
     }
 
     /**
@@ -432,36 +443,22 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
             Seat seat = seatMap.get(booking.getSeatId());
             StudyRoom room = seat != null ? roomMap.get(seat.getRoomId()) : null;
 
-            BookingVO vo = new BookingVO();
-            vo.setId(booking.getId());
-            vo.setSeatId(booking.getSeatId());
-            vo.setSeatCode(seat != null ? seat.getSeatCode() : null);
-            vo.setRoomId(booking.getRoomId());
-            vo.setRoomName(room != null ? room.getName() : null);
-
+            // 从预加载的 Map 中解析楼栋和校区名称
+            String buildingName = null;
+            String campusName = null;
             if (room != null) {
                 Floor floor = floorMap.get(room.getFloorId());
                 if (floor != null) {
                     Building building = buildingMap.get(floor.getBuildingId());
                     if (building != null) {
-                        vo.setBuildingName(building.getName());
+                        buildingName = building.getName();
                         Campus campus = campusMap.get(building.getCampusId());
-                        if (campus != null) vo.setCampusName(campus.getName());
+                        if (campus != null) campusName = campus.getName();
                     }
                 }
             }
 
-            vo.setStartTime(booking.getStartTime() != null ? booking.getStartTime().format(FORMATTER) : null);
-            vo.setEndTime(booking.getEndTime() != null ? booking.getEndTime().format(FORMATTER) : null);
-            vo.setStatus("COMPLETED".equals(booking.getStatus()) ? "CHECKED_OUT" : booking.getStatus());
-
-            String datePart = booking.getStartTime() != null
-                    ? booking.getStartTime().format(DateTimeFormatter.ofPattern("yyyyMMdd"))
-                    : LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-            vo.setCheckinCode("QR" + datePart + String.format("%04d", booking.getId() != null ? booking.getId() : 0));
-            vo.setCreatedAt(booking.getCreatedAt() != null ? booking.getCreatedAt().format(FORMATTER) : null);
-
-            return vo;
+            return assembleBookingVO(booking, seat, room, buildingName, campusName);
         }).collect(Collectors.toList());
 
         Page<BookingVO> voPage = new Page<>(bookingPage.getCurrent(), bookingPage.getSize(), bookingPage.getTotal());

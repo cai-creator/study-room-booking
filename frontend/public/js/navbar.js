@@ -55,12 +55,7 @@
 
   // ========= 统一导航栏 UI 初始化 =========
   window.initNavbarUI = function () {
-    var user = null;
-    var userKey = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
-    try {
-      var raw = localStorage.getItem(userKey);
-      if (raw) user = JSON.parse(raw);
-    } catch (e) { user = null; }
+    var user = (window.Utils && Utils.getUser) ? Utils.getUser() : null;
 
     if (user) {
       var avatarEl = document.getElementById('navbar-user-avatar');
@@ -72,8 +67,9 @@
       if (nameEl) nameEl.textContent = user.realName || user.username || '';
       if (dropdownName) dropdownName.textContent = user.realName || user.username || '';
 
-      var roleMap = { STUDENT: '学生', ADMIN: '管理员', SUPER_ADMIN: '超级管理员' };
-      if (dropdownRole) dropdownRole.textContent = roleMap[user.role] || user.role || '';
+      if (dropdownRole) dropdownRole.textContent = (window.Utils && Utils.getStatusLabel)
+        ? Utils.getStatusLabel(user.role, 'role')
+        : (user.role || '');
     }
 
     // 高亮当前页
