@@ -52,6 +52,7 @@ public class CheckinService {
      * <p>
      * 学生在预约时段开始前后的一定时间内到达自习室并签到。
      * 签到成功后，预约状态从 RESERVED 变为 CHECKED_IN。
+     * 支持幂等性检查：如果已经签到，返回成功响应。
      *
      * @param seatCode 座位编号
      * @param roomId   自习室ID
@@ -72,12 +73,12 @@ public class CheckinService {
             throw new BusinessException(ResultCode.SEAT_NOT_FOUND);
         }
 
-        // 2. 查找该用户在该座位的有效预约（状态为 RESERVED）
+        // 2. 查找该用户在该座位的预约（幂等性检查：RESERVED 或 CHECKED_IN）
         Reservation reservation = reservationMapper.selectOne(
                 new LambdaQueryWrapper<Reservation>()
                         .eq(Reservation::getUserId, userId)
                         .eq(Reservation::getSeatId, seat.getId())
-                        .eq(Reservation::getStatus, "RESERVED")
+                        .in(Reservation::getStatus, "RESERVED", "CHECKED_IN")
                         .orderByDesc(Reservation::getStartTime)
                         .last("LIMIT 1")
         );
@@ -86,7 +87,13 @@ public class CheckinService {
             throw new BusinessException(ResultCode.CHECKIN_NOT_ALLOWED);
         }
 
-        // 3. 验证签到时间
+        // 3. 幂等性检查：如果已经签到，直接返回成功
+        if ("CHECKED_IN".equals(reservation.getStatus())) {
+            log.info("用户 {} 重复签到（已签到），预约ID: {}, 座位: {}", userId, reservation.getId(), seatCode);
+            return buildCheckinVO(reservation, seat);
+        }
+
+        // 4. 验证签到时间
         // 提前预约（创建时间 < 开始时间）：签到窗口为开始时间 ~ 开始时间+checkinGraceMinutes
         // 开始后预约（创建时间 >= 开始时间）：签到窗口为创建时间 ~ 创建时间+checkinGraceMinutes
         LocalDateTime now = LocalDateTime.now();
@@ -109,7 +116,7 @@ public class CheckinService {
             throw new BusinessException(ResultCode.CHECKIN_TIMEOUT);
         }
 
-        // 4. 更新预约状态为已签到
+        // 5. 更新预约状态为已签到
         reservation.setStatus("CHECKED_IN");
         reservation.setCheckinTime(now);
         reservation.setUpdatedAt(now);
@@ -117,7 +124,7 @@ public class CheckinService {
 
         log.info("用户 {} 签到成功，预约ID: {}, 座位: {}", userId, reservation.getId(), seatCode);
 
-        // 5. 构建返回对象
+        // 6. 构建返回对象
         return buildCheckinVO(reservation, seat);
     }
 
@@ -126,7 +133,7 @@ public class CheckinService {
     /**
      * 签退
      * <p>
-     * 学生离开自习室时签退，预约状态变为 COMPLETED。
+     * 学生离开自习室时签退，物理删除预约记录以释放唯一约束。
      *
      * @param seatCode 座位编号
      * @param roomId   自习室ID
@@ -143,15 +150,15 @@ public class CheckinService {
             throw new BusinessException(ResultCode.CHECKOUT_NOT_ALLOWED);
         }
 
-        // 2. 更新预约状态为已完成
-        reservation.setStatus("COMPLETED");
-        reservation.setCheckoutTime(LocalDateTime.now());
-        reservation.setUpdatedAt(LocalDateTime.now());
-        reservationMapper.updateById(reservation);
+        // 2. 构建返回对象（物理删除前）
+        CheckinVO vo = buildCheckinVO(reservation, null);
+
+        // 3. 物理删除预约记录，释放唯一约束 (seat_id, start_time, end_time)
+        reservationMapper.physicalDeleteById(reservation.getId());
 
         log.info("用户 {} 签退成功，预约ID: {}", userId, reservation.getId());
 
-        return buildCheckinVO(reservation, null);
+        return vo;
     }
 
     // ===================== 暂离 =====================

@@ -627,6 +627,7 @@ Authorization: Bearer {token}
 |------|------|------|------|------|
 | 校区使用概览 | GET | `/api/dashboard/campus-overview` | 各校区自习室使用率概览 | 公开 |
 | 楼栋使用概览 | GET | `/api/dashboard/building-overview` | 各楼栋自习室使用率 | 公开 |
+| 自习室使用概览 | GET | `/api/dashboard/room-overview` | 所有自习室使用率概览（批量） | 公开 |
 | 自习室使用详情 | GET | `/api/dashboard/room-detail/{roomId}` | 单个自习室座位实时状态 | 公开 |
 
 **校区使用概览响应:**

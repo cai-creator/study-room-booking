@@ -296,7 +296,7 @@ Utils.loadNavbar('student')
 `getNoShowRate` / `getConversionRate` / `exportReport`
 
 ### dashboard.js 实时看板
-`getCampusOverview` / `getBuildingOverview` / `getRoomDetail` / `getRoomList`
+`getCampusOverview` / `getBuildingOverview` / `getRoomOverview` / `getRoomDetail`
 
 ---
 

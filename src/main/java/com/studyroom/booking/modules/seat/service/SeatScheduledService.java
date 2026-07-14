@@ -82,17 +82,15 @@ public class SeatScheduledService {
         }
 
         for (Reservation reservation : allExpired) {
-            // 标记为爽约
-            reservation.setStatus("NO_SHOW");
-            reservation.setUpdatedAt(LocalDateTime.now());
-            reservationMapper.updateById(reservation);
-
-            // 创建爽约记录
+            // 创建爽约记录（物理删除前）
             noShowRecordService.createNoShowRecord(
                     reservation.getUserId(),
                     reservation.getId(),
                     "NO_CHECKIN"
             );
+
+            // 物理删除预约记录，释放唯一约束 (seat_id, start_time, end_time)
+            reservationMapper.physicalDeleteById(reservation.getId());
 
             log.info("预约 {} 超时未签到，已标记为爽约。用户: {}, 座位: {}",
                     reservation.getId(), reservation.getUserId(), reservation.getSeatId());
@@ -119,18 +117,15 @@ public class SeatScheduledService {
         );
 
         for (Reservation reservation : timeoutReservations) {
-            // 标记为爽约
-            reservation.setStatus("NO_SHOW");
-            reservation.setCheckoutTime(LocalDateTime.now());
-            reservation.setUpdatedAt(LocalDateTime.now());
-            reservationMapper.updateById(reservation);
-
-            // 创建爽约记录
+            // 创建爽约记录（物理删除前）
             noShowRecordService.createNoShowRecord(
                     reservation.getUserId(),
                     reservation.getId(),
                     "TEMPORARY_LEAVE_TIMEOUT"
             );
+
+            // 物理删除预约记录，释放唯一约束 (seat_id, start_time, end_time)
+            reservationMapper.physicalDeleteById(reservation.getId());
 
             log.info("预约 {} 暂离超时（{}分钟），已标记为爽约。用户: {}",
                     reservation.getId(), temporaryAbsenceMinutes, reservation.getUserId());
@@ -157,10 +152,8 @@ public class SeatScheduledService {
         );
 
         for (Reservation reservation : expiredReservations) {
-            reservation.setStatus("COMPLETED");
-            reservation.setCheckoutTime(reservation.getEndTime());
-            reservation.setUpdatedAt(now);
-            reservationMapper.updateById(reservation);
+            // 物理删除预约记录，释放唯一约束 (seat_id, start_time, end_time)
+            reservationMapper.physicalDeleteById(reservation.getId());
 
             log.info("预约 {} 已到结束时间，自动标记为已完成。用户: {}", reservation.getId(), reservation.getUserId());
         }

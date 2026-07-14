@@ -255,6 +255,7 @@
             var buildings = state.buildingData.filter(function (b) { return !campusName || b.campusName === campusName; });
             var roomsByBuilding = {};
             buildings.forEach(function (b) { roomsByBuilding[b.buildingId] = state.spaceRooms.filter(function (r) { return String(r.buildingId) === String(b.buildingId); }); });
+            var roomOverviewMap = state.roomOverviewData ? state.roomOverviewData.reduce(function (map, r) { map[String(r.roomId)] = r; return map; }, {}) : {};
             var container = document.getElementById('heatmap-content');
             if (!buildings.length) { container.innerHTML = '<div class="py-12 text-center text-sm" style="color:var(--color-text-tertiary);">该校区下暂无楼栋数据</div>'; return; }
             var h = '<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">';
@@ -266,10 +267,11 @@
                 else {
                     h += '<div class="grid grid-cols-2 gap-2">';
                     rooms.forEach(function (r) {
-                        var total = r.totalSeats || (r.rowsCount || 6) * (r.colsCount || 8);
-                        var fakeRate = Math.min(95, Math.max(5, Math.round(30 + Math.random() * 50 + ((b.usageRate || 40) - 40))));
-                        var color = usageHeatColor(fakeRate);
-                        h += '<div onclick="drillToRoom(\'' + Utils.escapeHtml(r.name) + '\', ' + r.id + ')" class="heatmap-cell cursor-pointer rounded-lg p-3 border" style="background:' + color.bg + ';border-color:var(--color-border-light);"><div class="text-xs font-semibold truncate mb-1" style="color:#0F172A;">' + Utils.escapeHtml(r.name) + '</div><div class="flex items-center justify-between"><div class="text-[10px]" style="color:#334155;">' + total + '座</div><div class="text-xs font-bold" style="color:#0F172A;">' + fakeRate + '%</div></div></div>';
+                        var roomInfo = roomOverviewMap[String(r.id)];
+                        var total = roomInfo ? (roomInfo.totalSeats || 0) : (r.totalSeats || (r.rowsCount || 6) * (r.colsCount || 8));
+                        var rate = roomInfo ? Math.round(roomInfo.usageRate || 0) : 0;
+                        var color = usageHeatColor(rate);
+                        h += '<div onclick="drillToRoom(\'' + Utils.escapeHtml(r.name) + '\', ' + r.id + ')" class="heatmap-cell cursor-pointer rounded-lg p-3 border" style="background:' + color.bg + ';border-color:var(--color-border-light);"><div class="text-xs font-semibold truncate mb-1" style="color:#0F172A;">' + Utils.escapeHtml(r.name) + '</div><div class="flex items-center justify-between"><div class="text-[10px]" style="color:#334155;">' + total + '座</div><div class="text-xs font-bold" style="color:#0F172A;">' + rate + '%</div></div></div>';
                     });
                     h += '</div>';
                 }
@@ -284,17 +286,19 @@
             var targetBuilding = state.buildingData.find(function (x) { return x.buildingName === buildingName; });
             var buildingId = targetBuilding ? targetBuilding.buildingId : null;
             var rooms = buildingId ? state.spaceRooms.filter(function (r) { return String(r.buildingId) === String(buildingId); }) : [];
+            var roomOverviewMap = state.roomOverviewData ? state.roomOverviewData.reduce(function (map, r) { map[String(r.roomId)] = r; return map; }, {}) : {};
             var container = document.getElementById('heatmap-content');
             if (!rooms.length) { container.innerHTML = '<div class="py-12 text-center text-sm" style="color:var(--color-text-tertiary);">该楼栋下暂无自习室数据</div>'; return; }
             var h = '<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">';
             rooms.forEach(function (r) {
-                var total = r.totalSeats || (r.rowsCount || 6) * (r.colsCount || 8);
-                var fakeRate = Math.min(95, Math.max(8, 25 + Math.floor(Math.random() * 60)));
-                var col = usageColor(fakeRate);
-                var occupied = Math.round(total * fakeRate / 100);
-                var avail = total - occupied;
-                h += '<div onclick="drillToRoom(\'' + Utils.escapeHtml(r.name) + '\', ' + r.id + ')" class="heatmap-cell cursor-pointer rounded-xl p-4" style="background:var(--surface-card);border:1px solid var(--color-border-light);box-shadow:var(--shadow-sm);"><div class="flex items-center justify-between mb-3"><div class="flex items-center gap-1.5 min-w-0"><i data-lucide="door-open" style="width:15px;height:15px;color:var(--brand-primary);"></i><span class="font-semibold text-sm truncate" style="color:var(--color-text-primary);">' + Utils.escapeHtml(r.name) + '</span></div><span class="px-2 py-0.5 rounded text-xs font-bold" style="background:' + col.bgLight + ';color:' + col.text + ';">' + fakeRate + '%</span></div>';
-                h += '<div class="w-full rounded-full h-2 mb-3 overflow-hidden" style="background:var(--color-bg-tertiary);"><div class="h-full rounded-full" style="width:' + fakeRate + '%;background:' + col.bg + ';"></div></div>';
+                var roomInfo = roomOverviewMap[String(r.id)];
+                var total = roomInfo ? (roomInfo.totalSeats || 0) : (r.totalSeats || (r.rowsCount || 6) * (r.colsCount || 8));
+                var avail = roomInfo ? (roomInfo.availableSeats || 0) : total;
+                var occupied = roomInfo ? ((roomInfo.reservedSeats || 0) + (roomInfo.occupiedSeats || 0)) : 0;
+                var rate = roomInfo ? Math.round(roomInfo.usageRate || 0) : 0;
+                var col = usageColor(rate);
+                h += '<div onclick="drillToRoom(\'' + Utils.escapeHtml(r.name) + '\', ' + r.id + ')" class="heatmap-cell cursor-pointer rounded-xl p-4" style="background:var(--surface-card);border:1px solid var(--color-border-light);box-shadow:var(--shadow-sm);"><div class="flex items-center justify-between mb-3"><div class="flex items-center gap-1.5 min-w-0"><i data-lucide="door-open" style="width:15px;height:15px;color:var(--brand-primary);"></i><span class="font-semibold text-sm truncate" style="color:var(--color-text-primary);">' + Utils.escapeHtml(r.name) + '</span></div><span class="px-2 py-0.5 rounded text-xs font-bold" style="background:' + col.bgLight + ';color:' + col.text + ';">' + rate + '%</span></div>';
+                h += '<div class="w-full rounded-full h-2 mb-3 overflow-hidden" style="background:var(--color-bg-tertiary);"><div class="h-full rounded-full" style="width:' + rate + '%;background:' + col.bg + ';"></div></div>';
                 h += '<div class="flex items-center justify-between text-xs" style="color:var(--color-text-secondary);"><span><i data-lucide="check" style="width:11px;height:11px;display:inline;color:var(--state-success);"></i> 空闲 <strong style="color:var(--state-success);">' + avail + '</strong></span><span><i data-lucide="user" style="width:11px;height:11px;display:inline;color:' + col.text + ';"></i> 使用 <strong style="color:' + col.text + ';">' + occupied + '</strong></span><span>共 ' + total + '</span></div>';
                 h += '</div>';
             });
@@ -392,10 +396,12 @@
             Promise.all([
                 DashboardAPI.getCampusOverview().catch(function () { return []; }),
                 DashboardAPI.getBuildingOverview().catch(function () { return []; }),
+                DashboardAPI.getRoomOverview().catch(function () { return []; }),
                 loadSpaceData()
             ]).then(function (res) {
                 state.campusData = res[0] || [];
                 state.buildingData = res[1] || [];
+                state.roomOverviewData = res[2] || [];
                 renderGlobalKPI(state.campusData, state.buildingData);
                 renderCampusList(state.campusData);
                 renderBuildingRanking(state.buildingData);

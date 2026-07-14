@@ -17,6 +17,7 @@ import com.studyroom.booking.modules.space.mapper.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -188,10 +189,16 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
         booking.setEndTime(endTime);
         booking.setStatus("RESERVED");
         booking.setVersion(0);
-        baseMapper.insert(booking);
 
-        log.info("用户 {} 创建预约成功，预约ID: {}, 座位: {}, 时间: {} ~ {}",
-                userId, booking.getId(), seat.getSeatCode(), startTime, endTime);
+        try {
+            baseMapper.insert(booking);
+            log.info("用户 {} 创建预约成功，预约ID: {}, 座位: {}, 时间: {} ~ {}",
+                    userId, booking.getId(), seat.getSeatCode(), startTime, endTime);
+        } catch (DuplicateKeyException e) {
+            // 唯一约束冲突：并发预约同一座位同一时段
+            log.warn("座位时段重复预约，seatId={}, {}~{}", request.getSeatId(), startTime, endTime);
+            throw new BusinessException(ResultCode.RESERVATION_CONFLICT);
+        }
 
         return Collections.singletonList(buildBookingVO(booking, seat, room));
     }
@@ -218,9 +225,8 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
             throw new BusinessException(3008, "预约已开始，无法取消");
         }
 
-        booking.setStatus("CANCELLED");
-        booking.setUpdatedAt(LocalDateTime.now());
-        baseMapper.updateById(booking);
+        // 物理删除预约记录，释放唯一约束 (seat_id, start_time, end_time)
+        baseMapper.physicalDeleteById(bookingId);
 
         log.info("用户 {} 取消预约 {}，操作者: {}", booking.getUserId(), bookingId, userId);
     }

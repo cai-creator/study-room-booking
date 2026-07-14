@@ -103,7 +103,8 @@ CREATE TABLE IF NOT EXISTS reservation (
     version INT NOT NULL DEFAULT 0,
     deleted TINYINT NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP()
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    UNIQUE (seat_id, start_time, end_time)
 );
 
 -- 黑名单表

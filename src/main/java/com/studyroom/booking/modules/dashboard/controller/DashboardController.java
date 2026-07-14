@@ -4,6 +4,7 @@ import com.studyroom.booking.common.Result;
 import com.studyroom.booking.modules.dashboard.dto.BuildingOverviewVO;
 import com.studyroom.booking.modules.dashboard.dto.CampusOverviewVO;
 import com.studyroom.booking.modules.dashboard.dto.RoomDetailVO;
+import com.studyroom.booking.modules.dashboard.dto.RoomOverviewVO;
 import com.studyroom.booking.modules.dashboard.service.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -48,5 +49,11 @@ public class DashboardController {
             @Parameter(description = "自习室ID", required = true)
             @PathVariable Long roomId) {
         return Result.success(dashboardService.getRoomDetail(roomId));
+    }
+
+    @GetMapping("/room-overview")
+    @Operation(summary = "自习室使用概览", description = "获取所有自习室的使用概览（批量）")
+    public Result<List<RoomOverviewVO>> roomOverview() {
+        return Result.success(dashboardService.getRoomOverview());
     }
 }

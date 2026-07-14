@@ -7,6 +7,7 @@ import com.studyroom.booking.common.exception.BusinessException;
 import com.studyroom.booking.modules.dashboard.dto.BuildingOverviewVO;
 import com.studyroom.booking.modules.dashboard.dto.CampusOverviewVO;
 import com.studyroom.booking.modules.dashboard.dto.RoomDetailVO;
+import com.studyroom.booking.modules.dashboard.dto.RoomOverviewVO;
 import com.studyroom.booking.modules.reservation.entity.Booking;
 import com.studyroom.booking.modules.reservation.mapper.BookingMapper;
 import com.studyroom.booking.modules.space.entity.*;
@@ -318,6 +319,77 @@ public class DashboardService {
                 : 0.0);
 
         return vo;
+    }
+
+    // ==================== 自习室使用概览（批量）====================
+
+    /**
+     * 获取所有自习室的使用概览
+     * <p>
+     * 批量查询所有自习室的座位总数、可用数、已预约数、已占用数和使用率。
+     */
+    public List<RoomOverviewVO> getRoomOverview() {
+        // 1. 查询所有自习室
+        List<StudyRoom> rooms = studyRoomMapper.selectList(
+                new LambdaQueryWrapper<StudyRoom>().ne(StudyRoom::getStatus, 0));
+
+        // 2. 查询所有座位并按自习室分组
+        List<Seat> allSeats = seatMapper.selectList(
+                new LambdaQueryWrapper<Seat>().eq(Seat::getStatus, 1));
+        Map<Long, List<Seat>> seatsByRoom = allSeats.stream()
+                .collect(Collectors.groupingBy(Seat::getRoomId));
+
+        // 3. 查询当前活跃预约
+        List<Booking> activeBookings = getActiveBookings();
+
+        // 按座位ID统计各状态数量
+        Map<Long, Long> reservedSeatCount = new HashMap<>();
+        Map<Long, Long> occupiedSeatCount = new HashMap<>();
+        for (Booking booking : activeBookings) {
+            String status = booking.getStatus();
+            Long seatId = booking.getSeatId();
+            if ("RESERVED".equals(status)) {
+                reservedSeatCount.merge(seatId, 1L, Long::sum);
+            } else if ("CHECKED_IN".equals(status) || "TEMPORARY_LEAVE".equals(status)) {
+                occupiedSeatCount.merge(seatId, 1L, Long::sum);
+            }
+        }
+
+        // 4. 计算每个自习室的统计
+        List<RoomOverviewVO> result = new ArrayList<>();
+        for (StudyRoom room : rooms) {
+            RoomOverviewVO vo = new RoomOverviewVO();
+            vo.setRoomId(room.getId());
+            vo.setRoomName(room.getName());
+            vo.setFloorId(room.getFloorId());
+
+            List<Seat> roomSeats = seatsByRoom.getOrDefault(room.getId(), Collections.emptyList());
+            int totalSeats = roomSeats.size();
+
+            int reservedCount = 0;
+            int occupiedCount = 0;
+            for (Seat seat : roomSeats) {
+                if (reservedSeatCount.containsKey(seat.getId())) {
+                    reservedCount++;
+                } else if (occupiedSeatCount.containsKey(seat.getId())) {
+                    occupiedCount++;
+                }
+            }
+
+            int availableCount = totalSeats - reservedCount - occupiedCount;
+
+            vo.setTotalSeats(totalSeats);
+            vo.setAvailableSeats(availableCount);
+            vo.setReservedSeats(reservedCount);
+            vo.setOccupiedSeats(occupiedCount);
+            vo.setUsageRate(totalSeats > 0
+                    ? Math.round((reservedCount + occupiedCount) * 10000.0 / totalSeats) / 100.0
+                    : 0.0);
+
+            result.add(vo);
+        }
+
+        return result;
     }
 
     // ==================== 私有辅助方法 ====================

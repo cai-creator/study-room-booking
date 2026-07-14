@@ -44,6 +44,19 @@
  * @property {number} usageRate       - 使用率（百分比）
  * @property {SeatStatusItem[]} seats - 座位实时状态列表
  */
+
+/**
+ * @typedef {Object} RoomOverviewVO
+ * @property {number} roomId          - 自习室ID
+ * @property {string} roomName        - 自习室名称
+ * @property {number} buildingId      - 楼栋ID
+ * @property {number} floorId         - 楼层ID
+ * @property {number} totalSeats      - 总座位数
+ * @property {number} availableSeats  - 可用座位数
+ * @property {number} reservedSeats   - 已预约座位数
+ * @property {number} occupiedSeats   - 已占用座位数
+ * @property {number} usageRate       - 使用率（百分比）
+ */
 (function () {
   'use strict';
 
@@ -68,6 +81,12 @@
    * @returns {Promise<RoomDetailVO>}
    */
   DashboardAPI.getRoomDetail = function (roomId) { return Request.get('/dashboard/room-detail/' + roomId); };
+
+  /**
+   * 获取所有自习室的使用概览（批量）
+   * @returns {Promise<RoomOverviewVO[]>}
+   */
+  DashboardAPI.getRoomOverview = function () { return Request.get('/dashboard/room-overview'); };
 
   window.DashboardAPI = DashboardAPI;
 })();
