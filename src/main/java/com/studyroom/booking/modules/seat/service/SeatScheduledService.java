@@ -89,8 +89,9 @@ public class SeatScheduledService {
                     "NO_CHECKIN"
             );
 
-            // 物理删除预约记录，释放唯一约束 (seat_id, start_time, end_time)
-            reservationMapper.physicalDeleteById(reservation.getId());
+            // 标记为爽约状态，保留历史记录
+            reservation.setStatus("NO_SHOW");
+            reservationMapper.updateById(reservation);
 
             log.info("预约 {} 超时未签到，已标记为爽约。用户: {}, 座位: {}",
                     reservation.getId(), reservation.getUserId(), reservation.getSeatId());
@@ -124,8 +125,9 @@ public class SeatScheduledService {
                     "TEMPORARY_LEAVE_TIMEOUT"
             );
 
-            // 物理删除预约记录，释放唯一约束 (seat_id, start_time, end_time)
-            reservationMapper.physicalDeleteById(reservation.getId());
+            // 标记为爽约状态，保留历史记录
+            reservation.setStatus("NO_SHOW");
+            reservationMapper.updateById(reservation);
 
             log.info("预约 {} 暂离超时（{}分钟），已标记为爽约。用户: {}",
                     reservation.getId(), temporaryAbsenceMinutes, reservation.getUserId());
@@ -152,8 +154,10 @@ public class SeatScheduledService {
         );
 
         for (Reservation reservation : expiredReservations) {
-            // 物理删除预约记录，释放唯一约束 (seat_id, start_time, end_time)
-            reservationMapper.physicalDeleteById(reservation.getId());
+            // 标记为已完成状态，保留历史记录
+            reservation.setStatus("COMPLETED");
+            reservation.setCheckoutTime(LocalDateTime.now());
+            reservationMapper.updateById(reservation);
 
             log.info("预约 {} 已到结束时间，自动标记为已完成。用户: {}", reservation.getId(), reservation.getUserId());
         }

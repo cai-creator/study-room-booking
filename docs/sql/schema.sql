@@ -194,8 +194,7 @@ CREATE TABLE reservation (
     KEY idx_status (status),
     KEY idx_start_time (start_time),
     KEY idx_end_time (end_time),
-    KEY idx_user_date (user_id, start_time),
-    UNIQUE KEY uk_seat_time (seat_id, start_time, end_time)
+    KEY idx_user_date (user_id, start_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预约记录表';
 
 -- =====================================================

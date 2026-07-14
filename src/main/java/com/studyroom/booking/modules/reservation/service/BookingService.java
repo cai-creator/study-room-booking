@@ -225,8 +225,9 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
             throw new BusinessException(3008, "预约已开始，无法取消");
         }
 
-        // 物理删除预约记录，释放唯一约束 (seat_id, start_time, end_time)
-        baseMapper.physicalDeleteById(bookingId);
+        // 状态变更为已取消，保留历史记录
+        booking.setStatus("CANCELLED");
+        baseMapper.updateById(booking);
 
         log.info("用户 {} 取消预约 {}，操作者: {}", booking.getUserId(), bookingId, userId);
     }

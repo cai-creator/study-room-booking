@@ -150,11 +150,13 @@ public class CheckinService {
             throw new BusinessException(ResultCode.CHECKOUT_NOT_ALLOWED);
         }
 
-        // 2. 构建返回对象（物理删除前）
+        // 2. 构建返回对象
         CheckinVO vo = buildCheckinVO(reservation, null);
 
-        // 3. 物理删除预约记录，释放唯一约束 (seat_id, start_time, end_time)
-        reservationMapper.physicalDeleteById(reservation.getId());
+        // 3. 状态变更为已完成，保留历史记录
+        reservation.setStatus("COMPLETED");
+        reservation.setCheckoutTime(LocalDateTime.now());
+        reservationMapper.updateById(reservation);
 
         log.info("用户 {} 签退成功，预约ID: {}", userId, reservation.getId());
 
