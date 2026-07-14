@@ -15,9 +15,7 @@ public class CreateUserRequest {
     @Schema(description = "用户名/学号", example = "admin001", requiredMode = Schema.RequiredMode.REQUIRED)
     private String username;
 
-    @NotBlank(message = "密码不能为空")
-    @Size(min = 6, max = 100, message = "密码长度需在6-100之间")
-    @Schema(description = "密码", example = "admin123", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "密码（留空则由系统自动生成）", example = "admin123")
     private String password;
 
     @NotBlank(message = "真实姓名不能为空")

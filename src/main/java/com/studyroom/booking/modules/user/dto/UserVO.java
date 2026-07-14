@@ -33,4 +33,7 @@ public class UserVO {
 
     @Schema(description = "创建时间", example = "2024-01-01 10:00:00")
     private String createdAt;
+
+    @Schema(description = "初始密码（仅创建用户时返回）", example = "Z2024")
+    private String initialPassword;
 }

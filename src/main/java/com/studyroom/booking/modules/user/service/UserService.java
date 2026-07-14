@@ -31,12 +31,12 @@ public class UserService {
 
     private final UserMapper userMapper;
     private final JwtUtils jwtUtils;
+    private final RefreshTokenService refreshTokenService;
 
     /**
      * 用户登录
      */
     public LoginVO login(LoginRequest request) {
-        // 查询用户
         User user = userMapper.selectOne(
                 new LambdaQueryWrapper<User>()
                         .eq(User::getUsername, request.getUsername())
@@ -47,24 +47,26 @@ public class UserService {
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
         }
 
-        // 检查密码
         if (!BCrypt.checkpw(request.getPassword(), user.getPassword())) {
             throw new BusinessException(ResultCode.USER_PASSWORD_ERROR);
         }
 
-        // 检查状态
         if (user.getStatus() == 0) {
             throw new BusinessException(ResultCode.USER_DISABLED);
         }
 
-        // 生成token
         String token = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getRole());
         Long expireAt = System.currentTimeMillis() + jwtUtils.getExpireTime();
 
-        // 构建返回对象
+        String refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
         LoginVO loginVO = new LoginVO();
         loginVO.setToken(token);
         loginVO.setExpireAt(expireAt);
+        if (refreshToken != null) {
+            loginVO.setRefreshToken(refreshToken);
+            loginVO.setRefreshExpireAt(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000L);
+        }
         loginVO.setUser(convertToVO(user));
 
         log.info("用户登录成功: username={}, role={}", user.getUsername(), user.getRole());
@@ -126,6 +128,7 @@ public class UserService {
     /**
      * 创建用户（超级管理员专用，可指定角色）
      * ADMIN 只能创建 STUDENT 角色用户，SUPER_ADMIN 可创建任意角色
+     * 初始密码规则：姓名首字母大写 + 账号后4位（账号必须为纯数字）
      */
     @Transactional
     public UserVO createUser(CreateUserRequest request, String currentRole) {
@@ -140,11 +143,16 @@ public class UserService {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
 
+        // 密码：如果管理员手动输入则使用输入的，否则自动生成
+        String initialPassword = (request.getPassword() != null && !request.getPassword().isBlank())
+                ? request.getPassword()
+                : generateInitialPassword(request.getRealName(), request.getUsername());
+
         User user;
         if (existingUser != null) {
             userMapper.updateIncludeDeleted(
                     existingUser.getId(),
-                    BCrypt.hashpw(request.getPassword()),
+                    BCrypt.hashpw(initialPassword),
                     request.getRealName(),
                     request.getEmail(),
                     request.getPhone(),
@@ -154,18 +162,18 @@ public class UserService {
                     LocalDateTime.now()
             );
             user = existingUser;
-            user.setPassword(BCrypt.hashpw(request.getPassword()));
+            user.setPassword(BCrypt.hashpw(initialPassword));
             user.setRealName(request.getRealName());
             user.setEmail(request.getEmail());
             user.setPhone(request.getPhone());
             user.setRole(targetRole);
             user.setStatus(1);
             user.setDeleted(0);
-            log.info("已注销用户重新创建: username={}, role={}", user.getUsername(), targetRole);
+            log.info("已注销用户重新创建: username={}, role={}, initialPassword={}", user.getUsername(), targetRole, initialPassword);
         } else {
             user = new User();
             user.setUsername(request.getUsername());
-            user.setPassword(BCrypt.hashpw(request.getPassword()));
+            user.setPassword(BCrypt.hashpw(initialPassword));
             user.setRealName(request.getRealName());
             user.setEmail(request.getEmail());
             user.setPhone(request.getPhone());
@@ -175,9 +183,58 @@ public class UserService {
             user.setCreatedAt(LocalDateTime.now());
             user.setUpdatedAt(LocalDateTime.now());
             userMapper.insert(user);
+            log.info("创建用户: username={}, role={}, initialPassword={}", user.getUsername(), targetRole, initialPassword);
         }
 
-        return convertToVO(user);
+        UserVO vo = convertToVO(user);
+        vo.setInitialPassword(initialPassword);
+        return vo;
+    }
+
+    /**
+     * 生成初始密码：姓名拼音首字母大写 + 账号后4位
+     * 例：蔡佳成 20243155 -> Cjc3155
+     * 例：John 20243155 -> J3155
+     */
+    private String generateInitialPassword(String realName, String username) {
+        if (realName == null || realName.isEmpty() || username == null || username.length() < 4) {
+            return "Init1234";
+        }
+        String initials = getNameInitials(realName);
+        String last4 = username.substring(username.length() - 4);
+        return initials + last4;
+    }
+
+    /**
+     * 提取姓名的拼音首字母（第一个大写，其余小写）
+     * 例：蔡佳成 -> Cjc，John -> J
+     */
+    private String getNameInitials(String realName) {
+        StringBuilder initials = new StringBuilder();
+        for (int i = 0; i < realName.length(); i++) {
+            char c = realName.charAt(i);
+            String initial = null;
+            if (isChinese(c)) {
+                String[] pinyinArray = net.sourceforge.pinyin4j.PinyinHelper.toHanyuPinyinStringArray(c);
+                if (pinyinArray != null && pinyinArray.length > 0) {
+                    initial = pinyinArray[0].substring(0, 1);
+                }
+            } else if (Character.isLetter(c)) {
+                initial = String.valueOf(c);
+            }
+            if (initial != null) {
+                if (initials.length() == 0) {
+                    initials.append(initial.toUpperCase());
+                } else {
+                    initials.append(initial.toLowerCase());
+                }
+            }
+        }
+        return initials.length() > 0 ? initials.toString() : "U";
+    }
+
+    private boolean isChinese(char c) {
+        return c >= '\u4e00' && c <= '\u9fff';
     }
 
     /**

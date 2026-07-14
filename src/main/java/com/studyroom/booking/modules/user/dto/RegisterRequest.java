@@ -1,5 +1,6 @@
 package com.studyroom.booking.modules.user.dto;
 
+import com.studyroom.booking.common.validation.PasswordStrength;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -17,7 +18,8 @@ public class RegisterRequest {
 
     @NotBlank(message = "密码不能为空")
     @Size(min = 6, max = 100, message = "密码长度需在6-100之间")
-    @Schema(description = "密码", example = "password123", requiredMode = Schema.RequiredMode.REQUIRED)
+    @PasswordStrength
+    @Schema(description = "密码（需包含大小写字母和数字）", example = "Password123", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
 
     @NotBlank(message = "真实姓名不能为空")

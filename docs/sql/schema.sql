@@ -34,6 +34,20 @@ CREATE TABLE sys_user (
     KEY idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 
+DROP TABLE IF EXISTS refresh_token;
+CREATE TABLE refresh_token (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '令牌ID',
+    user_id BIGINT NOT NULL COMMENT '用户ID',
+    token VARCHAR(64) NOT NULL COMMENT '刷新令牌',
+    expires_at DATETIME NOT NULL COMMENT '过期时间',
+    used TINYINT NOT NULL DEFAULT 0 COMMENT '是否已使用: 0-未使用, 1-已使用',
+    deleted TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    UNIQUE KEY uk_token (token),
+    KEY idx_user_id (user_id),
+    KEY idx_expires_at (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='刷新令牌表';
+
 -- =====================================================
 -- 2. 空间管理模块
 -- =====================================================

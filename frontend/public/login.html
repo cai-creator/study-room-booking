@@ -141,7 +141,7 @@
         <label class="block mb-1.5 text-sm font-medium" style="color: var(--color-text-secondary);">密码 <span style="color: var(--state-error);">*</span></label>
         <div class="relative">
           <i data-lucide="lock" class="absolute left-3 top-1/2 -translate-y-1/2" style="width: 16px; height: 16px; color: var(--color-text-tertiary);"></i>
-          <input id="r-password" type="password" placeholder="至少6位，建议包含字母和数字"
+          <input id="r-password" type="password" placeholder="至少6位，必须包含大小写字母和数字"
                  class="w-full pl-10 pr-4 py-2.5 text-sm rounded-md outline-none transition-all"
                  style="border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-primary);">
         </div>
@@ -387,6 +387,9 @@
     if (!realName) { showError('请输入真实姓名'); return; }
     if (!password) { showError('请输入密码'); return; }
     if (password.length < 6) { showError('密码至少需要6位'); return; }
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      showError('密码必须包含大小写字母和数字'); return;
+    }
     if (password !== password2) { showError('两次输入的密码不一致'); return; }
 
     // 可选字段格式校验（填了才校验）

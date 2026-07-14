@@ -272,12 +272,14 @@
             f.innerHTML =
                 fld('姓名', 'realName', edit.realName || '', '请输入姓名', true) +
                 fld('账号/学号', 'username', edit.username || '', '请输入账号/学号', true, !isEdit) +
-                (isEdit ? '' : '<label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">初始密码<span style="color:var(--state-error);">*</span></span><input type="text" name="password" value="password123" required class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);"><p class="mt-1 text-xs" style="color:var(--color-text-tertiary);">默认密码 password123，用户可登录后修改</p></label>') +
+                (isEdit ? '' : '<div class="mb-4 px-3 py-2.5 rounded-lg" style="background:var(--state-info-bg);border:1px solid var(--state-info);"><div class="flex items-start gap-2"><i data-lucide="info" style="width:16px;height:16px;color:var(--state-info);flex-shrink:0;margin-top:2px;"></i><div class="text-xs" style="color:var(--state-info);">密码将自动生成：<strong>姓名首字母大写 + 账号后4位</strong>。如需自定义，可在下方输入，留空则使用自动生成。</div></div></div>') +
+                (isEdit ? '' : '<label class="block mb-4"><span class="block text-sm font-medium mb-1.5" style="color:var(--color-text-primary);">自定义初始密码<span style="color:var(--color-text-tertiary);">（选填，留空则自动生成）</span></span><input type="text" name="password" placeholder="例如：Z2024" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none focus:ring-2" style="background:var(--color-bg);border:1px solid var(--color-border);color:var(--color-text-primary);--tw-ring-color:var(--brand-primary);"></label>') +
                 selField('角色', 'role', [['STUDENT', '学生'], ['ADMIN', '管理员'], ['SUPER_ADMIN', '超级管理员']], edit.role || 'STUDENT', true) +
                 fld('手机号', 'phone', edit.phone || '', '请输入手机号', false) +
                 fld('邮箱', 'email', edit.email || '', '请输入邮箱', false) +
                 '<div class="flex justify-end gap-2 pt-2"><button type="button" onclick="closeUserModal()" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors" style="background:var(--color-bg-tertiary);color:var(--color-text-secondary);">取消</button><button type="submit" class="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors hover:opacity-90" style="background:var(--brand-primary);color:white;">保存</button></div>';
             document.getElementById('user-modal').classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
         };
         window.closeUserModal = function () { document.getElementById('user-modal').classList.add('hidden'); };
         function fld(lbl, name, v, ph, req, enable) {
@@ -296,7 +298,22 @@
             var p;
             if (state.editing) p = UserAPI.updateUser(state.editing.id, obj);
             else { obj.status = 1; p = UserAPI.createUser(obj); }
-            p.then(function () { Utils.showToast(state.editing ? '更新成功' : '创建成功', 'success'); closeUserModal(); loadUsers(); })
+            p.then(function (data) {
+                if (state.editing) {
+                    Utils.showToast('更新成功', 'success');
+                    closeUserModal();
+                } else {
+                    var initialPwd = (data && data.initialPassword) || (data && data.data && data.data.initialPassword);
+                    var username = obj.username;
+                    if (initialPwd) {
+                        Utils.showToast('创建成功！账号: ' + username + '，初始密码: ' + initialPwd + '（请告知用户）', 'success', 8000);
+                    } else {
+                        Utils.showToast('创建成功', 'success');
+                    }
+                    closeUserModal();
+                }
+                loadUsers();
+            })
                 .catch(function (err) { Utils.showToast(err.message || '保存失败', 'error'); });
         };
 
