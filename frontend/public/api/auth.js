@@ -14,9 +14,11 @@
  * @property {string} createdAt   - 创建时间 (yyyy-MM-dd HH:mm:ss)
  *
  * @typedef {Object} LoginVO
- * @property {string}  token     - JWT访问令牌
- * @property {number}  expireAt  - 过期时间戳（毫秒）
- * @property {UserVO}  user      - 当前登录用户信息
+ * @property {string}  token             - JWT访问令牌
+ * @property {string}  refreshToken      - 刷新令牌
+ * @property {number}  expireAt          - 访问令牌过期时间戳（毫秒）
+ * @property {number}  refreshExpireAt   - 刷新令牌过期时间戳（毫秒）
+ * @property {UserVO}  user              - 当前登录用户信息
  */
 (function () {
   'use strict';
@@ -26,6 +28,9 @@
   /** 登录成功后的统一处理 */
   function handleLoginSuccess(data) {
     Utils.setToken(data.token);
+    if (data.refreshToken) {
+      Utils.setRefreshToken(data.refreshToken);
+    }
     Utils.setUser(data.user);
     var role = data.user.role;
     if (role === 'STUDENT') {
@@ -82,15 +87,21 @@
 
   /**
    * 用户登出
+   * <p>通知后端使当前token加入黑名单并失效所有refreshToken，然后清除前端登录态。
+   * <p>即使后端调用失败（如token已过期），也强制清除前端登录态并跳登录页。
    * @returns {Promise<void>}
    */
   AuthAPI.logout = function () {
-    var p = Request.post('/auth/logout');
-    return p.then(function () {
-      Utils.clearToken();
-      Utils.clearUser();
-      window.location.href = AppConfig.loginUrl;
-    });
+    return Request.post('/auth/logout')
+      .then(function () {
+        Utils.clearAuth();
+        window.location.href = AppConfig.loginUrl;
+      })
+      .catch(function () {
+        // 登出失败（如token已过期被黑名单拦截），仍清除本地登录态
+        Utils.clearAuth();
+        window.location.href = AppConfig.loginUrl;
+      });
   };
 
   /**

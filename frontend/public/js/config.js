@@ -23,6 +23,7 @@
     /** localStorage 键名 */
     storageKeys: {
       token: 'study_room_token',
+      refreshToken: 'study_room_refresh_token',
       user: 'study_room_user',
       theme: 'study_room_theme',
     },

@@ -3,6 +3,7 @@ package com.studyroom.booking.common.interceptor;
 import com.studyroom.booking.common.ResultCode;
 import com.studyroom.booking.common.exception.BusinessException;
 import com.studyroom.booking.common.context.UserContext;
+import com.studyroom.booking.modules.user.service.TokenBlacklistService;
 import com.studyroom.booking.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,11 +23,12 @@ import java.util.List;
 public class JwtInterceptor implements HandlerInterceptor {
 
     private final JwtUtils jwtUtils;
+    private final TokenBlacklistService tokenBlacklistService;
 
     private static final List<String> WHITE_LIST = Arrays.asList(
             "/auth/login",
             "/auth/register",
-            "/auth/logout",
+            "/auth/refresh",
             "/doc.html",
             "/swagger-ui.html",
             "/favicon.ico"
@@ -95,6 +97,12 @@ public class JwtInterceptor implements HandlerInterceptor {
         // 去除 "Bearer " 前缀（使用while循环处理Knife4j重复添加前缀的情况）
         while (token.startsWith("Bearer ")) {
             token = token.substring(7);
+        }
+
+        // 检查token是否在黑名单中（已登出的token）
+        if (tokenBlacklistService.isBlacklisted(token)) {
+            log.debug("Token已在黑名单中（已登出）: {} {}", httpMethod, servletPath);
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
         }
 
         // 解析token一次，提取所有用户信息

@@ -17,6 +17,8 @@ public enum ResultCode {
     USER_PASSWORD_ERROR(1002, "密码错误"),
     USER_ALREADY_EXISTS(1003, "用户已存在"),
     USER_DISABLED(1004, "账号已被禁用"),
+    USER_LOCKED(1005, "账号已被锁定，请稍后再试"),
+    REFRESH_TOKEN_INVALID(1006, "刷新令牌无效或已过期"),
 
     ROOM_NOT_FOUND(2001, "自习室不存在"),
     ROOM_CLOSED(2002, "自习室已关闭"),

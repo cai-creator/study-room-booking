@@ -101,6 +101,25 @@
     localStorage.removeItem(AppConfig.storageKeys.token);
   };
 
+  Utils.getRefreshToken = function () {
+    return localStorage.getItem(AppConfig.storageKeys.refreshToken);
+  };
+
+  Utils.setRefreshToken = function (token) {
+    localStorage.setItem(AppConfig.storageKeys.refreshToken, token);
+  };
+
+  Utils.clearRefreshToken = function () {
+    localStorage.removeItem(AppConfig.storageKeys.refreshToken);
+  };
+
+  /** 清除所有登录态（token + refreshToken + user） */
+  Utils.clearAuth = function () {
+    Utils.clearToken();
+    Utils.clearRefreshToken();
+    Utils.clearUser();
+  };
+
   Utils.getUser = function () {
     try {
       var raw = localStorage.getItem(AppConfig.storageKeys.user);
@@ -259,8 +278,7 @@
     var role = user.role;
     var allow = Array.isArray(allowedRoles) && allowedRoles.indexOf(role) !== -1;
     if (!allow) {
-      Utils.clearToken();
-      Utils.clearUser();
+      Utils.clearAuth();
       try { sessionStorage.setItem('roleMismatchMsg', '该账号为' + (ROLE_MAP[role] || role) + '账号，无法访问此页面'); } catch (e) {}
       window.location.replace(loginUrl);
       return false;

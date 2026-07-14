@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.studyroom.booking.modules.user.mapper.RefreshTokenMapper">
+
+    <delete id="deleteByUserId">
+        UPDATE refresh_token SET deleted = 1 WHERE user_id = #{userId} AND deleted = 0
+    </delete>
+
+    <delete id="deleteExpiredTokens">
+        UPDATE refresh_token SET deleted = 1 WHERE expires_at &lt; #{now} AND deleted = 0
+    </delete>
+
+    <update id="markTokenUsed">
+        UPDATE refresh_token SET used = 1 WHERE token = #{token} AND deleted = 0
+    </update>
+
+    <select id="selectByToken" resultType="com.studyroom.booking.modules.user.entity.RefreshToken">
+        SELECT * FROM refresh_token WHERE token = #{token} AND deleted = 0
+    </select>
+
+    <select id="selectByUserId" resultType="com.studyroom.booking.modules.user.entity.RefreshToken">
+        SELECT * FROM refresh_token WHERE user_id = #{userId} AND deleted = 0
+    </select>
+
+</mapper>

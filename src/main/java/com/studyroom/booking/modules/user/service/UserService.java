@@ -12,9 +12,11 @@ import com.studyroom.booking.modules.user.dto.RegisterRequest;
 import com.studyroom.booking.modules.user.dto.UpdateUserRequest;
 import com.studyroom.booking.modules.user.dto.ChangePasswordRequest;
 import com.studyroom.booking.modules.user.dto.UserVO;
+import com.studyroom.booking.modules.user.entity.RefreshToken;
 import com.studyroom.booking.modules.user.entity.User;
 import com.studyroom.booking.modules.user.mapper.UserMapper;
 import com.studyroom.booking.utils.JwtUtils;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,8 @@ public class UserService {
     private final UserMapper userMapper;
     private final JwtUtils jwtUtils;
     private final RefreshTokenService refreshTokenService;
+    private final LoginAttemptService loginAttemptService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     /**
      * 用户登录
@@ -47,13 +51,32 @@ public class UserService {
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
         }
 
+        // 检查账户是否被锁定
+        if (loginAttemptService.isLocked(user.getId())) {
+            long remaining = loginAttemptService.getRemainingLockMinutes(user.getId());
+            throw new BusinessException(ResultCode.USER_LOCKED.getCode(),
+                    ResultCode.USER_LOCKED.getMessage() + "（剩余" + remaining + "分钟）");
+        }
+
         if (!BCrypt.checkpw(request.getPassword(), user.getPassword())) {
-            throw new BusinessException(ResultCode.USER_PASSWORD_ERROR);
+            int failCount = loginAttemptService.recordFailure(user.getId());
+            int maxFail = loginAttemptService.getMaxFailCount();
+            int remaining = maxFail - failCount;
+            if (remaining > 0) {
+                throw new BusinessException(ResultCode.USER_PASSWORD_ERROR.getCode(),
+                        "密码错误，还可尝试" + remaining + "次");
+            } else {
+                throw new BusinessException(ResultCode.USER_LOCKED.getCode(),
+                        "连续失败" + maxFail + "次，账户已锁定" + loginAttemptService.getLockMinutes() + "分钟");
+            }
         }
 
         if (user.getStatus() == 0) {
             throw new BusinessException(ResultCode.USER_DISABLED);
         }
+
+        // 登录成功，重置失败计数
+        loginAttemptService.recordSuccess(user.getId());
 
         String token = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getRole());
         Long expireAt = System.currentTimeMillis() + jwtUtils.getExpireTime();
@@ -71,6 +94,65 @@ public class UserService {
 
         log.info("用户登录成功: username={}, role={}", user.getUsername(), user.getRole());
         return loginVO;
+    }
+
+    /**
+     * 刷新令牌
+     */
+    public LoginVO refreshToken(String refreshTokenStr) {
+        RefreshToken refreshToken = refreshTokenService.validateAndConsume(refreshTokenStr);
+        if (refreshToken == null) {
+            throw new BusinessException(ResultCode.REFRESH_TOKEN_INVALID);
+        }
+
+        User user = userMapper.selectById(refreshToken.getUserId());
+        if (user == null || user.getDeleted() == 1) {
+            throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        }
+        if (user.getStatus() == 0) {
+            throw new BusinessException(ResultCode.USER_DISABLED);
+        }
+
+        // 生成新的access token
+        String newToken = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getRole());
+        Long expireAt = System.currentTimeMillis() + jwtUtils.getExpireTime();
+
+        // 生成新的refresh token（轮换机制）
+        String newRefreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+        LoginVO loginVO = new LoginVO();
+        loginVO.setToken(newToken);
+        loginVO.setExpireAt(expireAt);
+        if (newRefreshToken != null) {
+            loginVO.setRefreshToken(newRefreshToken);
+            loginVO.setRefreshExpireAt(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000L);
+        }
+        loginVO.setUser(convertToVO(user));
+
+        log.info("刷新令牌成功: username={}", user.getUsername());
+        return loginVO;
+    }
+
+    /**
+     * 用户登出
+     */
+    public void logout(Long userId, String authHeader) {
+        if (userId != null) {
+            // 使所有refresh token失效
+            refreshTokenService.invalidateAllTokens(userId);
+        }
+        // 将access token加入黑名单
+        if (authHeader != null) {
+            String token = authHeader;
+            while (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+            Claims claims = jwtUtils.parseToken(token);
+            if (claims != null && claims.getExpiration() != null) {
+                tokenBlacklistService.blacklist(token, claims.getExpiration().getTime());
+            }
+        }
+        log.info("用户登出: userId={}", userId);
     }
 
     /**

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.studyroom.booking.modules.user.mapper.LoginAttemptMapper">
+
+    <select id="selectByUserId" resultType="com.studyroom.booking.modules.user.entity.LoginAttempt">
+        SELECT * FROM login_attempts WHERE user_id = #{userId}
+    </select>
+
+    <update id="resetFailCount">
+        UPDATE login_attempts SET fail_count = 0, locked_until = NULL, updated_at = NOW() WHERE user_id = #{userId}
+    </update>
+
+</mapper>

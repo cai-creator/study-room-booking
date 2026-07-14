@@ -3,6 +3,7 @@ package com.studyroom.booking.modules.user.controller;
 import com.studyroom.booking.common.Result;
 import com.studyroom.booking.modules.user.dto.LoginRequest;
 import com.studyroom.booking.modules.user.dto.LoginVO;
+import com.studyroom.booking.modules.user.dto.RefreshRequest;
 import com.studyroom.booking.modules.user.dto.RegisterRequest;
 import com.studyroom.booking.modules.user.dto.UserVO;
 import com.studyroom.booking.modules.user.service.UserService;
@@ -14,6 +15,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -24,7 +27,7 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/login")
-    @Operation(summary = "用户登录", description = "用户名密码登录，返回JWT token")
+    @Operation(summary = "用户登录", description = "用户名密码登录，返回JWT token和refreshToken")
     public Result<LoginVO> login(@Valid @RequestBody LoginRequest request) {
         return Result.success("登录成功", userService.login(request));
     }
@@ -35,10 +38,19 @@ public class AuthController {
         return Result.success("注册成功", userService.register(request));
     }
 
+    @PostMapping("/refresh")
+    @Operation(summary = "刷新令牌", description = "使用refreshToken获取新的accessToken")
+    public Result<LoginVO> refresh(@Valid @RequestBody RefreshRequest request) {
+        return Result.success("刷新成功", userService.refreshToken(request.getRefreshToken()));
+    }
+
     @PostMapping("/logout")
-    @Operation(summary = "用户登出", description = "退出登录（客户端清除token即可）")
+    @Operation(summary = "用户登出", description = "退出登录，使当前token失效")
     @SecurityRequirement(name = "BearerAuth")
-    public Result<Void> logout() {
+    public Result<Void> logout(
+            @Parameter(hidden = true) @RequestAttribute(value = "userId", required = false) Long userId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        userService.logout(userId, authHeader);
         return Result.success("登出成功", null);
     }
 

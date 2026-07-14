@@ -25,6 +25,7 @@
       return;
     }
     var tokenKey = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.token) || 'study_room_token';
+    var refreshTokenKey = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.refreshToken) || 'study_room_refresh_token';
     var userKey = (window.AppConfig && AppConfig.storageKeys && AppConfig.storageKeys.user) || 'study_room_user';
     var loginUrl;
     if (window.AppConfig && AppConfig.loginUrl) {
@@ -35,6 +36,7 @@
       loginUrl = '../../public/login.html';
     }
     try { localStorage.removeItem(tokenKey); } catch (e) {}
+    try { localStorage.removeItem(refreshTokenKey); } catch (e) {}
     try { localStorage.removeItem(userKey); } catch (e) {}
     window.location.href = loginUrl;
   };

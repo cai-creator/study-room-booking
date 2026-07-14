@@ -16,30 +16,22 @@
  *    @property {T}       data       - 业务数据（调用方只会收到 data 的解包值，通过 .then() 拿到）
  *    @property {number}  timestamp  - 响应时间戳（毫秒）
  *
- *    举例：
- *      UserAPI.getUser(1).then(user => {
- *        // 这里的 user 就是 UserVO，不是 Result<UserVO>
- *        console.log(user.realName);
- *      }).catch(err => {
- *        // err 是完整的 {code, message} 结构
- *        alert(err.message);
- *      });
- *
  * 3. 错误码速查
  *    | code | 说明 | 行为 |
  *    |------|------|------|
  *    | 200  | 成功 | resolve(data) |
  *    | 400  | 参数错误/业务逻辑失败（如用户名已存在、预约冲突） | reject，前端弹 message |
- *    | 401  | 未登录 / Token过期 | request.js 已自动：清token → 跳登录页 |
+ *    | 401  | 未登录 / Token过期 | request.js 自动尝试refreshToken续期，续期失败再跳登录页 |
  *    | 403  | 无权限（如学生想进管理员接口） | reject，前端提示"无权限" |
  *    | 500  | 后端内部错误 | reject，前端弹 message |
  *    | 0    | 网络错误 / 请求超时(15s) | reject，由 request.js 生成 |
  *
  * 4. 认证 & Token
- *    - 登录成功后端返回 LoginVO { token, expireAt, user }
+ *    - 登录成功后端返回 LoginVO { token, refreshToken, expireAt, refreshExpireAt, user }
  *    - 请求时自动加 Header：Authorization: Bearer <token>
- *    - /auth/login、/auth/register、白名单 GET 接口（/campuses 等）不需要 token
- *    - 前端不需要手动续期，401 会被 request.js 自动拦截跳登录页
+ *    - /auth/login、/auth/register、/auth/refresh、白名单 GET 接口不需要 token
+ *    - access token 过期(401)时，request.js 自动用 refreshToken 调 /auth/refresh 续期并重试原请求
+ *    - refreshToken 也过期时，清登录态跳登录页
  *
  * 5. 分页参数 & 返回结构
  *    请求参数（Query）：
@@ -127,6 +119,47 @@
   /** 请求超时时间（毫秒） */
   var TIMEOUT = 15000;
 
+  /** refresh token 续期锁：防止并发请求同时触发多次刷新 */
+  var refreshingPromise = null;
+
+  /**
+   * 使用 refreshToken 续期 access token
+   * @returns {Promise<string>} resolve 新的 access token；reject 表示续期失败
+   */
+  function doRefresh() {
+    if (refreshingPromise) {
+      return refreshingPromise;
+    }
+    var refreshToken = Utils.getRefreshToken();
+    if (!refreshToken) {
+      return Promise.reject({ code: 401, message: '无刷新令牌' });
+    }
+    refreshingPromise = fetch(AppConfig.apiBaseUrl + '/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: refreshToken }),
+    })
+      .then(function (response) { return response.json(); })
+      .then(function (result) {
+        if (result.code === 200 && result.data) {
+          Utils.setToken(result.data.token);
+          Utils.setRefreshToken(result.data.refreshToken);
+          return result.data.token;
+        }
+        throw { code: 401, message: result.message || '刷新令牌无效' };
+      })
+      .finally(function () {
+        refreshingPromise = null;
+      });
+    return refreshingPromise;
+  }
+
+  /** 跳登录页（清登录态） */
+  function redirectToLogin() {
+    Utils.clearAuth();
+    window.location.href = AppConfig.loginUrl;
+  }
+
   /**
    * 发起请求
    * @param {string} method  - HTTP 方法
@@ -135,7 +168,6 @@
    * @returns {Promise}      - resolve 时返回解包后的 data 字段（不是 Result 外层！）
    */
   function request(method, url, data) {
-    // Mock 模式下由各 API 模块自行处理，不会走到这里
     var fullUrl = AppConfig.apiBaseUrl + url;
     var options = {
       method: method,
@@ -144,8 +176,9 @@
       },
     };
 
-    // 注入 Token（登录/注册接口不需要）
-    if (!url.startsWith('/auth/login') && !url.startsWith('/auth/register')) {
+    // 注入 Token（登录/注册/刷新接口不需要）
+    var isAuthEndpoint = url.startsWith('/auth/login') || url.startsWith('/auth/register') || url.startsWith('/auth/refresh');
+    if (!isAuthEndpoint) {
       var token = Utils.getToken();
       if (token) {
         options.headers['Authorization'] = 'Bearer ' + token;
@@ -167,6 +200,17 @@
       options.body = JSON.stringify(data);
     }
 
+    return doFetch(fullUrl, options, url);
+  }
+
+  /**
+   * 执行 fetch 并处理响应，支持 401 自动续期重试
+   * @param {string} fullUrl
+   * @param {object} options
+   * @param {string} originalUrl - 原始接口路径（用于判断是否为 auth 端点）
+   * @param {boolean} [isRetry] - 是否为续期后的重试请求（防止无限重试）
+   */
+  function doFetch(fullUrl, options, originalUrl, isRetry) {
     return new Promise(function (resolve, reject) {
       var timer = setTimeout(function () {
         reject({ code: 0, message: '请求超时，请稍后重试' });
@@ -194,11 +238,29 @@
           if (result.code === 200) {
             resolve(result.data);
           } else if (result.code === 401) {
-            // token 过期或无效：自动清状态并跳登录
-            Utils.clearToken();
-            Utils.clearUser();
-            window.location.href = AppConfig.loginUrl;
-            reject(result);
+            // auth 端点（login/register/refresh）的 401 直接失败
+            // 已重试过的请求也直接失败，防止死循环
+            var isAuthEndpoint = originalUrl.startsWith('/auth/login') || originalUrl.startsWith('/auth/register') || originalUrl.startsWith('/auth/refresh');
+            if (isAuthEndpoint || isRetry) {
+              if (isAuthEndpoint) redirectToLogin();
+              reject(result);
+              return;
+            }
+            // access token 过期，尝试用 refreshToken 续期后重试
+            doRefresh()
+              .then(function () {
+                // 续期成功，用新 token 重试原请求
+                var newToken = Utils.getToken();
+                if (newToken) {
+                  options.headers['Authorization'] = 'Bearer ' + newToken;
+                }
+                doFetch(fullUrl, options, originalUrl, true).then(resolve, reject);
+              })
+              .catch(function () {
+                // 续期失败，跳登录页
+                redirectToLogin();
+                reject(result);
+              });
           } else {
             reject(result);
           }

@@ -49,7 +49,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/auth/login",
                         "/auth/register",
-                        "/auth/logout",
+                        "/auth/refresh",
                         "/doc.html",
                         "/swagger-ui.html",
                         "/swagger-ui/**",
@@ -66,6 +66,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/auth/login",
                         "/auth/register",
+                        "/auth/refresh",
                         "/auth/logout",
                         "/doc.html",
                         "/swagger-ui.html",
