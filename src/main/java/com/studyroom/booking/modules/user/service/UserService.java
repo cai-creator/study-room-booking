@@ -209,8 +209,8 @@ public class UserService {
             // 普通管理员：只能看学生 + 自己
             wrapper.and(w -> w.eq(User::getRole, "STUDENT").or().eq(User::getId, currentUserId));
         } else if ("SUPER_ADMIN".equals(currentRole)) {
-            // 超级管理员：可看所有普通管理员和学生
-            wrapper.in(User::getRole, "ADMIN", "STUDENT");
+            // 超级管理员：可看所有普通管理员、学生 + 自己
+            wrapper.and(w -> w.in(User::getRole, "ADMIN", "STUDENT").or().eq(User::getId, currentUserId));
         }
 
         if (keyword != null && !keyword.isEmpty()) {
