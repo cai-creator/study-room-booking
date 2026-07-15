@@ -14,11 +14,20 @@
     }
   </style>
   <style>
-    .side-menu-item { transition: all 0.15s; cursor: pointer; }
+    .side-menu-item { transition: all 0.15s ease; cursor: pointer; border-radius: 8px; }
     .side-menu-item:hover { background: var(--color-bg-tertiary); }
-    .side-menu-item.active { background: var(--brand-primary-lighter); color: var(--brand-primary); border-left: 3px solid var(--brand-primary); }
+    .side-menu-item.active { background: var(--brand-primary-lighter); color: var(--brand-primary); font-weight: 600; }
+    .side-menu-item.active::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; background: var(--brand-primary); border-radius: 0 2px 2px 0; }
     .pwd-rule.met { background: var(--state-success-bg) !important; color: var(--state-success) !important; }
-    .stat-card { transition: all 0.2s; }
+    .form-input { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+    .form-input:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 3px var(--brand-primary-lighter); }
+    .btn-primary { transition: all 0.15s ease; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .section-header i { width: 18px; height: 18px; color: var(--brand-primary); }
+    .card-item { transition: all 0.15s ease; }
+    .card-item:hover { background: var(--color-bg-tertiary); }
+    .stat-card { transition: all 0.2s ease; }
     .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
   </style>
 </head>
@@ -26,31 +35,32 @@
   <div id="navbar-placeholder"></div>
 
   <main class="mx-auto px-4 sm:px-6 py-6" style="max-width: 1200px;">
-    <div class="flex items-center gap-3 mb-6">
-      <a href="pages/space-management.html" class="flex items-center gap-1 text-sm transition-colors no-underline" style="color:var(--brand-primary);">
-        <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> 返回管理端
+    <!-- 面包屑 -->
+    <div class="flex items-center gap-2 mb-6 text-sm">
+      <a href="pages/space-management.html" class="flex items-center gap-1 transition-colors no-underline" style="color:var(--color-text-secondary);">
+        <i data-lucide="home" style="width:14px;height:14px;"></i> 管理端
       </a>
-      <span class="text-sm" style="color:var(--color-text-tertiary);">/</span>
-      <h1 class="text-xl font-bold">个人设置</h1>
+      <span style="color:var(--color-text-tertiary);">/</span>
+      <span style="color:var(--color-text-primary);">个人设置</span>
     </div>
 
     <div class="grid grid-cols-12 gap-6">
       <!-- 左侧菜单 -->
       <aside class="col-span-12 md:col-span-3">
-        <div class="rounded-xl p-3" style="background: var(--surface-card); border: var(--surface-card-border);">
-          <div class="side-menu-item active px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2" data-section="profile" onclick="switchSection('profile')">
+        <div class="rounded-xl p-2 sticky top-20" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+          <div class="side-menu-item active relative px-4 py-3 text-sm flex items-center gap-3" data-section="profile" onclick="switchSection('profile')">
             <i data-lucide="user" style="width:16px;height:16px;"></i> 个人信息
           </div>
-          <div class="side-menu-item px-4 py-3 rounded-lg text-sm flex items-center gap-2" data-section="password" onclick="switchSection('password')" style="color:var(--color-text-secondary);">
+          <div class="side-menu-item relative px-4 py-3 text-sm flex items-center gap-3" data-section="password" onclick="switchSection('password')" style="color:var(--color-text-secondary);">
             <i data-lucide="lock" style="width:16px;height:16px;"></i> 修改密码
           </div>
-          <div class="side-menu-item px-4 py-3 rounded-lg text-sm flex items-center gap-2" data-section="security" onclick="switchSection('security')" style="color:var(--color-text-secondary);">
+          <div class="side-menu-item relative px-4 py-3 text-sm flex items-center gap-3" data-section="security" onclick="switchSection('security')" style="color:var(--color-text-secondary);">
             <i data-lucide="shield-check" style="width:16px;height:16px;"></i> 安全设置
           </div>
-          <div class="side-menu-item px-4 py-3 rounded-lg text-sm flex items-center gap-2" data-section="notification" onclick="switchSection('notification')" style="color:var(--color-text-secondary);">
+          <div class="side-menu-item relative px-4 py-3 text-sm flex items-center gap-3" data-section="notification" onclick="switchSection('notification')" style="color:var(--color-text-secondary);">
             <i data-lucide="bell" style="width:16px;height:16px;"></i> 通知设置
           </div>
-          <div class="side-menu-item px-4 py-3 rounded-lg text-sm flex items-center gap-2" data-section="workspace" onclick="switchSection('workspace')" style="color:var(--color-text-secondary);">
+          <div class="side-menu-item relative px-4 py-3 text-sm flex items-center gap-3" data-section="workspace" onclick="switchSection('workspace')" style="color:var(--color-text-secondary);">
             <i data-lucide="layout-dashboard" style="width:16px;height:16px;"></i> 工作台
           </div>
         </div>
@@ -59,199 +69,237 @@
       <!-- 右侧内容 -->
       <div class="col-span-12 md:col-span-9 space-y-6">
         <!-- 个人信息 -->
-        <section id="sec-profile" class="rounded-xl p-6" style="background: var(--surface-card); border: var(--surface-card-border);">
-          <h2 class="text-base font-semibold mb-1">个人信息</h2>
+        <section id="sec-profile" class="rounded-xl p-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+          <div class="section-header">
+            <i data-lucide="user"></i>
+            <h2 class="text-base font-semibold">个人信息</h2>
+          </div>
           <p class="text-xs mb-5" style="color:var(--color-text-tertiary);">管理员账号信息</p>
-          <div id="profile-loading" class="py-4 text-center text-sm" style="color:var(--color-text-tertiary);">加载中...</div>
-          <form id="profile-form" class="hidden space-y-4" onsubmit="return false;">
+          <div id="profile-loading" class="py-8 text-center">
+            <div class="w-10 h-10 rounded-full mx-auto mb-3 flex items-center justify-center" style="background: var(--color-bg-tertiary);">
+              <i data-lucide="loader-2" style="width:20px;height:20px;color:var(--color-text-tertiary);animation: spin 1s linear infinite;"></i>
+            </div>
+            <span class="text-sm" style="color:var(--color-text-tertiary);">加载中...</span>
+          </div>
+          <form id="profile-form" class="hidden space-y-5" onsubmit="return false;">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">用户名</label>
-                <input id="profile-username" readonly class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg-secondary);color:var(--color-text-tertiary);">
+                <label class="block text-xs font-medium mb-2" style="color:var(--color-text-secondary);">用户名</label>
+                <input id="profile-username" readonly class="form-input w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">
               </div>
               <div>
-                <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">角色</label>
-                <input id="profile-role" readonly class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg-secondary);color:var(--color-text-tertiary);">
+                <label class="block text-xs font-medium mb-2" style="color:var(--color-text-secondary);">角色</label>
+                <input id="profile-role" readonly class="form-input w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">
               </div>
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">真实姓名 <span style="color:var(--state-error);">*</span></label>
-              <input id="profile-realname" maxlength="50" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
+              <label class="block text-xs font-medium mb-2" style="color:var(--color-text-secondary);">真实姓名 <span style="color:var(--state-error);">*</span></label>
+              <input id="profile-realname" maxlength="50" class="form-input w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">邮箱</label>
-                <input id="profile-email" type="email" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
+                <label class="block text-xs font-medium mb-2" style="color:var(--color-text-secondary);">邮箱</label>
+                <input id="profile-email" type="email" class="form-input w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
               </div>
               <div>
-                <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">手机号</label>
-                <input id="profile-phone" type="tel" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
+                <label class="block text-xs font-medium mb-2" style="color:var(--color-text-secondary);">手机号</label>
+                <input id="profile-phone" type="tel" class="form-input w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
               </div>
             </div>
-            <div class="flex items-center gap-3 pt-2">
-              <button type="button" onclick="saveProfile()" class="px-5 py-2 rounded-lg text-sm font-medium" style="background:var(--brand-primary);color:white;border:none;cursor:pointer;">保存修改</button>
+            <div class="flex items-center gap-3 pt-3">
+              <button type="button" onclick="saveProfile()" class="btn-primary px-5 py-2.5 rounded-lg text-sm font-medium" style="background:var(--brand-primary);color:white;border:none;cursor:pointer;">保存修改</button>
               <span id="profile-msg" class="text-xs hidden"></span>
             </div>
           </form>
         </section>
 
         <!-- 修改密码 -->
-        <section id="sec-password" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border);">
-          <h2 class="text-base font-semibold mb-1">修改密码</h2>
+        <section id="sec-password" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+          <div class="section-header">
+            <i data-lucide="lock"></i>
+            <h2 class="text-base font-semibold">修改密码</h2>
+          </div>
           <p class="text-xs mb-5" style="color:var(--color-text-tertiary);">至少6位，必须包含大小写字母和数字</p>
-          <form class="space-y-4" onsubmit="return false;">
+          <form class="space-y-5" onsubmit="return false;">
             <div>
-              <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">当前密码</label>
-              <input id="pwd-old" type="password" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
+              <label class="block text-xs font-medium mb-2" style="color:var(--color-text-secondary);">当前密码</label>
+              <input id="pwd-old" type="password" class="form-input w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">新密码</label>
-              <input id="pwd-new" type="password" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
-              <div class="mt-2 flex flex-wrap gap-2">
-                <span class="pwd-rule text-xs px-2 py-0.5 rounded" data-rule="length" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">≥6位</span>
-                <span class="pwd-rule text-xs px-2 py-0.5 rounded" data-rule="upper" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">大写字母</span>
-                <span class="pwd-rule text-xs px-2 py-0.5 rounded" data-rule="lower" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">小写字母</span>
-                <span class="pwd-rule text-xs px-2 py-0.5 rounded" data-rule="digit" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">数字</span>
+              <label class="block text-xs font-medium mb-2" style="color:var(--color-text-secondary);">新密码</label>
+              <input id="pwd-new" type="password" class="form-input w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
+              <div class="mt-3 flex flex-wrap gap-2">
+                <span class="pwd-rule text-xs px-2.5 py-1 rounded-md" data-rule="length" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">≥6位</span>
+                <span class="pwd-rule text-xs px-2.5 py-1 rounded-md" data-rule="upper" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">大写字母</span>
+                <span class="pwd-rule text-xs px-2.5 py-1 rounded-md" data-rule="lower" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">小写字母</span>
+                <span class="pwd-rule text-xs px-2.5 py-1 rounded-md" data-rule="digit" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">数字</span>
               </div>
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">确认新密码</label>
-              <input id="pwd-confirm" type="password" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
+              <label class="block text-xs font-medium mb-2" style="color:var(--color-text-secondary);">确认新密码</label>
+              <input id="pwd-confirm" type="password" class="form-input w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
             </div>
-            <div class="flex items-center gap-3 pt-2">
-              <button type="button" onclick="changePassword()" class="px-5 py-2 rounded-lg text-sm font-medium" style="background:var(--brand-primary);color:white;border:none;cursor:pointer;">修改密码</button>
+            <div class="flex items-center gap-3 pt-3">
+              <button type="button" onclick="changePassword()" class="btn-primary px-5 py-2.5 rounded-lg text-sm font-medium" style="background:var(--brand-primary);color:white;border:none;cursor:pointer;">修改密码</button>
               <span id="pwd-msg" class="text-xs hidden"></span>
             </div>
           </form>
         </section>
 
         <!-- 安全设置 -->
-        <section id="sec-security" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border);">
-          <h2 class="text-base font-semibold mb-1">安全设置</h2>
+        <section id="sec-security" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+          <div class="section-header">
+            <i data-lucide="shield-check"></i>
+            <h2 class="text-base font-semibold">安全设置</h2>
+          </div>
           <p class="text-xs mb-5" style="color:var(--color-text-tertiary);">管理员账号安全配置</p>
           <div class="space-y-3" id="security-info">
-            <div class="p-4 rounded-lg" style="background:var(--color-bg-secondary);">
+            <div class="card-item p-4 rounded-lg" style="background:var(--color-bg-secondary);">
               <div class="flex items-center justify-between">
                 <div>
                   <div class="text-sm font-medium">账号状态</div>
                   <div id="sec-status" class="text-xs mt-1" style="color:var(--color-text-tertiary);">加载中...</div>
                 </div>
-                <i data-lucide="check-circle" style="width:24px;height:24px;color:var(--state-success);"></i>
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:var(--state-success-bg);">
+                  <i data-lucide="check-circle" style="width:20px;height:20px;color:var(--state-success);"></i>
+                </div>
               </div>
             </div>
-            <div class="p-4 rounded-lg" style="background:var(--color-bg-secondary);">
+            <div class="card-item p-4 rounded-lg" style="background:var(--color-bg-secondary);">
               <div class="flex items-center justify-between">
                 <div>
                   <div class="text-sm font-medium">登录设备管理</div>
                   <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">查看活跃会话并退出其他设备</div>
                 </div>
-                <button onclick="forceLogoutOtherDevices()" class="text-sm px-3 py-1.5 rounded transition-colors" style="color:var(--state-error);background:var(--state-error-bg);border:none;cursor:pointer;">退出其他设备</button>
+                <button onclick="forceLogoutOtherDevices()" class="text-xs px-3 py-1.5 rounded-md transition-colors" style="color:var(--state-error);background:var(--state-error-bg);border:none;cursor:pointer;">退出其他设备</button>
               </div>
             </div>
-            <div class="p-4 rounded-lg" style="background:var(--color-bg-secondary);">
+            <div class="card-item p-4 rounded-lg" style="background:var(--color-bg-secondary);">
               <div class="flex items-center justify-between">
                 <div>
                   <div class="text-sm font-medium">登录失败锁定</div>
                   <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">连续5次登录失败将自动锁定30分钟</div>
                 </div>
-                <i data-lucide="shield-check" style="width:24px;height:24px;color:var(--state-success);"></i>
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:var(--state-info-bg);">
+                  <i data-lucide="shield-check" style="width:20px;height:20px;color:var(--state-info);"></i>
+                </div>
               </div>
             </div>
-            <div class="p-4 rounded-lg" style="background:var(--color-bg-secondary);">
+            <div class="card-item p-4 rounded-lg" style="background:var(--color-bg-secondary);">
               <div class="flex items-center justify-between">
                 <div>
                   <div class="text-sm font-medium">二次验证（2FA）</div>
                   <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">管理员敏感操作二次身份验证</div>
                 </div>
-                <span class="text-xs px-2 py-1 rounded" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">待启用</span>
+                <span class="text-xs px-2.5 py-1 rounded-md" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">待启用</span>
               </div>
             </div>
           </div>
         </section>
 
         <!-- 通知设置 -->
-        <section id="sec-notification" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border);">
-          <h2 class="text-base font-semibold mb-1">通知设置</h2>
+        <section id="sec-notification" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+          <div class="section-header">
+            <i data-lucide="bell"></i>
+            <h2 class="text-base font-semibold">通知设置</h2>
+          </div>
           <p class="text-xs mb-5" style="color:var(--color-text-tertiary);">管理员工作通知</p>
           <div class="space-y-3">
-            <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
-              <input type="checkbox" id="notif-new-user" checked class="w-4 h-4">
+            <label class="card-item flex items-center gap-4 p-4 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
+              <input type="checkbox" id="notif-new-user" checked class="w-4 h-4 accent-current" style="accent-color:var(--brand-primary);">
               <div class="flex-1">
                 <div class="text-sm font-medium">新用户注册</div>
-                <div class="text-xs" style="color:var(--color-text-tertiary);">新学生注册账号时通知</div>
+                <div class="text-xs mt-0.5" style="color:var(--color-text-tertiary);">新学生注册账号时通知</div>
               </div>
             </label>
-            <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
-              <input type="checkbox" id="notif-blacklist" checked class="w-4 h-4">
+            <label class="card-item flex items-center gap-4 p-4 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
+              <input type="checkbox" id="notif-blacklist" checked class="w-4 h-4 accent-current" style="accent-color:var(--brand-primary);">
               <div class="flex-1">
                 <div class="text-sm font-medium">黑名单触发</div>
-                <div class="text-xs" style="color:var(--color-text-tertiary);">用户触发黑名单时通知</div>
+                <div class="text-xs mt-0.5" style="color:var(--color-text-tertiary);">用户触发黑名单时通知</div>
               </div>
             </label>
-            <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
-              <input type="checkbox" id="notif-system" checked class="w-4 h-4">
+            <label class="card-item flex items-center gap-4 p-4 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
+              <input type="checkbox" id="notif-system" checked class="w-4 h-4 accent-current" style="accent-color:var(--brand-primary);">
               <div class="flex-1">
                 <div class="text-sm font-medium">系统通知</div>
-                <div class="text-xs" style="color:var(--color-text-tertiary);">系统公告和维护通知</div>
+                <div class="text-xs mt-0.5" style="color:var(--color-text-tertiary);">系统公告和维护通知</div>
               </div>
             </label>
-            <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
-              <input type="checkbox" id="notif-booking" class="w-4 h-4">
+            <label class="card-item flex items-center gap-4 p-4 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
+              <input type="checkbox" id="notif-booking" class="w-4 h-4 accent-current" style="accent-color:var(--brand-primary);">
               <div class="flex-1">
                 <div class="text-sm font-medium">预约高峰预警</div>
-                <div class="text-xs" style="color:var(--color-text-tertiary);">座位使用率超过阈值时通知</div>
+                <div class="text-xs mt-0.5" style="color:var(--color-text-tertiary);">座位使用率超过阈值时通知</div>
               </div>
             </label>
-            <div class="flex items-center gap-3 pt-2">
-              <button type="button" onclick="saveNotification()" class="px-5 py-2 rounded-lg text-sm font-medium" style="background:var(--brand-primary);color:white;border:none;cursor:pointer;">保存设置</button>
+            <div class="flex items-center gap-3 pt-3">
+              <button type="button" onclick="saveNotification()" class="btn-primary px-5 py-2.5 rounded-lg text-sm font-medium" style="background:var(--brand-primary);color:white;border:none;cursor:pointer;">保存设置</button>
               <span id="notif-msg" class="text-xs hidden"></span>
             </div>
           </div>
         </section>
 
         <!-- 工作台 -->
-        <section id="sec-workspace" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border);">
-          <h2 class="text-base font-semibold mb-1">工作台</h2>
+        <section id="sec-workspace" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+          <div class="section-header">
+            <i data-lucide="layout-dashboard"></i>
+            <h2 class="text-base font-semibold">工作台</h2>
+          </div>
           <p class="text-xs mb-5" style="color:var(--color-text-tertiary);">管理员工作概览</p>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <a href="pages/space-management.html" class="stat-card rounded-lg p-4 text-center no-underline" style="background:var(--color-bg-secondary);color:var(--color-text-primary);">
-              <i data-lucide="layout-grid" style="width:24px;height:24px;color:var(--brand-primary);margin:0 auto 8px;display:block;"></i>
+            <a href="pages/space-management.html" class="stat-card rounded-xl p-4 text-center no-underline" style="background:var(--color-bg-secondary);color:var(--color-text-primary);border:1px solid var(--color-border);">
+              <div class="w-10 h-10 rounded-lg mx-auto mb-3 flex items-center justify-center" style="background:var(--brand-primary-lighter);">
+                <i data-lucide="layout-grid" style="width:20px;height:20px;color:var(--brand-primary);"></i>
+              </div>
               <div class="text-sm font-medium">空间管理</div>
-              <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">校区·楼栋·楼层·自习室</div>
+              <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">校区·楼栋·楼层</div>
             </a>
-            <a href="pages/user-management.html" class="stat-card rounded-lg p-4 text-center no-underline" style="background:var(--color-bg-secondary);color:var(--color-text-primary);">
-              <i data-lucide="users" style="width:24px;height:24px;color:var(--brand-primary);margin:0 auto 8px;display:block;"></i>
+            <a href="pages/user-management.html" class="stat-card rounded-xl p-4 text-center no-underline" style="background:var(--color-bg-secondary);color:var(--color-text-primary);border:1px solid var(--color-border);">
+              <div class="w-10 h-10 rounded-lg mx-auto mb-3 flex items-center justify-center" style="background:var(--state-success-bg);">
+                <i data-lucide="users" style="width:20px;height:20px;color:var(--state-success);"></i>
+              </div>
               <div class="text-sm font-medium">用户管理</div>
               <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">学生/管理员</div>
             </a>
-            <a href="pages/blacklist.html" class="stat-card rounded-lg p-4 text-center no-underline" style="background:var(--color-bg-secondary);color:var(--color-text-primary);">
-              <i data-lucide="shield-x" style="width:24px;height:24px;color:var(--brand-primary);margin:0 auto 8px;display:block;"></i>
+            <a href="pages/blacklist.html" class="stat-card rounded-xl p-4 text-center no-underline" style="background:var(--color-bg-secondary);color:var(--color-text-primary);border:1px solid var(--color-border);">
+              <div class="w-10 h-10 rounded-lg mx-auto mb-3 flex items-center justify-center" style="background:var(--state-error-bg);">
+                <i data-lucide="shield-x" style="width:20px;height:20px;color:var(--state-error);"></i>
+              </div>
               <div class="text-sm font-medium">黑名单</div>
               <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">爽约管理</div>
             </a>
-            <a href="pages/reports.html" class="stat-card rounded-lg p-4 text-center no-underline" style="background:var(--color-bg-secondary);color:var(--color-text-primary);">
-              <i data-lucide="bar-chart-3" style="width:24px;height:24px;color:var(--brand-primary);margin:0 auto 8px;display:block;"></i>
+            <a href="pages/reports.html" class="stat-card rounded-xl p-4 text-center no-underline" style="background:var(--color-bg-secondary);color:var(--color-text-primary);border:1px solid var(--color-border);">
+              <div class="w-10 h-10 rounded-lg mx-auto mb-3 flex items-center justify-center" style="background:var(--state-warning-bg);">
+                <i data-lucide="bar-chart-3" style="width:20px;height:20px;color:var(--state-warning);"></i>
+              </div>
               <div class="text-sm font-medium">数据报表</div>
               <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">使用率分析</div>
             </a>
           </div>
           <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <a href="../public/notifications.html" class="rounded-lg p-4 flex items-center gap-3 no-underline transition-colors" style="background:var(--color-bg-secondary);color:var(--color-text-primary);">
-              <i data-lucide="bell" style="width:20px;height:20px;color:var(--brand-primary);"></i>
+            <a href="../public/notifications.html" class="card-item rounded-xl p-4 flex items-center gap-4 no-underline transition-colors" style="background:var(--color-bg-secondary);color:var(--color-text-primary);border:1px solid var(--color-border);">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:var(--brand-primary-lighter);">
+                <i data-lucide="bell" style="width:20px;height:20px;color:var(--brand-primary);"></i>
+              </div>
               <div>
                 <div class="text-sm font-medium">消息通知</div>
                 <div class="text-xs" style="color:var(--color-text-tertiary);">查看所有消息</div>
               </div>
             </a>
-            <a href="../public/settings.html" class="rounded-lg p-4 flex items-center gap-3 no-underline transition-colors" style="background:var(--color-bg-secondary);color:var(--color-text-primary);">
-              <i data-lucide="settings" style="width:20px;height:20px;color:var(--brand-primary);"></i>
+            <a href="../public/settings.html" class="card-item rounded-xl p-4 flex items-center gap-4 no-underline transition-colors" style="background:var(--color-bg-secondary);color:var(--color-text-primary);border:1px solid var(--color-border);">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:var(--state-info-bg);">
+                <i data-lucide="settings" style="width:20px;height:20px;color:var(--state-info);"></i>
+              </div>
               <div>
                 <div class="text-sm font-medium">基础设置</div>
                 <div class="text-xs" style="color:var(--color-text-tertiary);">切换简化版设置</div>
               </div>
             </a>
-            <button onclick="Utils.toast && Utils.toast('操作日志查看: 待后续对接', 'info')" class="rounded-lg p-4 flex items-center gap-3 text-left transition-colors" style="background:var(--color-bg-secondary);color:var(--color-text-primary);border:none;cursor:pointer;">
-              <i data-lucide="file-clock" style="width:20px;height:20px;color:var(--brand-primary);"></i>
+            <button onclick="Utils.toast && Utils.toast('操作日志查看: 待后续对接', 'info')" class="card-item rounded-xl p-4 flex items-center gap-4 text-left transition-colors" style="background:var(--color-bg-secondary);color:var(--color-text-primary);border:1px solid var(--color-border);cursor:pointer;">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:var(--state-warning-bg);">
+                <i data-lucide="file-clock" style="width:20px;height:20px;color:var(--state-warning);"></i>
+              </div>
               <div>
                 <div class="text-sm font-medium">操作日志</div>
                 <div class="text-xs" style="color:var(--color-text-tertiary);">审计历史操作</div>
@@ -300,6 +348,7 @@
       if (name === 'profile') loadProfile();
       if (name === 'security') loadSecurity();
       if (name === 'notification') loadNotificationPref();
+      lucide.createIcons();
     };
 
     // 个人信息
@@ -393,9 +442,14 @@
     // 安全
     function loadSecurity() {
       AuthAPI.getCurrentUser().then(function(data) {
-        document.getElementById('sec-status').textContent = data.status === 1 ? '● 正常' : '● 已禁用';
+        var statusEl = document.getElementById('sec-status');
+        if (data.status === 1) {
+          statusEl.innerHTML = '<span style="color:var(--state-success);">● 正常</span>';
+        } else {
+          statusEl.innerHTML = '<span style="color:var(--state-error);">● 已禁用</span>';
+        }
       }).catch(function() {
-        document.getElementById('sec-status').textContent = '--';
+        document.getElementById('sec-status').innerHTML = '<span style="color:var(--color-text-tertiary);">--</span>';
       });
     }
 

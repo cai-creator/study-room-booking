@@ -14,54 +14,80 @@
     }
   </style>
   <style>
+    .tab-btn { transition: all 0.15s ease; }
     .tab-btn.active { color: var(--brand-primary) !important; border-bottom: 2px solid var(--brand-primary); }
-    .notif-item { transition: all 0.15s; }
+    .notif-item { transition: all 0.15s ease; }
     .notif-item:hover { background: var(--color-bg-secondary); }
     .notif-item.unread { background: var(--brand-primary-lightest); }
+    .action-btn { transition: all 0.15s ease; }
+    .action-btn:hover { opacity: 0.8; }
+    .empty-icon { opacity: 0.3; }
   </style>
 </head>
 <body class="min-h-screen" style="background: var(--color-bg-secondary);">
   <div id="navbar-placeholder"></div>
 
   <main class="mx-auto px-4 sm:px-6 py-6" style="max-width: 900px;">
-    <div class="flex items-center gap-3 mb-6">
-      <button onclick="history.back()" class="flex items-center gap-1 text-sm transition-colors" style="color:var(--brand-primary);background:none;border:none;cursor:pointer;">
-        <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> 返回
+    <!-- 面包屑 -->
+    <div class="flex items-center gap-2 mb-6 text-sm">
+      <button onclick="history.back()" class="flex items-center gap-1 transition-colors" style="color:var(--color-text-secondary);background:none;border:none;cursor:pointer;">
+        <i data-lucide="arrow-left" style="width:14px;height:14px;"></i> 返回
       </button>
-      <span class="text-sm" style="color:var(--color-text-tertiary);">/</span>
-      <h1 class="text-xl font-bold">消息通知</h1>
+      <span style="color:var(--color-text-tertiary);">/</span>
+      <span style="color:var(--color-text-primary);">消息通知</span>
     </div>
 
-    <!-- Tab + 操作栏 -->
-    <div class="rounded-t-xl flex items-center justify-between px-4 py-3" style="background: var(--surface-card); border: var(--surface-card-border); border-bottom: 0;">
-      <div class="flex gap-4">
-        <button class="tab-btn active pb-2 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="all" onclick="switchTab('all')">全部</button>
-        <button class="tab-btn pb-2 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="unread" onclick="switchTab('unread')" style="color:var(--color-text-tertiary);">未读</button>
-        <button class="tab-btn pb-2 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="read" onclick="switchTab('read')" style="color:var(--color-text-tertiary);">已读</button>
+    <!-- 标题栏 -->
+    <div class="rounded-xl p-6 mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:var(--brand-primary-lighter);">
+            <i data-lucide="mail" style="width:20px;height:20px;color:var(--brand-primary);"></i>
+          </div>
+          <div>
+            <h1 class="text-lg font-semibold">消息通知</h1>
+            <p class="text-xs" style="color:var(--color-text-tertiary);">查看和管理你的所有消息</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="markAllRead()" class="action-btn text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5" style="color:var(--brand-primary);background:var(--brand-primary-lighter);border:none;cursor:pointer;">
+            <i data-lucide="check-check" style="width:14px;height:14px;"></i> 全部已读
+          </button>
+          <button onclick="loadNotifications()" class="action-btn text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5" style="color:var(--color-text-secondary);background:var(--color-bg-tertiary);border:none;cursor:pointer;">
+            <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> 刷新
+          </button>
+        </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="markAllRead()" class="text-xs px-3 py-1.5 rounded-md transition-colors flex items-center gap-1" style="color:var(--brand-primary);background:var(--brand-primary-lighter);border:none;cursor:pointer;">
-          <i data-lucide="check-check" style="width:13px;height:13px;"></i> 全部已读
-        </button>
-        <button onclick="loadNotifications()" class="text-xs px-3 py-1.5 rounded-md transition-colors flex items-center gap-1" style="color:var(--color-text-secondary);background:var(--color-bg-tertiary);border:none;cursor:pointer;">
-          <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> 刷新
-        </button>
+    </div>
+
+    <!-- Tab 栏 -->
+    <div class="rounded-xl mb-4" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+      <div class="flex px-4 pt-4 gap-6">
+        <button class="tab-btn active pb-3 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="all" onclick="switchTab('all')">全部</button>
+        <button class="tab-btn pb-3 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="unread" onclick="switchTab('unread')" style="color:var(--color-text-tertiary);">未读</button>
+        <button class="tab-btn pb-3 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="read" onclick="switchTab('read')" style="color:var(--color-text-tertiary);">已读</button>
       </div>
     </div>
 
     <!-- 通知列表 -->
-    <div id="notif-list" class="rounded-b-xl divide-y" style="background: var(--surface-card); border: var(--surface-card-border);">
-      <div class="py-12 text-center text-sm" style="color:var(--color-text-tertiary);">
-        <i data-lucide="bell" style="width:32px;height:32px;display:block;margin:0 auto 8px;opacity:0.3;"></i>
-        加载中...
+    <div id="notif-list" class="rounded-xl divide-y" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+      <div class="py-16 text-center">
+        <div class="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style="background: var(--color-bg-tertiary);">
+          <i data-lucide="loader-2" style="width:24px;height:24px;color:var(--color-text-tertiary);animation: spin 1s linear infinite;"></i>
+        </div>
+        <span class="text-sm" style="color:var(--color-text-tertiary);">加载中...</span>
       </div>
     </div>
 
     <!-- 分页 -->
-    <div id="notif-pagination" class="mt-4 flex items-center justify-center gap-2 hidden">
-      <button onclick="changePage(-1)" class="px-3 py-1.5 rounded-md text-sm transition-colors" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);">上一页</button>
-      <span id="page-info" class="text-sm" style="color:var(--color-text-secondary);">第 1 页 / 共 1 页</span>
-      <button onclick="changePage(1)" class="px-3 py-1.5 rounded-md text-sm transition-colors" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);">下一页</button>
+    <div id="notif-pagination" class="mt-4 flex items-center justify-center gap-3 hidden">
+      <button onclick="changePage(-1)" class="action-btn px-4 py-2 rounded-lg text-sm" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);cursor:pointer;">
+        <i data-lucide="chevron-left" style="width:16px;height:16px;"></i> 上一页
+      </button>
+      <span id="page-info" class="text-sm px-3" style="color:var(--color-text-secondary);">第 1 页 / 共 1 页</span>
+      <button onclick="changePage(1)" class="action-btn px-4 py-2 rounded-lg text-sm" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);cursor:pointer;">
+        下一页 <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
+      </button>
     </div>
   </main>
 
@@ -127,22 +153,24 @@
             if (window.initNavbarUI) initNavbarUI();
           } else {
             document.getElementById('notif-list').innerHTML =
-              '<div class="py-12 text-center text-sm" style="color:var(--state-error);">加载失败：' + (res.message || '未知错误') + '</div>';
+              '<div class="py-16 text-center"><div class="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style="background:var(--state-error-bg);"><i data-lucide="alert-circle" style="width:24px;height:24px;color:var(--state-error);"></i></div><span class="text-sm" style="color:var(--state-error);">加载失败：' + (res.message || '未知错误') + '</span></div>';
           }
         })
         .catch(function(err) {
           document.getElementById('notif-list').innerHTML =
-            '<div class="py-12 text-center text-sm" style="color:var(--state-error);">网络错误，请稍后重试</div>';
+            '<div class="py-16 text-center"><div class="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style="background:var(--state-error-bg);"><i data-lucide="wifi-off" style="width:24px;height:24px;color:var(--state-error);"></i></div><span class="text-sm" style="color:var(--state-error);">网络错误，请稍后重试</span></div>';
         });
     };
 
     function renderList(list) {
       var container = document.getElementById('notif-list');
       if (!list || list.length === 0) {
+        var emptyIcon = currentTab === 'unread' ? 'mail' : 'inbox';
         container.innerHTML =
-          '<div class="py-16 text-center text-sm" style="color:var(--color-text-tertiary);">' +
-          '<i data-lucide="inbox" style="width:40px;height:40px;display:block;margin:0 auto 8px;opacity:0.3;"></i>' +
-          '暂无消息</div>';
+          '<div class="py-16 text-center">' +
+          '<div class="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center" style="background:var(--color-bg-tertiary);">' +
+          '<i data-lucide="' + emptyIcon + '" style="width:28px;height:28px;color:var(--color-text-tertiary);" class="empty-icon"></i></div>' +
+          '<span class="text-sm" style="color:var(--color-text-tertiary);">暂无消息</span></div>';
         if (window.lucide) lucide.createIcons();
         return;
       }
@@ -153,21 +181,21 @@
         var time = formatTime(n.createdAt);
         html +=
           '<div class="notif-item' + unread + ' px-5 py-4 flex items-start gap-4 cursor-pointer" onclick="markAsRead(' + n.id + ')" data-id="' + n.id + '">' +
-          '  <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style="background:' + typeInfo.bg + ';color:' + typeInfo.color + ';">' +
-          '    <i data-lucide="' + typeInfo.icon + '" style="width:18px;height:18px;"></i>' +
+          '  <div class="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center" style="background:' + typeInfo.bg + ';color:' + typeInfo.color + ';">' +
+          '    <i data-lucide="' + typeInfo.icon + '" style="width:20px;height:20px;"></i>' +
           '  </div>' +
           '  <div class="flex-1 min-w-0">' +
           '    <div class="flex items-center gap-2 mb-1">' +
           '      <span class="text-sm font-semibold" style="color:var(--color-text-primary);">' + escapeHtml(n.title) + '</span>' +
           (n.readFlag === 0 ? '<span class="w-2 h-2 rounded-full" style="background:var(--state-error);"></span>' : '') +
           '    </div>' +
-          '    <p class="text-sm mb-1" style="color:var(--color-text-secondary);">' + escapeHtml(n.content) + '</p>' +
+          '    <p class="text-sm mb-1.5 line-clamp-2" style="color:var(--color-text-secondary);">' + escapeHtml(n.content) + '</p>' +
           '    <span class="text-xs" style="color:var(--color-text-tertiary);">' + time + '</span>' +
           '  </div>' +
           (n.readFlag === 1
-            ? '<button onclick="event.stopPropagation();deleteNotification(' + n.id + ')" class="text-xs px-2 py-1 rounded transition-colors" style="color:var(--color-text-tertiary);background:transparent;border:none;cursor:pointer;" title="删除">' +
-              '<i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>'
-            : '<button onclick="event.stopPropagation();markAsRead(' + n.id + ')" class="text-xs px-2 py-1 rounded transition-colors" style="color:var(--brand-primary);background:var(--brand-primary-lighter);border:none;cursor:pointer;" title="标记已读">' +
+            ? '<button onclick="event.stopPropagation();deleteNotification(' + n.id + ')" class="action-btn text-xs p-2 rounded-lg" style="color:var(--color-text-tertiary);background:transparent;border:none;cursor:pointer;" title="删除">' +
+              '<i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>'
+            : '<button onclick="event.stopPropagation();markAsRead(' + n.id + ')" class="action-btn text-xs px-3 py-1.5 rounded-lg" style="color:var(--brand-primary);background:var(--brand-primary-lighter);border:none;cursor:pointer;" title="标记已读">' +
               '<i data-lucide="check" style="width:14px;height:14px;"></i></button>') +
           '</div>';
       });
@@ -212,6 +240,7 @@
       if (totalPages <= 1) { pag.classList.add('hidden'); return; }
       pag.classList.remove('hidden');
       document.getElementById('page-info').textContent = '第 ' + currentPage + ' 页 / 共 ' + totalPages + ' 页';
+      lucide.createIcons();
     }
 
     window.changePage = function(delta) {
@@ -263,7 +292,7 @@
         });
     };
 
-    // ===== WebSocket 实时接收 =====
+    // WebSocket 实时接收
     function initWebSocket() {
       try {
         var baseUrl = (AppConfig.apiBaseUrl || 'http://localhost:8081/api').replace(/\/api$/, '');
