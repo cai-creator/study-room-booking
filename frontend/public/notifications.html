@@ -1,100 +1,247 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="light">
+<html lang="zh-CN" class="light" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>消息通知 - 智约自习</title>
-  <link rel="stylesheet" href="colors_and_type.css">
+  <style id="theme-vars">
+:root {
+  --brand-primary: #0E7C6B;
+  --brand-primary-lighter: #D6F0EC;
+  --brand-primary-lightest: #EDF9F7;
+  --brand-primary-dark: #095E52;
+  --brand-background: #F7F8FA;
+  --brand-foreground: #1A1D23;
+  --brand-card: #FFFFFF;
+  --brand-muted: #F0F1F5;
+  --brand-radius-sm: 4px;
+  --brand-radius-md: 8px;
+  --brand-radius-lg: 12px;
+  --color-bg: #F7F8FA;
+  --color-bg-secondary: #F0F1F5;
+  --color-bg-tertiary: #E8E9ED;
+  --color-text-primary: #1A1D23;
+  --color-text-secondary: #5F6470;
+  --color-text-tertiary: #9399A5;
+  --color-border: #E2E4E9;
+  --surface-card: #FFFFFF;
+  --surface-card-border: 1px solid var(--color-border);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --state-success: #16A34A;
+  --state-success-bg: #DCFCE7;
+  --state-warning: #D97706;
+  --state-warning-bg: #FEF3C7;
+  --state-info: #2563EB;
+  --state-info-bg: #DBEAFE;
+  --state-error: #DC2626;
+  --state-error-bg: #FEE2E2;
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+}
+.dark {
+  --brand-background: #0F1117;
+  --brand-foreground: #EDEEF0;
+  --brand-card: #1E2028;
+  --brand-muted: #1A1D26;
+  --color-bg: #0F1117;
+  --color-bg-secondary: #1A1D26;
+  --color-bg-tertiary: #252830;
+  --color-text-primary: #EDEEF0;
+  --color-text-secondary: #A0A4AE;
+  --color-text-tertiary: #6B7080;
+  --color-border: #2D3039;
+  --surface-card: #1E2028;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --brand-primary-lighter: #0D3B33;
+  --brand-primary-lightest: #0A2A24;
+  --state-success-bg: #052E16;
+  --state-warning-bg: #451A03;
+  --state-info-bg: #172554;
+  --state-error-bg: #450A0A;
+}
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
-  <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
   <style type="text/tailwindcss">
-    @theme inline { --color-primary: var(--brand-primary); }
-    @layer base {
-      body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); }
-    }
+  @theme inline {
+    --color-background: var(--brand-background);
+    --color-foreground: var(--brand-foreground);
+    --color-card: var(--brand-card);
+    --color-primary: var(--brand-primary);
+    --color-muted: var(--brand-muted);
+    --color-border: var(--color-border);
+    --radius-sm: var(--brand-radius-sm);
+    --radius-md: var(--brand-radius-md);
+    --radius-lg: var(--brand-radius-lg);
+  }
+  @layer base {
+    body { background: var(--brand-background); color: var(--brand-foreground); font-family: var(--font-family); }
+  }
   </style>
   <style>
-    .tab-btn { transition: all 0.15s ease; }
-    .tab-btn.active { color: var(--brand-primary) !important; border-bottom: 2px solid var(--brand-primary); }
+    .tab-btn { transition: all 0.15s ease; border: none; background: transparent; cursor: pointer; padding-bottom: 12px; padding-top: 12px; font-size: 14px; font-weight: 500; white-space: nowrap; }
+    .tab-btn.active { color: var(--brand-primary); border-bottom: 2px solid var(--brand-primary); }
+    .tab-btn:not(.active) { color: var(--color-text-tertiary); border-bottom: 2px solid transparent; }
     .notif-item { transition: all 0.15s ease; }
     .notif-item:hover { background: var(--color-bg-secondary); }
     .notif-item.unread { background: var(--brand-primary-lightest); }
-    .action-btn { transition: all 0.15s ease; }
+    .action-btn { transition: all 0.15s ease; cursor: pointer; }
     .action-btn:hover { opacity: 0.8; }
     .empty-icon { opacity: 0.3; }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
-<body class="min-h-screen" style="background: var(--color-bg-secondary);">
-  <div id="navbar-placeholder"></div>
+<body class="min-h-screen font-sans antialiased">
 
+  <!-- ===== Top Navigation Bar ===== -->
+  <header class="w-full" style="background: var(--surface-card); border-bottom: 1px solid var(--color-border);">
+    <div class="mx-auto flex items-center justify-between px-4 sm:px-6 h-14" style="max-width: 1280px;">
+      <a href="#" class="flex items-center gap-2 shrink-0" style="text-decoration: none;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--brand-primary);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <span class="text-base font-semibold" style="color: var(--color-text-primary);">智约自习</span>
+      </a>
+      <nav class="hidden lg:flex items-center gap-1">
+        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">首页</a>
+        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">自习室</a>
+        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">我的预约</a>
+        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">实时看板</a>
+        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">数据报表</a>
+        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">空间管理</a>
+        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">黑名单管理</a>
+        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">用户权限</a>
+      </nav>
+      <div class="flex items-center gap-2 shrink-0">
+        <div id="nav-avatar" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium" style="background: var(--brand-primary); color: white;"></div>
+        <span id="nav-name" class="hidden sm:block text-sm" style="color: var(--color-text-primary);"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Main Content ===== -->
   <main class="mx-auto px-4 sm:px-6 py-6" style="max-width: 900px;">
-    <!-- 面包屑 -->
-    <div class="flex items-center gap-2 mb-6 text-sm">
-      <button onclick="history.back()" class="flex items-center gap-1 transition-colors" style="color:var(--color-text-secondary);background:none;border:none;cursor:pointer;">
-        <i data-lucide="arrow-left" style="width:14px;height:14px;"></i> 返回
+
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 mb-6">
+      <button onclick="history.back()" class="flex items-center gap-1 text-sm whitespace-nowrap" style="color: var(--brand-primary); background: none; border: none; cursor: pointer;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        返回
       </button>
-      <span style="color:var(--color-text-tertiary);">/</span>
-      <span style="color:var(--color-text-primary);">消息通知</span>
+      <span class="text-sm" style="color: var(--color-text-tertiary);">/</span>
+      <h1 class="text-lg font-semibold" style="color: var(--color-text-primary);">消息通知</h1>
     </div>
 
-    <!-- 标题栏 -->
-    <div class="rounded-xl p-6 mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
-      <div class="flex items-center justify-between flex-wrap gap-4">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:var(--brand-primary-lighter);">
-            <i data-lucide="mail" style="width:20px;height:20px;color:var(--brand-primary);"></i>
-          </div>
-          <div>
-            <h1 class="text-lg font-semibold">消息通知</h1>
-            <p class="text-xs" style="color:var(--color-text-tertiary);">查看和管理你的所有消息</p>
-          </div>
+    <!-- Summary Card -->
+    <div class="rounded-xl p-5 sm:p-6 mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+      <div class="flex items-start sm:items-center gap-4">
+        <div class="w-16 h-16 rounded-full flex items-center justify-center shrink-0" style="background: var(--brand-primary); color: white;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="markAllRead()" class="action-btn text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5" style="color:var(--brand-primary);background:var(--brand-primary-lighter);border:none;cursor:pointer;">
-            <i data-lucide="check-check" style="width:14px;height:14px;"></i> 全部已读
-          </button>
-          <button onclick="loadNotifications()" class="action-btn text-xs px-3 py-1.5 rounded-md flex items-center gap-1.5" style="color:var(--color-text-secondary);background:var(--color-bg-tertiary);border:none;cursor:pointer;">
-            <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> 刷新
-          </button>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap mb-1">
+            <span class="text-lg font-semibold" style="color: var(--color-text-primary);">消息中心</span>
+            <span id="summary-unread-badge" class="text-xs px-2 py-0.5 rounded-lg whitespace-nowrap" style="background: var(--state-error-bg); color: var(--state-error);">0 条未读</span>
+          </div>
+          <p class="text-sm" style="color: var(--color-text-tertiary);">查看和管理你的所有消息通知</p>
+          <div class="flex items-center gap-4 mt-3 flex-wrap">
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">总计 <strong id="summary-total" class="font-semibold" style="color: var(--color-text-primary);">--</strong></span>
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">本月 <strong id="summary-month" class="font-semibold" style="color: var(--color-text-primary);">--</strong></span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Tab 栏 -->
-    <div class="rounded-xl mb-4" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
-      <div class="flex px-4 pt-4 gap-6">
-        <button class="tab-btn active pb-3 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="all" onclick="switchTab('all')">全部</button>
-        <button class="tab-btn pb-3 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="unread" onclick="switchTab('unread')" style="color:var(--color-text-tertiary);">未读</button>
-        <button class="tab-btn pb-3 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="read" onclick="switchTab('read')" style="color:var(--color-text-tertiary);">已读</button>
-      </div>
+    <!-- Action Bar -->
+    <div class="flex items-center justify-end gap-2 mb-4 flex-wrap">
+      <button onclick="markAllRead()" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg action-btn" style="color: var(--brand-primary); background: var(--brand-primary-lighter); border: none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></svg>
+        全部已读
+      </button>
+      <button onclick="loadNotifications()" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg action-btn" style="color: var(--color-text-secondary); background: var(--color-bg-tertiary); border: 1px solid var(--color-border);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+        刷新
+      </button>
     </div>
 
-    <!-- 通知列表 -->
-    <div id="notif-list" class="rounded-xl divide-y" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+    <!-- Tab Bar -->
+    <div class="flex gap-6 mb-6 border-b" style="border-color: var(--color-border);">
+      <button class="tab-btn active flex items-center gap-1.5" data-tab="all" onclick="switchTab('all')">
+        全部
+        <span id="tab-badge-all" class="inline-flex items-center justify-center ml-1 w-5 h-5 text-xs rounded-full" style="background: var(--state-error); color: #fff;"></span>
+      </button>
+      <button class="tab-btn" data-tab="unread" onclick="switchTab('unread')">未读</button>
+      <button class="tab-btn" data-tab="read" onclick="switchTab('read')">已读</button>
+    </div>
+
+    <!-- Notification List -->
+    <div id="notif-list" class="rounded-xl overflow-hidden mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
       <div class="py-16 text-center">
         <div class="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style="background: var(--color-bg-tertiary);">
-          <i data-lucide="loader-2" style="width:24px;height:24px;color:var(--color-text-tertiary);animation: spin 1s linear infinite;"></i>
+          <svg class="spin" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
         </div>
-        <span class="text-sm" style="color:var(--color-text-tertiary);">加载中...</span>
+        <span class="text-sm" style="color: var(--color-text-tertiary);">加载中...</span>
       </div>
     </div>
 
-    <!-- 分页 -->
-    <div id="notif-pagination" class="mt-4 flex items-center justify-center gap-3 hidden">
-      <button onclick="changePage(-1)" class="action-btn px-4 py-2 rounded-lg text-sm" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);cursor:pointer;">
-        <i data-lucide="chevron-left" style="width:16px;height:16px;"></i> 上一页
-      </button>
-      <span id="page-info" class="text-sm px-3" style="color:var(--color-text-secondary);">第 1 页 / 共 1 页</span>
-      <button onclick="changePage(1)" class="action-btn px-4 py-2 rounded-lg text-sm" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);cursor:pointer;">
-        下一页 <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
-      </button>
+    <!-- Pagination -->
+    <div id="notif-pagination" class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 hidden">
+      <span id="page-info" class="text-xs whitespace-nowrap" style="color: var(--color-text-tertiary);">--</span>
+      <div class="flex items-center gap-1.5">
+        <button onclick="changePage(-1)" class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="background: var(--surface-card); border: 1px solid var(--color-border); color: var(--color-text-primary); cursor: pointer;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          上一页
+        </button>
+        <button onclick="changePage(1)" class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="background: var(--surface-card); border: 1px solid var(--color-border); color: var(--color-text-primary); cursor: pointer;">
+          下一页
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
     </div>
+
+    <!-- Notification Settings Card -->
+    <div class="rounded-xl p-5 sm:p-6 mt-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+      <div class="flex items-center gap-2 mb-1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <h2 class="text-base font-semibold" style="color: var(--color-text-primary);">通知偏好</h2>
+      </div>
+      <p class="text-xs mb-5" style="color: var(--color-text-tertiary);">选择你希望接收的通知类型</p>
+      <div class="space-y-3">
+        <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
+          <input type="checkbox" id="pref-booking-reminder" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+          <div class="flex-1">
+            <div class="text-sm font-medium" style="color: var(--color-text-primary);">预约提醒</div>
+            <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">预约开始前15分钟提醒</div>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
+          <input type="checkbox" id="pref-checkin-reminder" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+          <div class="flex-1">
+            <div class="text-sm font-medium" style="color: var(--color-text-primary);">签到提醒</div>
+            <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">签到截止前提醒</div>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
+          <input type="checkbox" id="pref-system" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+          <div class="flex-1">
+            <div class="text-sm font-medium" style="color: var(--color-text-primary);">系统通知</div>
+            <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">系统公告和维护通知</div>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
+          <input type="checkbox" id="pref-blacklist" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+          <div class="flex-1">
+            <div class="text-sm font-medium" style="color: var(--color-text-primary);">黑名单预警</div>
+            <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">接近爽约次数上限时提醒</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
   </main>
 
   <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/request.js"></script>
-  <script src="js/navbar.js"></script>
 
   <script>
   (function() {
@@ -106,20 +253,18 @@
     var totalPages = 1;
     var ws = null;
 
-    var user = Utils.getUser();
-    var token = Utils.getToken();
+    var user = Utils.getUser ? Utils.getUser() : null;
+    var token = Utils.getToken ? Utils.getToken() : null;
     if (!token || !user) {
-      window.location.replace(AppConfig.loginUrl || (BasePath ? BasePath.public + '/login.html' : '/public/login.html'));
+      window.location.replace((window.AppConfig && AppConfig.loginUrl) || '/public/login.html');
       return;
     }
 
-    var isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
-    var navbarUrl = isAdmin ? '../admin/partials/navbar.html' : '../student/partials/navbar.html';
-    fetch(navbarUrl).then(function(r) { return r.text(); }).then(function(html) {
-      document.getElementById('navbar-placeholder').innerHTML = html;
-      if (window.initNavbarUI) initNavbarUI();
-      lucide.createIcons();
-    });
+    // 填充导航栏用户信息
+    var avatarEl = document.getElementById('nav-avatar');
+    var nameEl = document.getElementById('nav-name');
+    if (avatarEl) avatarEl.textContent = (user.realName || user.username || 'U').charAt(0);
+    if (nameEl) nameEl.textContent = user.realName || user.username || '';
 
     function getReadFlag() {
       if (currentTab === 'unread') return 0;
@@ -133,45 +278,47 @@
       document.querySelectorAll('.tab-btn').forEach(function(btn) {
         var isActive = btn.getAttribute('data-tab') === tab;
         btn.classList.toggle('active', isActive);
-        btn.style.color = isActive ? 'var(--brand-primary)' : 'var(--color-text-tertiary)';
+        if (isActive) btn.style.color = 'var(--brand-primary)'; else btn.style.color = '';
       });
       loadNotifications();
     };
 
     window.loadNotifications = function() {
       var readFlag = getReadFlag();
-      var url = (AppConfig.apiBaseUrl || '') + '/notifications?pageNum=' + currentPage + '&pageSize=' + pageSize;
+      var url = (window.AppConfig && AppConfig.apiBaseUrl || '') + '/notifications?pageNum=' + currentPage + '&pageSize=' + pageSize;
       if (readFlag !== null) url += '&readFlag=' + readFlag;
 
       fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
         .then(function(r) { return r.json(); })
         .then(function(res) {
           if (res && res.code === 200) {
-            renderList(res.data && res.data.records ? res.data.records : []);
+            var records = res.data && res.data.records ? res.data.records : [];
+            renderList(records);
             totalPages = (res.data && res.data.pages) || 1;
             updatePagination();
-            if (window.initNavbarUI) initNavbarUI();
+            updateSummary(records, res.data);
           } else {
-            document.getElementById('notif-list').innerHTML =
-              '<div class="py-16 text-center"><div class="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style="background:var(--state-error-bg);"><i data-lucide="alert-circle" style="width:24px;height:24px;color:var(--state-error);"></i></div><span class="text-sm" style="color:var(--state-error);">加载失败：' + (res.message || '未知错误') + '</span></div>';
+            document.getElementById('notif-list').innerHTML = errorHtml('加载失败：' + (res.message || '未知错误'));
           }
         })
-        .catch(function(err) {
-          document.getElementById('notif-list').innerHTML =
-            '<div class="py-16 text-center"><div class="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style="background:var(--state-error-bg);"><i data-lucide="wifi-off" style="width:24px;height:24px;color:var(--state-error);"></i></div><span class="text-sm" style="color:var(--state-error);">网络错误，请稍后重试</span></div>';
+        .catch(function() {
+          document.getElementById('notif-list').innerHTML = errorHtml('网络错误，请稍后重试');
         });
     };
+
+    function errorHtml(msg) {
+      return '<div class="py-16 text-center"><div class="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center" style="background:var(--state-error-bg);">' +
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--state-error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></div>' +
+        '<span class="text-sm" style="color:var(--state-error);">' + msg + '</span></div>';
+    }
 
     function renderList(list) {
       var container = document.getElementById('notif-list');
       if (!list || list.length === 0) {
-        var emptyIcon = currentTab === 'unread' ? 'mail' : 'inbox';
-        container.innerHTML =
-          '<div class="py-16 text-center">' +
-          '<div class="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center" style="background:var(--color-bg-tertiary);">' +
-          '<i data-lucide="' + emptyIcon + '" style="width:28px;height:28px;color:var(--color-text-tertiary);" class="empty-icon"></i></div>' +
-          '<span class="text-sm" style="color:var(--color-text-tertiary);">暂无消息</span></div>';
-        if (window.lucide) lucide.createIcons();
+        var emptyIcon = currentTab === 'unread'
+          ? '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>'
+          : '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-tertiary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>';
+        container.innerHTML = '<div class="py-16 text-center"><div class="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center" style="background:var(--color-bg-tertiary);">' + emptyIcon + '</div><span class="text-sm" style="color:var(--color-text-tertiary);">暂无消息</span></div>';
         return;
       }
       var html = '';
@@ -179,39 +326,49 @@
         var typeInfo = getTypeInfo(n.type);
         var unread = n.readFlag === 0 ? ' unread' : '';
         var time = formatTime(n.createdAt);
+        var actionBtn = n.readFlag === 1
+          ? '<button onclick="event.stopPropagation();deleteNotification(' + n.id + ')" class="action-btn p-2 rounded-lg" style="color:var(--color-text-tertiary);background:transparent;border:none;" title="删除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></button>'
+          : '<button onclick="event.stopPropagation();markAsRead(' + n.id + ')" class="action-btn flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg" style="color:var(--brand-primary);background:var(--brand-primary-lighter);border:none;" title="标记已读"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>';
         html +=
-          '<div class="notif-item' + unread + ' px-5 py-4 flex items-start gap-4 cursor-pointer" onclick="markAsRead(' + n.id + ')" data-id="' + n.id + '">' +
-          '  <div class="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center" style="background:' + typeInfo.bg + ';color:' + typeInfo.color + ';">' +
-          '    <i data-lucide="' + typeInfo.icon + '" style="width:20px;height:20px;"></i>' +
+          '<div class="notif-item' + unread + ' flex items-start gap-3 sm:gap-4 px-4 sm:px-5 py-4 cursor-pointer" onclick="markAsRead(' + n.id + ')" style="border-left: 3px solid ' + (n.readFlag === 0 ? 'var(--brand-primary)' : 'transparent') + ';">' +
+          '  <div class="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center" style="background:' + typeInfo.bg + ';">' +
+          '    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="' + typeInfo.color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + typeInfo.path + '</svg>' +
           '  </div>' +
           '  <div class="flex-1 min-w-0">' +
           '    <div class="flex items-center gap-2 mb-1">' +
           '      <span class="text-sm font-semibold" style="color:var(--color-text-primary);">' + escapeHtml(n.title) + '</span>' +
-          (n.readFlag === 0 ? '<span class="w-2 h-2 rounded-full" style="background:var(--state-error);"></span>' : '') +
+          (n.readFlag === 0 ? '<span class="shrink-0 w-2 h-2 rounded-full" style="background:var(--state-error);"></span>' : '') +
           '    </div>' +
-          '    <p class="text-sm mb-1.5 line-clamp-2" style="color:var(--color-text-secondary);">' + escapeHtml(n.content) + '</p>' +
-          '    <span class="text-xs" style="color:var(--color-text-tertiary);">' + time + '</span>' +
+          '    <p class="text-sm mb-1.5" style="color:var(--color-text-secondary);">' + escapeHtml(n.content) + '</p>' +
+          '    <span class="text-xs whitespace-nowrap" style="color:var(--color-text-tertiary);">' + time + '</span>' +
           '  </div>' +
-          (n.readFlag === 1
-            ? '<button onclick="event.stopPropagation();deleteNotification(' + n.id + ')" class="action-btn text-xs p-2 rounded-lg" style="color:var(--color-text-tertiary);background:transparent;border:none;cursor:pointer;" title="删除">' +
-              '<i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>'
-            : '<button onclick="event.stopPropagation();markAsRead(' + n.id + ')" class="action-btn text-xs px-3 py-1.5 rounded-lg" style="color:var(--brand-primary);background:var(--brand-primary-lighter);border:none;cursor:pointer;" title="标记已读">' +
-              '<i data-lucide="check" style="width:14px;height:14px;"></i></button>') +
-          '</div>';
+          '  <div class="shrink-0 flex items-center self-center">' + actionBtn + '</div>' +
+          '</div>' +
+          '<div style="border-top:1px solid var(--color-border);"></div>';
       });
+      // remove last divider
+      html = html.replace(/<div style="border-top:1px solid var\(--color-border\);"><\/div>$/, '');
       container.innerHTML = html;
-      if (window.lucide) lucide.createIcons();
     }
+
+    var SVG_PATHS = {
+      'calendar-clock': '<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/>',
+      'check-circle': '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',
+      'log-in': '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/>',
+      'info': '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+      'shield-alert': '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+      'bell': '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'
+    };
 
     function getTypeInfo(type) {
       var map = {
-        'BOOKING_REMINDER': { icon: 'calendar-clock', color: 'var(--brand-primary)', bg: 'var(--brand-primary-lighter)' },
-        'BOOKING_SUCCESS': { icon: 'check-circle', color: 'var(--state-success)', bg: 'var(--state-success-bg)' },
-        'CHECKIN_REMINDER': { icon: 'log-in', color: 'var(--state-warning)', bg: 'var(--state-warning-bg)' },
-        'SYSTEM_NOTICE': { icon: 'info', color: 'var(--state-info)', bg: 'var(--state-info-bg)' },
-        'BLACKLIST_WARN': { icon: 'shield-alert', color: 'var(--state-error)', bg: 'var(--state-error-bg)' }
+        'BOOKING_REMINDER': { color: 'var(--brand-primary)', bg: 'var(--brand-primary-lighter)', path: SVG_PATHS['calendar-clock'] },
+        'BOOKING_SUCCESS': { color: 'var(--state-success)', bg: 'var(--state-success-bg)', path: SVG_PATHS['check-circle'] },
+        'CHECKIN_REMINDER': { color: 'var(--state-warning)', bg: 'var(--state-warning-bg)', path: SVG_PATHS['log-in'] },
+        'SYSTEM_NOTICE': { color: 'var(--state-info)', bg: 'var(--state-info-bg)', path: SVG_PATHS['info'] },
+        'BLACKLIST_WARN': { color: 'var(--state-error)', bg: 'var(--state-error-bg)', path: SVG_PATHS['shield-alert'] }
       };
-      return map[type] || { icon: 'bell', color: 'var(--color-text-secondary)', bg: 'var(--color-bg-tertiary)' };
+      return map[type] || { color: 'var(--color-text-secondary)', bg: 'var(--color-bg-tertiary)', path: SVG_PATHS['bell'] };
     }
 
     function formatTime(timeStr) {
@@ -239,8 +396,32 @@
       var pag = document.getElementById('notif-pagination');
       if (totalPages <= 1) { pag.classList.add('hidden'); return; }
       pag.classList.remove('hidden');
-      document.getElementById('page-info').textContent = '第 ' + currentPage + ' 页 / 共 ' + totalPages + ' 页';
-      lucide.createIcons();
+      document.getElementById('page-info').textContent = '共 ' + totalPages + ' 页，第 ' + currentPage + ' 页';
+    }
+
+    function updateSummary(records, data) {
+      var total = data && data.total !== undefined ? data.total : (records ? records.length : 0);
+      var unreadBadge = document.getElementById('summary-unread-badge');
+      var totalEl = document.getElementById('summary-total');
+      var monthEl = document.getElementById('summary-month');
+      var tabBadge = document.getElementById('tab-badge-all');
+
+      // 获取未读数
+      fetch((window.AppConfig && AppConfig.apiBaseUrl || '') + '/notifications/unread-count', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      }).then(function(r) { return r.json(); }).then(function(res) {
+        if (res && res.code === 200 && res.data) {
+          var unread = res.data.unreadCount || 0;
+          if (unreadBadge) unreadBadge.textContent = unread + ' 条未读';
+          if (tabBadge) {
+            if (unread > 0) { tabBadge.textContent = unread > 99 ? '99+' : unread; tabBadge.style.display = 'inline-flex'; }
+            else { tabBadge.style.display = 'none'; }
+          }
+        }
+      }).catch(function() {});
+
+      if (totalEl) totalEl.textContent = total + ' 条';
+      if (monthEl) monthEl.textContent = records ? records.length + ' 条' : '--';
     }
 
     window.changePage = function(delta) {
@@ -251,72 +432,63 @@
     };
 
     window.markAsRead = function(id) {
-      fetch((AppConfig.apiBaseUrl || '') + '/notifications/' + id + '/read', {
+      fetch((window.AppConfig && AppConfig.apiBaseUrl || '') + '/notifications/' + id + '/read', {
         method: 'PUT',
         headers: { 'Authorization': 'Bearer ' + token }
       }).then(function(r) { return r.json(); })
         .then(function(res) {
-          if (res && res.code === 200) {
-            loadNotifications();
-          }
+          if (res && res.code === 200) loadNotifications();
         });
     };
 
     window.markAllRead = function() {
-      fetch((AppConfig.apiBaseUrl || '') + '/notifications/read-all', {
+      fetch((window.AppConfig && AppConfig.apiBaseUrl || '') + '/notifications/read-all', {
         method: 'PUT',
         headers: { 'Authorization': 'Bearer ' + token }
       }).then(function(r) { return r.json(); })
         .then(function(res) {
           if (res && res.code === 200) {
-            Utils.toast && Utils.toast('已全部标记为已读', 'success');
+            if (Utils.toast) Utils.toast('已全部标记为已读', 'success');
             loadNotifications();
           } else {
-            Utils.toast && Utils.toast(res.message || '操作失败', 'error');
+            if (Utils.toast) Utils.toast(res.message || '操作失败', 'error');
           }
         });
     };
 
     window.deleteNotification = function(id) {
       if (!confirm('确定删除该通知吗？')) return;
-      fetch((AppConfig.apiBaseUrl || '') + '/notifications/' + id, {
+      fetch((window.AppConfig && AppConfig.apiBaseUrl || '') + '/notifications/' + id, {
         method: 'DELETE',
         headers: { 'Authorization': 'Bearer ' + token }
       }).then(function(r) { return r.json(); })
         .then(function(res) {
-          if (res && res.code === 200) {
-            loadNotifications();
-          } else {
-            Utils.toast && Utils.toast(res.message || '删除失败', 'error');
-          }
+          if (res && res.code === 200) loadNotifications();
+          else if (Utils.toast) Utils.toast(res.message || '删除失败', 'error');
         });
     };
 
-    // WebSocket 实时接收
+    // WebSocket
     function initWebSocket() {
       try {
-        var baseUrl = (AppConfig.apiBaseUrl || 'http://localhost:8081/api').replace(/\/api$/, '');
+        var baseUrl = (window.AppConfig && AppConfig.apiBaseUrl || 'http://localhost:8081/api').replace(/\/api$/, '');
         var wsUrl = baseUrl.replace(/^http/, 'ws') + '/ws/notifications?token=' + encodeURIComponent(token);
         ws = new WebSocket(wsUrl);
         ws.onmessage = function(evt) {
           try {
             var msg = JSON.parse(evt.data);
             if (msg.type === 'NOTIFICATION') {
-              Utils.toast && Utils.toast('收到新消息：' + msg.title, 'info');
+              if (Utils.toast) Utils.toast('收到新消息：' + msg.title, 'info');
               loadNotifications();
             }
-          } catch (e) { /* ignore */ }
+          } catch (e) {}
         };
         ws.onclose = function() { setTimeout(initWebSocket, 5000); };
-        ws.onerror = function() { /* ignore */ };
-      } catch (e) {
-        console.warn('WebSocket初始化失败', e);
-      }
+      } catch (e) { console.warn('WebSocket初始化失败', e); }
     }
 
     loadNotifications();
     initWebSocket();
-    lucide.createIcons();
   })();
   </script>
 </body>
