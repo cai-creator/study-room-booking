@@ -11,7 +11,7 @@ import com.studyroom.booking.modules.seat.mapper.NoShowRecordMapper;
 import com.studyroom.booking.modules.seat.mapper.ReservationMapper;
 import com.studyroom.booking.modules.seat.mapper.SeatControlMapper;
 import com.studyroom.booking.modules.space.entity.StudyRoom;
-import com.studyroom.booking.modules.space.mapper.RoomMapper;
+import com.studyroom.booking.modules.space.mapper.StudyRoomMapper;
 import com.studyroom.booking.modules.user.entity.User;
 import com.studyroom.booking.modules.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class NoShowRecordService {
     private final NoShowRecordMapper noShowRecordMapper;
     private final ReservationMapper reservationMapper;
     private final SeatControlMapper seatMapper;
-    private final RoomMapper roomMapper;
+    private final StudyRoomMapper studyRoomMapper;
     private final UserMapper userMapper;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -119,7 +119,7 @@ public class NoShowRecordService {
                             .collect(Collectors.toList());
 
                     if (!roomIds.isEmpty()) {
-                        List<StudyRoom> rooms = roomMapper.selectBatchIds(roomIds);
+                        List<StudyRoom> rooms = studyRoomMapper.selectBatchIds(roomIds);
                         roomMap = rooms.stream()
                                 .collect(Collectors.toMap(StudyRoom::getId, r -> r, (a, b) -> a));
                     }
