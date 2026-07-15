@@ -11,6 +11,8 @@ import com.studyroom.booking.modules.seat.entity.Blacklist;
 import com.studyroom.booking.modules.seat.entity.NoShowRecord;
 import com.studyroom.booking.modules.seat.mapper.BlacklistMapper;
 import com.studyroom.booking.modules.seat.mapper.NoShowRecordMapper;
+import com.studyroom.booking.modules.user.entity.User;
+import com.studyroom.booking.modules.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -36,6 +41,7 @@ public class BlacklistService {
     private final BlacklistMapper blacklistMapper;
     private final NoShowRecordMapper noShowRecordMapper;
     private final NotificationService notificationService;
+    private final UserMapper userMapper;
 
     /** 黑名单爽约阈值（7天内），默认3次 */
     @Value("${booking.rules.blacklist-threshold:3}")
@@ -74,10 +80,28 @@ public class BlacklistService {
 
         Page<Blacklist> blacklistPage = blacklistMapper.selectPage(page, wrapper);
 
+        List<Blacklist> records = blacklistPage.getRecords();
+        Map<Long, User> userMap = Collections.emptyMap();
+
+        if (!records.isEmpty()) {
+            List<Long> userIds = records.stream()
+                    .map(Blacklist::getUserId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            if (!userIds.isEmpty()) {
+                List<User> users = userMapper.selectBatchIds(userIds);
+                userMap = users.stream()
+                        .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
+            }
+        }
+
         // 转换为VO
         Page<BlacklistVO> voPage = new Page<>(blacklistPage.getCurrent(), blacklistPage.getSize(), blacklistPage.getTotal());
-        List<BlacklistVO> voList = blacklistPage.getRecords().stream()
-                .map(this::convertToVO)
+        final Map<Long, User> finalUserMap = userMap;
+        List<BlacklistVO> voList = records.stream()
+                .map(blacklist -> convertToVO(blacklist, finalUserMap))
                 .collect(Collectors.toList());
         voPage.setRecords(voList);
 
@@ -92,7 +116,14 @@ public class BlacklistService {
         if (blacklist == null) {
             throw new BusinessException(ResultCode.BLACKLIST_NOT_FOUND);
         }
-        return convertToVO(blacklist);
+        Map<Long, User> userMap = Collections.emptyMap();
+        if (blacklist.getUserId() != null) {
+            User user = userMapper.selectById(blacklist.getUserId());
+            if (user != null) {
+                userMap = Collections.singletonMap(user.getId(), user);
+            }
+        }
+        return convertToVO(blacklist, userMap);
     }
 
     /**
@@ -113,7 +144,14 @@ public class BlacklistService {
             return null;
         }
 
-        return convertToVO(blacklist);
+        Map<Long, User> userMap = Collections.emptyMap();
+        if (blacklist.getUserId() != null) {
+            User user = userMapper.selectById(blacklist.getUserId());
+            if (user != null) {
+                userMap = Collections.singletonMap(user.getId(), user);
+            }
+        }
+        return convertToVO(blacklist, userMap);
     }
 
     // ===================== 手动管理 =====================
@@ -163,7 +201,12 @@ public class BlacklistService {
             log.warn("发送加入黑名单通知失败，userId={}", userId, e);
         }
 
-        return convertToVO(blacklist);
+        Map<Long, User> userMap = Collections.emptyMap();
+        User user = userMapper.selectById(userId);
+        if (user != null) {
+            userMap = Collections.singletonMap(user.getId(), user);
+        }
+        return convertToVO(blacklist, userMap);
     }
 
     /**
@@ -308,7 +351,7 @@ public class BlacklistService {
 
     // ===================== 辅助方法 =====================
 
-    private BlacklistVO convertToVO(Blacklist blacklist) {
+    private BlacklistVO convertToVO(Blacklist blacklist, Map<Long, User> userMap) {
         BlacklistVO vo = new BlacklistVO();
         vo.setId(blacklist.getId());
         vo.setUserId(blacklist.getUserId());
@@ -318,6 +361,16 @@ public class BlacklistService {
         vo.setEndTime(blacklist.getEndTime() != null ? blacklist.getEndTime().format(FORMATTER) : null);
         vo.setStatus(blacklist.getStatus());
         vo.setCreatedAt(blacklist.getCreatedAt() != null ? blacklist.getCreatedAt().format(FORMATTER) : null);
+
+        // 填充用户信息
+        if (blacklist.getUserId() != null && userMap != null) {
+            User user = userMap.get(blacklist.getUserId());
+            if (user != null) {
+                vo.setUsername(user.getUsername());
+                vo.setRealName(user.getRealName());
+            }
+        }
+
         return vo;
     }
 }

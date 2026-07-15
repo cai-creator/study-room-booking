@@ -10,6 +10,10 @@ import com.studyroom.booking.modules.seat.entity.SeatControl;
 import com.studyroom.booking.modules.seat.mapper.NoShowRecordMapper;
 import com.studyroom.booking.modules.seat.mapper.ReservationMapper;
 import com.studyroom.booking.modules.seat.mapper.SeatControlMapper;
+import com.studyroom.booking.modules.space.entity.StudyRoom;
+import com.studyroom.booking.modules.space.mapper.RoomMapper;
+import com.studyroom.booking.modules.user.entity.User;
+import com.studyroom.booking.modules.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +37,8 @@ public class NoShowRecordService {
     private final NoShowRecordMapper noShowRecordMapper;
     private final ReservationMapper reservationMapper;
     private final SeatControlMapper seatMapper;
+    private final RoomMapper roomMapper;
+    private final UserMapper userMapper;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final int MAX_PAGE_SIZE = 100;
@@ -68,8 +74,22 @@ public class NoShowRecordService {
         List<NoShowRecord> records = recordPage.getRecords();
         Map<Long, Reservation> reservationMap = Collections.emptyMap();
         Map<Long, SeatControl> seatMap = Collections.emptyMap();
+        Map<Long, StudyRoom> roomMap = Collections.emptyMap();
+        Map<Long, User> userMap = Collections.emptyMap();
 
         if (!records.isEmpty()) {
+            // 查询用户信息
+            List<Long> userIds = records.stream()
+                    .map(NoShowRecord::getUserId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (!userIds.isEmpty()) {
+                List<User> users = userMapper.selectBatchIds(userIds);
+                userMap = users.stream()
+                        .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
+            }
+
             List<Long> reservationIds = records.stream()
                     .map(NoShowRecord::getReservationId)
                     .filter(Objects::nonNull)
@@ -91,6 +111,18 @@ public class NoShowRecordService {
                     List<SeatControl> seats = seatMapper.selectBatchIds(seatIds);
                     seatMap = seats.stream()
                             .collect(Collectors.toMap(SeatControl::getId, s -> s, (a, b) -> a));
+
+                    List<Long> roomIds = seats.stream()
+                            .map(SeatControl::getRoomId)
+                            .filter(Objects::nonNull)
+                            .distinct()
+                            .collect(Collectors.toList());
+
+                    if (!roomIds.isEmpty()) {
+                        List<StudyRoom> rooms = roomMapper.selectBatchIds(roomIds);
+                        roomMap = rooms.stream()
+                                .collect(Collectors.toMap(StudyRoom::getId, r -> r, (a, b) -> a));
+                    }
                 }
             }
         }
@@ -99,8 +131,10 @@ public class NoShowRecordService {
         Page<NoShowRecordVO> voPage = new Page<>(recordPage.getCurrent(), recordPage.getSize(), recordPage.getTotal());
         final Map<Long, Reservation> finalReservationMap = reservationMap;
         final Map<Long, SeatControl> finalSeatMap = seatMap;
+        final Map<Long, StudyRoom> finalRoomMap = roomMap;
+        final Map<Long, User> finalUserMap = userMap;
         List<NoShowRecordVO> voList = records.stream()
-                .map(record -> convertToVO(record, finalReservationMap, finalSeatMap))
+                .map(record -> convertToVO(record, finalReservationMap, finalSeatMap, finalRoomMap, finalUserMap))
                 .collect(Collectors.toList());
         voPage.setRecords(voList);
 
@@ -154,7 +188,7 @@ public class NoShowRecordService {
 
     // ===================== 辅助方法 =====================
 
-    private NoShowRecordVO convertToVO(NoShowRecord record, Map<Long, Reservation> reservationMap, Map<Long, SeatControl> seatMap) {
+    private NoShowRecordVO convertToVO(NoShowRecord record, Map<Long, Reservation> reservationMap, Map<Long, SeatControl> seatMap, Map<Long, StudyRoom> roomMap, Map<Long, User> userMap) {
         NoShowRecordVO vo = new NoShowRecordVO();
         vo.setId(record.getId());
         vo.setUserId(record.getUserId());
@@ -163,12 +197,28 @@ public class NoShowRecordService {
         vo.setRecordDate(record.getRecordDate() != null ? record.getRecordDate().toString() : null);
         vo.setCreatedAt(record.getCreatedAt() != null ? record.getCreatedAt().format(FORMATTER) : null);
 
-        // 从批量查询的结果中获取预约和座位信息
+        // 填充用户信息
+        if (record.getUserId() != null && userMap != null) {
+            User user = userMap.get(record.getUserId());
+            if (user != null) {
+                vo.setUsername(user.getUsername());
+                vo.setRealName(user.getRealName());
+            }
+        }
+
+        // 从批量查询的结果中获取预约、座位和自习室信息
         Reservation reservation = reservationMap.get(record.getReservationId());
         if (reservation != null) {
+            vo.setStartTime(reservation.getStartTime() != null ? reservation.getStartTime().format(FORMATTER) : null);
+            vo.setEndTime(reservation.getEndTime() != null ? reservation.getEndTime().format(FORMATTER) : null);
+
             SeatControl seat = seatMap.get(reservation.getSeatId());
             if (seat != null) {
                 vo.setSeatCode(seat.getSeatCode());
+                StudyRoom room = roomMap.get(seat.getRoomId());
+                if (room != null) {
+                    vo.setRoomName(room.getName());
+                }
             }
         }
 

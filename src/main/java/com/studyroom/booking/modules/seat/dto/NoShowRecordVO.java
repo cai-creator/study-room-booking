@@ -33,6 +33,12 @@ public class NoShowRecordVO {
     @Schema(description = "自习室名称")
     private String roomName;
 
+    @Schema(description = "预约开始时间")
+    private String startTime;
+
+    @Schema(description = "预约结束时间")
+    private String endTime;
+
     @Schema(description = "爽约原因: NO_CHECKIN-未签到, TEMPORARY_LEAVE_TIMEOUT-暂离超时")
     private String reason;
 
