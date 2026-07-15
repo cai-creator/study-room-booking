@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人设置 - 智约自习</title>
+    <style id="theme-vars">
+/* ============================================
+   智约自习 - Design System Tokens
+   ============================================ */
+
+:root {
+  /* ---- Brand ---- */
+  --brand-primary: #0E7C6B;
+  --brand-primary-lighter: #D6F0EC;
+  --brand-primary-lightest: #EDF9F7;
+  --brand-primary-dark: #095E52;
+
+  /* ---- Semantic Mappings ---- */
+  --brand-background: #F7F8FA;
+  --brand-foreground: #1A1D23;
+  --brand-card: #FFFFFF;
+  --brand-muted: #F0F1F5;
+  --brand-radius-sm: 4px;
+  --brand-radius-md: 8px;
+  --brand-radius-lg: 12px;
+
+  /* ---- Neutral Palette ---- */
+  --color-bg: #F7F8FA;
+  --color-bg-secondary: #F0F1F5;
+  --color-bg-tertiary: #E8E9ED;
+
+  --color-text-primary: #1A1D23;
+  --color-text-secondary: #5F6470;
+  --color-text-tertiary: #9399A5;
+
+  --color-border: #E2E4E9;
+
+  /* ---- Surfaces ---- */
+  --surface-card: #FFFFFF;
+  --surface-card-border: 1px solid var(--color-border);
+
+  /* ---- Shadows ---- */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+
+  /* ---- State Colors ---- */
+  --state-success: #16A34A;
+  --state-success-bg: #DCFCE7;
+
+  --state-warning: #D97706;
+  --state-warning-bg: #FEF3C7;
+
+  --state-info: #2563EB;
+  --state-info-bg: #DBEAFE;
+
+  --state-error: #DC2626;
+  --state-error-bg: #FEE2E2;
+
+  /* ---- Typography ---- */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ---- Dark mode ---- */
+.dark {
+  --brand-background: #0F1117;
+  --brand-foreground: #EDEEF0;
+  --brand-card: #1E2028;
+  --brand-muted: #1A1D26;
+
+  --color-bg: #0F1117;
+  --color-bg-secondary: #1A1D26;
+  --color-bg-tertiary: #252830;
+
+  --color-text-primary: #EDEEF0;
+  --color-text-secondary: #A0A4AE;
+  --color-text-tertiary: #6B7080;
+
+  --color-border: #2D3039;
+
+  --surface-card: #1E2028;
+  --surface-card-border: 1px solid var(--color-border);
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+
+  --brand-primary-lighter: #0D3B33;
+  --brand-primary-lightest: #0A2A24;
+
+  --state-success-bg: #052E16;
+  --state-warning-bg: #451A03;
+  --state-info-bg: #172554;
+  --state-error-bg: #450A0A;
+}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--brand-background);
+    --color-foreground: var(--brand-foreground);
+    --color-card: var(--brand-card);
+    --color-primary: var(--brand-primary);
+    --color-muted: var(--brand-muted);
+    --color-border: var(--color-border);
+    --radius-sm: var(--brand-radius-sm);
+    --radius-md: var(--brand-radius-md);
+    --radius-lg: var(--brand-radius-lg);
+  }
+  @layer base {
+    body { background: var(--brand-background); color: var(--brand-foreground); font-family: var(--font-family); }
+  }
+    </style>
+    <style>
+      .tab-btn { transition: all 0.15s ease; border: none; background: transparent; cursor: pointer; padding-bottom: 12px; padding-top: 12px; font-size: 14px; font-weight: 500; white-space: nowrap; }
+      .tab-btn.active { color: var(--brand-primary); border-bottom: 2px solid var(--brand-primary); }
+      .tab-btn:not(.active) { color: var(--color-text-tertiary); border-bottom: 2px solid transparent; }
+      .pwd-rule.met { background: var(--state-success-bg) !important; color: var(--state-success) !important; }
+      .form-input { transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+      .form-input:focus { border-color: var(--brand-primary); outline: none; box-shadow: 0 0 0 3px rgba(14, 124, 107, 0.1); }
+      .btn-primary { transition: all 0.15s ease; }
+      .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+      .card-item { transition: all 0.15s ease; }
+      .card-item:hover { background: var(--color-bg-tertiary); }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+
+  <!-- ===== Top Navigation Bar ===== -->
+  <header class="w-full" style="background: var(--color-bg); border-bottom: 1px solid var(--color-border);">
+    <div class="mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14" style="max-width: 1280px;">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2 shrink-0" style="text-decoration: none;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--brand-primary);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <span class="text-base font-semibold" style="color: var(--color-text-primary);">智约自习</span>
+      </a>
+      <!-- Nav Links -->
+      <nav class="hidden md:flex items-center gap-1">
+        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">首页</a>
+        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">自习室</a>
+        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">我的预约</a>
+        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">实时看板</a>
+        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">数据报表</a>
+        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">空间管理</a>
+        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">黑名单管理</a>
+        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">用户权限</a>
+      </nav>
+      <!-- User Avatar -->
+      <div class="flex items-center gap-2 shrink-0">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium" style="background: var(--brand-primary); color: white;">张</div>
+        <span class="hidden sm:block text-sm" style="color: var(--color-text-primary);">张明远</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Main Content ===== -->
+  <main class="mx-auto px-4 sm:px-6 py-6" style="max-width: 800px;">
+
+    <!-- Breadcrumb / Page Header -->
+    <div class="flex items-center gap-2 mb-6">
+      <a href="#" class="flex items-center gap-1 text-sm whitespace-nowrap" style="color: var(--brand-primary); text-decoration: none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        返回
+      </a>
+      <span class="text-sm" style="color: var(--color-text-tertiary);">/</span>
+      <h1 class="text-lg font-semibold" style="color: var(--color-text-primary);">个人设置</h1>
+    </div>
+
+    <!-- ===== User Profile Card ===== -->
+    <div class="rounded-xl p-5 sm:p-6 mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+      <div class="flex items-start sm:items-center gap-4">
+        <div class="w-16 h-16 rounded-full flex items-center justify-center text-xl font-semibold shrink-0" style="background: var(--brand-primary); color: white;">张</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap mb-1">
+            <span class="text-lg font-semibold" style="color: var(--color-text-primary);">张明远</span>
+            <span class="text-xs px-2 py-0.5 rounded-lg whitespace-nowrap" style="background: var(--brand-primary-lighter); color: var(--brand-primary);">学生</span>
+            <span class="text-xs px-2 py-0.5 rounded-lg whitespace-nowrap" style="background: var(--state-success-bg); color: var(--state-success);">正常</span>
+          </div>
+          <p class="text-sm" style="color: var(--color-text-tertiary);">学号: 2024001001</p>
+          <div class="flex items-center gap-4 mt-3 flex-wrap">
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">累计预约 <strong class="font-semibold" style="color: var(--color-text-primary);">47次</strong></span>
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">本月爽约 <strong class="font-semibold" style="color: var(--color-text-primary);">0次</strong></span>
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">信用评分 <strong class="font-semibold" style="color: var(--state-success);">良好</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Tab Bar ===== -->
+    <div class="flex gap-6 mb-6 border-b" style="border-color: var(--color-border);">
+      <button class="tab-btn active flex items-center gap-1.5" data-tab="profile">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        个人信息
+      </button>
+      <button class="tab-btn flex items-center gap-1.5" data-tab="password">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        修改密码
+      </button>
+      <button class="tab-btn flex items-center gap-1.5" data-tab="notification">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        通知设置
+      </button>
+    </div>
+
+    <!-- ===== Personal Info Form Card ===== -->
+    <div id="panel-profile" class="rounded-xl p-5 sm:p-6 mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+      <!-- Success Message -->
+      <div class="flex items-center gap-2 mb-5 px-3 py-2 rounded-lg" style="background: var(--state-success-bg);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--state-success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span class="text-xs" style="color: var(--state-success);">个人信息已更新</span>
+      </div>
+
+      <!-- Row 1: Username + Role -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">用户名 / 学号</label>
+          <input type="text" value="2024001001" readonly class="form-input w-full px-3 py-2.5 rounded-lg text-sm" style="border: 1px solid var(--color-border); background: var(--color-bg-secondary); color: var(--color-text-tertiary);">
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">角色</label>
+          <input type="text" value="学生" readonly class="form-input w-full px-3 py-2.5 rounded-lg text-sm" style="border: 1px solid var(--color-border); background: var(--color-bg-secondary); color: var(--color-text-tertiary);">
+        </div>
+      </div>
+
+      <!-- Row 2: Real Name -->
+      <div class="mb-4">
+        <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">真实姓名 <span style="color: var(--state-error);">*</span></label>
+        <input type="text" value="张明远" class="form-input w-full px-3 py-2.5 rounded-lg text-sm" style="border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-primary);">
+      </div>
+
+      <!-- Row 3: Email + Phone -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">邮箱</label>
+          <input type="email" value="zhangmy@stu.edu.cn" class="form-input w-full px-3 py-2.5 rounded-lg text-sm" style="border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-primary);">
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">手机号</label>
+          <input type="tel" value="138****5678" class="form-input w-full px-3 py-2.5 rounded-lg text-sm" style="border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-primary);">
+        </div>
+      </div>
+
+      <!-- Row 4: Department -->
+      <div class="mb-6">
+        <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">院系</label>
+        <input type="text" value="计算机科学与技术学院" readonly class="form-input w-full px-3 py-2.5 rounded-lg text-sm" style="border: 1px solid var(--color-border); background: var(--color-bg-secondary); color: var(--color-text-tertiary);">
+      </div>
+
+      <!-- Save Button -->
+      <div class="flex items-center justify-end">
+        <button class="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium btn-primary" style="background: var(--brand-primary); color: white; border: none; cursor: pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          保存修改
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== Change Password Card ===== -->
+    <div id="panel-password" class="rounded-xl p-5 sm:p-6 mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+      <div class="flex items-center gap-2 mb-1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <h2 class="text-base font-semibold" style="color: var(--color-text-primary);">修改密码</h2>
+      </div>
+      <p class="text-xs mb-5" style="color: var(--color-text-tertiary);">至少6位，必须包含大小写字母和数字</p>
+
+      <div class="mx-auto" style="max-width: 480px;">
+        <div class="mb-4">
+          <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">当前密码 <span style="color: var(--state-error);">*</span></label>
+          <input type="password" placeholder="请输入当前密码" class="form-input w-full px-3 py-2.5 rounded-lg text-sm" style="border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-primary);">
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">新密码 <span style="color: var(--state-error);">*</span></label>
+          <input type="password" placeholder="请输入新密码" class="form-input w-full px-3 py-2.5 rounded-lg text-sm" style="border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-primary);">
+          <div class="mt-3 flex flex-wrap gap-2 mb-2">
+            <span class="pwd-rule text-xs px-2 py-0.5 rounded whitespace-nowrap" data-rule="length" style="background: var(--color-bg-tertiary); color: var(--color-text-tertiary);">≥6位</span>
+            <span class="pwd-rule text-xs px-2 py-0.5 rounded whitespace-nowrap" data-rule="upper" style="background: var(--color-bg-tertiary); color: var(--color-text-tertiary);">大写字母</span>
+            <span class="pwd-rule text-xs px-2 py-0.5 rounded whitespace-nowrap" data-rule="lower" style="background: var(--color-bg-tertiary); color: var(--color-text-tertiary);">小写字母</span>
+            <span class="pwd-rule text-xs px-2 py-0.5 rounded whitespace-nowrap" data-rule="digit" style="background: var(--color-bg-tertiary); color: var(--color-text-tertiary);">数字</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <div class="h-1 rounded-full flex-1" style="background: var(--color-bg-tertiary);"></div>
+            <div class="h-1 rounded-full flex-1" style="background: var(--color-bg-tertiary);"></div>
+            <div class="h-1 rounded-full flex-1" style="background: var(--color-bg-tertiary);"></div>
+            <div class="h-1 rounded-full flex-1" style="background: var(--color-bg-tertiary);"></div>
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-xs font-medium mb-1.5" style="color: var(--color-text-secondary);">确认新密码 <span style="color: var(--state-error);">*</span></label>
+          <input type="password" placeholder="请再次输入新密码" class="form-input w-full px-3 py-2.5 rounded-lg text-sm" style="border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-primary);">
+        </div>
+
+        <div class="flex items-center justify-end">
+          <button class="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium btn-primary" style="background: var(--brand-primary); color: white; border: none; cursor: pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            修改密码
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Notification Settings Card ===== -->
+    <div id="panel-notification" class="rounded-xl p-5 sm:p-6 mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+      <div class="flex items-center gap-2 mb-1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <h2 class="text-base font-semibold" style="color: var(--color-text-primary);">通知设置</h2>
+      </div>
+      <p class="text-xs mb-5" style="color: var(--color-text-tertiary);">选择你希望接收的通知类型</p>
+      <div class="space-y-3">
+        <label class="card-item flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
+          <input type="checkbox" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+          <div class="flex-1">
+            <div class="text-sm font-medium" style="color: var(--color-text-primary);">预约提醒</div>
+            <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">预约开始前15分钟提醒</div>
+          </div>
+        </label>
+        <label class="card-item flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
+          <input type="checkbox" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+          <div class="flex-1">
+            <div class="text-sm font-medium" style="color: var(--color-text-primary);">签到提醒</div>
+            <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">签到截止前提醒</div>
+          </div>
+        </label>
+        <label class="card-item flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
+          <input type="checkbox" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+          <div class="flex-1">
+            <div class="text-sm font-medium" style="color: var(--color-text-primary);">系统通知</div>
+            <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">系统公告和维护通知</div>
+          </div>
+        </label>
+        <label class="card-item flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
+          <input type="checkbox" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+          <div class="flex-1">
+            <div class="text-sm font-medium" style="color: var(--color-text-primary);">黑名单预警</div>
+            <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">接近爽约次数上限时提醒</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- ===== Account Security Card ===== -->
+    <div class="rounded-xl p-5 sm:p-6 mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+      <h2 class="text-base font-semibold mb-4" style="color: var(--color-text-primary);">账号安全</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="card-item flex items-center gap-3 p-3 rounded-lg" style="background: var(--color-bg-secondary);">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background: var(--state-success-bg);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--state-success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-xs" style="color: var(--color-text-tertiary);">登录密码</p>
+            <p class="text-sm font-medium" style="color: var(--state-success);">已设置</p>
+          </div>
+        </div>
+        <div class="card-item flex items-center gap-3 p-3 rounded-lg" style="background: var(--color-bg-secondary);">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background: var(--state-info-bg);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--state-info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-xs" style="color: var(--color-text-tertiary);">最近登录</p>
+            <p class="text-sm font-medium" style="color: var(--color-text-primary);">2026-07-15 09:32</p>
+          </div>
+        </div>
+        <div class="card-item flex items-center gap-3 p-3 rounded-lg" style="background: var(--color-bg-secondary);">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style="background: var(--state-info-bg);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--state-info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-xs" style="color: var(--color-text-tertiary);">登录设备</p>
+            <p class="text-sm font-medium" style="color: var(--color-text-primary);">Chrome / Windows</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+</body>
+</html>

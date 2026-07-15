@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消息通知 - 智约自习</title>
+    <style id="theme-vars">
+/* ============================================
+   智约自习 - Design System Tokens
+   ============================================ */
+
+:root {
+  /* ---- Brand ---- */
+  --brand-primary: #0E7C6B;
+  --brand-primary-lighter: #D6F0EC;
+  --brand-primary-lightest: #EDF9F7;
+  --brand-primary-dark: #095E52;
+
+  /* ---- Semantic Mappings ---- */
+  --brand-background: #F7F8FA;
+  --brand-foreground: #1A1D23;
+  --brand-card: #FFFFFF;
+  --brand-muted: #F0F1F5;
+  --brand-radius-sm: 4px;
+  --brand-radius-md: 8px;
+  --brand-radius-lg: 12px;
+
+  /* ---- Neutral Palette ---- */
+  --color-bg: #F7F8FA;
+  --color-bg-secondary: #F0F1F5;
+  --color-bg-tertiary: #E8E9ED;
+
+  --color-text-primary: #1A1D23;
+  --color-text-secondary: #5F6470;
+  --color-text-tertiary: #9399A5;
+
+  --color-border: #E2E4E9;
+
+  /* ---- Surfaces ---- */
+  --surface-card: #FFFFFF;
+  --surface-card-border: 1px solid var(--color-border);
+
+  /* ---- Shadows ---- */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+
+  /* ---- State Colors ---- */
+  --state-success: #16A34A;
+  --state-success-bg: #DCFCE7;
+
+  --state-warning: #D97706;
+  --state-warning-bg: #FEF3C7;
+
+  --state-info: #2563EB;
+  --state-info-bg: #DBEAFE;
+
+  --state-error: #DC2626;
+  --state-error-bg: #FEE2E2;
+
+  /* ---- Typography ---- */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ---- Dark mode ---- */
+.dark {
+  --brand-background: #0F1117;
+  --brand-foreground: #EDEEF0;
+  --brand-card: #1E2028;
+  --brand-muted: #1A1D26;
+
+  --color-bg: #0F1117;
+  --color-bg-secondary: #1A1D26;
+  --color-bg-tertiary: #252830;
+
+  --color-text-primary: #EDEEF0;
+  --color-text-secondary: #A0A4AE;
+  --color-text-tertiary: #6B7080;
+
+  --color-border: #2D3039;
+
+  --surface-card: #1E2028;
+  --surface-card-border: 1px solid var(--color-border);
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+
+  --brand-primary-lighter: #0D3B33;
+  --brand-primary-lightest: #0A2A24;
+
+  --state-success-bg: #052E16;
+  --state-warning-bg: #451A03;
+  --state-info-bg: #172554;
+  --state-error-bg: #450A0A;
+}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--brand-background);
+    --color-foreground: var(--brand-foreground);
+    --color-card: var(--brand-card);
+    --color-primary: var(--brand-primary);
+    --color-muted: var(--brand-muted);
+    --color-border: var(--color-border);
+    --radius-sm: var(--brand-radius-sm);
+    --radius-md: var(--brand-radius-md);
+    --radius-lg: var(--brand-radius-lg);
+  }
+  @layer base {
+    body { background: var(--brand-background); color: var(--brand-foreground); font-family: var(--font-family); }
+  }
+    </style>
+    <style>
+      .tab-btn { transition: all 0.15s ease; border: none; background: transparent; cursor: pointer; padding-bottom: 12px; padding-top: 12px; font-size: 14px; font-weight: 500; white-space: nowrap; }
+      .tab-btn.active { color: var(--brand-primary); border-bottom: 2px solid var(--brand-primary); }
+      .tab-btn:not(.active) { color: var(--color-text-tertiary); border-bottom: 2px solid transparent; }
+      .notif-item { transition: all 0.15s ease; }
+      .notif-item:hover { background: var(--color-bg-secondary); }
+      .notif-item.unread { background: var(--brand-primary-lightest); }
+      .action-btn { transition: all 0.15s ease; cursor: pointer; }
+      .action-btn:hover { opacity: 0.8; }
+      .form-input:focus { border-color: var(--brand-primary); outline: none; box-shadow: 0 0 0 3px rgba(14, 124, 107, 0.1); }
+      .btn-primary { transition: all 0.15s ease; }
+      .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+      [data-icon] { display: inline-flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+
+    <!-- ====== Top Navigation Bar ====== -->
+    <header class="w-full" style="background: var(--surface-card); border-bottom: 1px solid var(--color-border);">
+      <div class="mx-auto flex items-center justify-between px-4 sm:px-6 h-14" style="max-width: 1280px;">
+        <!-- Logo -->
+        <a href="#" class="flex items-center gap-2 shrink-0" style="text-decoration: none;">
+          <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--brand-primary);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <span class="text-base font-semibold" style="color: var(--color-text-primary);">智约自习</span>
+        </a>
+        <!-- Nav Links (hidden on mobile) -->
+        <nav class="hidden lg:flex items-center gap-1">
+          <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">首页</a>
+          <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">自习室</a>
+          <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">我的预约</a>
+          <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">实时看板</a>
+          <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">数据报表</a>
+          <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">空间管理</a>
+          <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">黑名单管理</a>
+          <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">用户权限</a>
+        </nav>
+        <!-- User Avatar -->
+        <div class="flex items-center gap-2 shrink-0">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium" style="background: var(--brand-primary); color: white;">张</div>
+          <span class="hidden sm:block text-sm" style="color: var(--color-text-primary);">张明远</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ====== Main Content ====== -->
+    <main class="mx-auto px-4 sm:px-6 py-6" style="max-width: 900px;">
+
+      <!-- Breadcrumb / Page Header -->
+      <div class="flex items-center gap-2 mb-6">
+        <a href="#" class="flex items-center gap-1 text-sm whitespace-nowrap" style="color: var(--brand-primary); text-decoration: none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          返回
+        </a>
+        <span class="text-sm" style="color: var(--color-text-tertiary);">/</span>
+        <h1 class="text-lg font-semibold" style="color: var(--color-text-primary);">消息通知</h1>
+      </div>
+
+      <!-- ===== User Profile Card (摘要) ===== -->
+      <div class="rounded-xl p-5 sm:p-6 mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+        <div class="flex items-start sm:items-center gap-4">
+          <div class="w-16 h-16 rounded-full flex items-center justify-center text-xl font-semibold shrink-0" style="background: var(--brand-primary); color: white;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap mb-1">
+              <span class="text-lg font-semibold" style="color: var(--color-text-primary);">消息中心</span>
+              <span class="text-xs px-2 py-0.5 rounded-lg whitespace-nowrap" style="background: var(--state-error-bg); color: var(--state-error);">3 条未读</span>
+            </div>
+            <p class="text-sm" style="color: var(--color-text-tertiary);">查看和管理你的所有消息通知</p>
+            <div class="flex items-center gap-4 mt-3 flex-wrap">
+              <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">总计 <strong class="font-semibold" style="color: var(--color-text-primary);">18 条</strong></span>
+              <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">本月 <strong class="font-semibold" style="color: var(--color-text-primary);">12 条</strong></span>
+              <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">系统通知 <strong class="font-semibold" style="color: var(--color-text-primary);">5 条</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Action Bar ===== -->
+      <div class="flex items-center justify-end gap-2 mb-4 flex-wrap">
+        <button class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg action-btn" style="color: var(--brand-primary); background: var(--brand-primary-lighter); border: none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></svg>
+          全部已读
+        </button>
+        <button class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg action-btn" style="color: var(--color-text-secondary); background: var(--color-bg-tertiary); border: 1px solid var(--color-border);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+          刷新
+        </button>
+      </div>
+
+      <!-- ===== Tab Bar ===== -->
+      <div class="flex gap-6 mb-6 border-b" style="border-color: var(--color-border);">
+        <button class="tab-btn active flex items-center gap-1.5" data-tab="all">
+          全部
+          <span class="inline-flex items-center justify-center ml-1 w-5 h-5 text-xs rounded-full" style="background: var(--state-error); color: #fff;">3</span>
+        </button>
+        <button class="tab-btn" data-tab="unread">未读</button>
+        <button class="tab-btn" data-tab="read">已读</button>
+      </div>
+
+      <!-- ===== Notification List Card ===== -->
+      <div class="rounded-xl overflow-hidden mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+
+        <!-- Item 1: Unread - Booking Success (green) -->
+        <div class="notif-item unread flex items-start gap-3 sm:gap-4 px-4 sm:px-5 py-4" style="border-left: 3px solid var(--brand-primary);">
+          <div class="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center" style="background: var(--state-success-bg);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--state-success);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold" style="color: var(--color-text-primary);">预约成功</span>
+              <span class="shrink-0 w-2 h-2 rounded-full" style="background: var(--state-error);"></span>
+            </div>
+            <p class="text-sm mb-1.5" style="color: var(--color-text-secondary);">你已成功预约 图书馆3F综合阅览室 A-12座位，时段 2026-07-15 14:00-18:00。请在开始后15分钟内扫码签到。</p>
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-tertiary);">2小时前</span>
+          </div>
+          <div class="shrink-0 flex items-center self-center">
+            <button class="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg action-btn" style="color: var(--brand-primary); background: var(--brand-primary-lighter); border: none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              标记已读
+            </button>
+          </div>
+        </div>
+        <div style="border-top: 1px solid var(--color-border);"></div>
+
+        <!-- Item 2: Unread - Check-in Reminder (amber) -->
+        <div class="notif-item unread flex items-start gap-3 sm:gap-4 px-4 sm:px-5 py-4" style="border-left: 3px solid var(--brand-primary);">
+          <div class="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center" style="background: var(--state-warning-bg);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--state-warning);"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold" style="color: var(--color-text-primary);">签到提醒</span>
+              <span class="shrink-0 w-2 h-2 rounded-full" style="background: var(--state-error);"></span>
+            </div>
+            <p class="text-sm mb-1.5" style="color: var(--color-text-secondary);">你的预约将在10分钟后开始（图书馆3F综合阅览室 A-12座位），请及时前往签到。</p>
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-tertiary);">10分钟前</span>
+          </div>
+          <div class="shrink-0 flex items-center self-center">
+            <button class="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg action-btn" style="color: var(--brand-primary); background: var(--brand-primary-lighter); border: none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              标记已读
+            </button>
+          </div>
+        </div>
+        <div style="border-top: 1px solid var(--color-border);"></div>
+
+        <!-- Item 3: Unread - System Notice (blue) -->
+        <div class="notif-item unread flex items-start gap-3 sm:gap-4 px-4 sm:px-5 py-4" style="border-left: 3px solid var(--brand-primary);">
+          <div class="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center" style="background: var(--state-info-bg);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--state-info);"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold" style="color: var(--color-text-primary);">自习室维护通知</span>
+              <span class="shrink-0 w-2 h-2 rounded-full" style="background: var(--state-error);"></span>
+            </div>
+            <p class="text-sm mb-1.5" style="color: var(--color-text-secondary);">图书馆5F自修室A将于7月15日-7月20日进行设备维护，期间暂停预约。已预约座位将自动取消并通知改签。</p>
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-tertiary);">1天前</span>
+          </div>
+          <div class="shrink-0 flex items-center self-center">
+            <button class="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg action-btn" style="color: var(--brand-primary); background: var(--brand-primary-lighter); border: none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              标记已读
+            </button>
+          </div>
+        </div>
+        <div style="border-top: 1px solid var(--color-border);"></div>
+
+        <!-- Item 4: Read - Blacklist Warning (red) -->
+        <div class="notif-item flex items-start gap-3 sm:gap-4 px-4 sm:px-5 py-4" style="background: var(--surface-card); border-left: 3px solid transparent;">
+          <div class="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center" style="background: var(--state-error-bg);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--state-error);"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold" style="color: var(--color-text-primary);">爽约预警</span>
+            </div>
+            <p class="text-sm mb-1.5" style="color: var(--color-text-secondary);">你近7天内已累计爽约2次，距离黑名单仅差1次。请合理安排预约，避免影响使用权限。</p>
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-tertiary);">2天前</span>
+          </div>
+          <div class="shrink-0 flex items-center self-center">
+            <button class="p-2 rounded-lg action-btn" style="color: var(--color-text-tertiary); background: transparent; border: none;" title="删除">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+            </button>
+          </div>
+        </div>
+        <div style="border-top: 1px solid var(--color-border);"></div>
+
+        <!-- Item 5: Read - Booking Reminder (brand) -->
+        <div class="notif-item flex items-start gap-3 sm:gap-4 px-4 sm:px-5 py-4" style="background: var(--surface-card); border-left: 3px solid transparent;">
+          <div class="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center" style="background: var(--brand-primary-lighter);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--brand-primary);"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold" style="color: var(--color-text-primary);">预约即将开始</span>
+            </div>
+            <p class="text-sm mb-1.5" style="color: var(--color-text-secondary);">你预约的 教学楼A 2F 201自习室 B-05座位 将于30分钟后开始，请提前到场。</p>
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-tertiary);">3天前</span>
+          </div>
+          <div class="shrink-0 flex items-center self-center">
+            <button class="p-2 rounded-lg action-btn" style="color: var(--color-text-tertiary); background: transparent; border: none;" title="删除">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+            </button>
+          </div>
+        </div>
+        <div style="border-top: 1px solid var(--color-border);"></div>
+
+        <!-- Item 6: Read - System Notice (blue) -->
+        <div class="notif-item flex items-start gap-3 sm:gap-4 px-4 sm:px-5 py-4" style="background: var(--surface-card); border-left: 3px solid transparent;">
+          <div class="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center" style="background: var(--state-info-bg);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--state-info);"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold" style="color: var(--color-text-primary);">系统公告</span>
+            </div>
+            <p class="text-sm mb-1.5" style="color: var(--color-text-secondary);">期末考试周（7月1日-7月15日）自习室开放时间延长至23:00，请合理安排学习时间。</p>
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-tertiary);">1周前</span>
+          </div>
+          <div class="shrink-0 flex items-center self-center">
+            <button class="p-2 rounded-lg action-btn" style="color: var(--color-text-tertiary); background: transparent; border: none;" title="删除">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== Notification Settings Card ===== -->
+      <div class="rounded-xl p-5 sm:p-6 mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+        <div class="flex items-center gap-2 mb-1">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <h2 class="text-base font-semibold" style="color: var(--color-text-primary);">通知偏好</h2>
+        </div>
+        <p class="text-xs mb-5" style="color: var(--color-text-tertiary);">选择你希望接收的通知类型</p>
+        <div class="space-y-3">
+          <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
+            <input type="checkbox" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+            <div class="flex-1">
+              <div class="text-sm font-medium" style="color: var(--color-text-primary);">预约提醒</div>
+              <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">预约开始前15分钟提醒</div>
+            </div>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
+            <input type="checkbox" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+            <div class="flex-1">
+              <div class="text-sm font-medium" style="color: var(--color-text-primary);">签到提醒</div>
+              <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">签到截止前提醒</div>
+            </div>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
+            <input type="checkbox" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+            <div class="flex-1">
+              <div class="text-sm font-medium" style="color: var(--color-text-primary);">系统通知</div>
+              <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">系统公告和维护通知</div>
+            </div>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
+            <input type="checkbox" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+            <div class="flex-1">
+              <div class="text-sm font-medium" style="color: var(--color-text-primary);">黑名单预警</div>
+              <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">接近爽约次数上限时提醒</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- ===== Pagination ===== -->
+      <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <span class="text-xs whitespace-nowrap" style="color: var(--color-text-tertiary);">共 18 条记录，第 1/4 页</span>
+        <div class="flex items-center gap-1.5">
+          <button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="background: var(--surface-card); border: 1px solid var(--color-border); color: var(--color-text-tertiary); cursor: pointer; opacity: 0.5;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            上一页
+          </button>
+          <button class="w-8 h-8 flex items-center justify-center rounded-lg text-sm" style="background: var(--brand-primary); color: #fff; border: 1px solid var(--brand-primary); cursor: pointer;">1</button>
+          <button class="w-8 h-8 flex items-center justify-center rounded-lg text-sm" style="background: var(--surface-card); color: var(--color-text-secondary); border: 1px solid var(--color-border); cursor: pointer;">2</button>
+          <button class="w-8 h-8 flex items-center justify-center rounded-lg text-sm" style="background: var(--surface-card); color: var(--color-text-secondary); border: 1px solid var(--color-border); cursor: pointer;">3</button>
+          <button class="w-8 h-8 flex items-center justify-center rounded-lg text-sm" style="background: var(--surface-card); color: var(--color-text-secondary); border: 1px solid var(--color-border); cursor: pointer;">4</button>
+          <button class="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="background: var(--surface-card); border: 1px solid var(--color-border); color: var(--color-text-primary); cursor: pointer;">
+            下一页
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+</body>
+</html>
