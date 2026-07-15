@@ -7,6 +7,7 @@ import com.studyroom.booking.modules.user.dto.CreateUserRequest;
 import com.studyroom.booking.modules.user.dto.UpdateUserRequest;
 import com.studyroom.booking.modules.user.dto.ChangePasswordRequest;
 import com.studyroom.booking.modules.user.dto.UserVO;
+import com.studyroom.booking.modules.user.dto.UserStatsVO;
 import com.studyroom.booking.modules.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -106,5 +107,18 @@ public class UserController {
             @Parameter(hidden = true) @RequestAttribute("role") String currentRole) {
         userService.updateStatus(id, status, currentUserId, currentRole);
         return Result.success("状态修改成功", null);
+    }
+
+    @GetMapping("/{id}/stats")
+    @Operation(summary = "用户统计", description = "获取用户统计信息（累计预约、本月爽约、信用评分）")
+    @SecurityRequirement(name = "BearerAuth")
+    public Result<UserStatsVO> getUserStats(
+            @Parameter(description = "用户ID") @PathVariable Long id,
+            @Parameter(hidden = true) @RequestAttribute("userId") Long currentUserId,
+            @Parameter(hidden = true) @RequestAttribute("role") String currentRole) {
+        if (!currentUserId.equals(id) && !"ADMIN".equals(currentRole) && !"SUPER_ADMIN".equals(currentRole)) {
+            return Result.error("无权查看");
+        }
+        return Result.success(userService.getUserStats(id));
     }
 }

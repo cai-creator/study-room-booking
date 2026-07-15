@@ -2,6 +2,7 @@ package com.studyroom.booking.integration.interceptor;
 
 import com.studyroom.booking.common.interceptor.JwtInterceptor;
 import com.studyroom.booking.common.interceptor.RoleInterceptor;
+import com.studyroom.booking.modules.user.service.TokenBlacklistService;
 import com.studyroom.booking.utils.JwtUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class JwtInterceptorTest {
 
     private JwtUtils jwtUtils;
+    private TokenBlacklistService tokenBlacklistService;
     private JwtInterceptor jwtInterceptor;
     private RoleInterceptor roleInterceptor;
 
@@ -28,7 +30,8 @@ class JwtInterceptorTest {
         jwtUtils = new JwtUtils();
         setField(jwtUtils, "secret", "study-room-booking-secret-key-2024-very-long-secret-for-jwt-token");
         setField(jwtUtils, "expire", 86400000L);
-        jwtInterceptor = new JwtInterceptor(jwtUtils);
+        tokenBlacklistService = new TokenBlacklistService();
+        jwtInterceptor = new JwtInterceptor(jwtUtils, tokenBlacklistService);
         roleInterceptor = new RoleInterceptor();
     }
 

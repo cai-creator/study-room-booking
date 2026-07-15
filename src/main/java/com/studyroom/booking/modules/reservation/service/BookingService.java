@@ -11,6 +11,7 @@ import com.studyroom.booking.modules.reservation.dto.BookingVO;
 import com.studyroom.booking.modules.reservation.dto.CreateBookingRequest;
 import com.studyroom.booking.modules.reservation.entity.Booking;
 import com.studyroom.booking.modules.reservation.mapper.BookingMapper;
+import com.studyroom.booking.modules.notification.service.NotificationService;
 import com.studyroom.booking.modules.seat.service.BlacklistService;
 import com.studyroom.booking.modules.space.entity.*;
 import com.studyroom.booking.modules.space.mapper.*;
@@ -46,6 +47,7 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
     private final BuildingMapper buildingMapper;
     private final CampusMapper campusMapper;
     private final BlacklistService blacklistService;
+    private final NotificationService notificationService;
 
     @Value("${booking.rules.max-daily-reservations:3}")
     private int maxDailyReservations;
@@ -200,6 +202,18 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
             throw new BusinessException(ResultCode.RESERVATION_CONFLICT);
         }
 
+        // 发送预约成功通知
+        try {
+            String content = String.format("您已成功预约 %s · %s，时间：%s ~ %s，请在开始后10分钟内完成签到。",
+                    room.getName(), seat.getSeatCode(),
+                    startTime.format(FORMATTER), endTime.format(FORMATTER));
+            notificationService.sendNotification(userId, "BOOKING_SUCCESS",
+                    "预约成功", content,
+                    String.format("{\"bookingId\":%d,\"seatCode\":\"%s\"}", booking.getId(), seat.getSeatCode()));
+        } catch (Exception e) {
+            log.warn("发送预约成功通知失败，userId={}, bookingId={}", userId, booking.getId(), e);
+        }
+
         return Collections.singletonList(buildBookingVO(booking, seat, room));
     }
 
@@ -230,6 +244,22 @@ public class BookingService extends ServiceImpl<BookingMapper, Booking> {
         baseMapper.updateById(booking);
 
         log.info("用户 {} 取消预约 {}，操作者: {}", booking.getUserId(), bookingId, userId);
+
+        // 发送取消预约通知
+        try {
+            Seat seat = seatMapper.selectById(booking.getSeatId());
+            StudyRoom room = seat != null ? studyRoomMapper.selectById(seat.getRoomId()) : null;
+            String content = String.format("您的预约已取消：%s · %s，时间：%s ~ %s。",
+                    room != null ? room.getName() : "自习室",
+                    seat != null ? seat.getSeatCode() : "",
+                    booking.getStartTime() != null ? booking.getStartTime().format(FORMATTER) : "",
+                    booking.getEndTime() != null ? booking.getEndTime().format(FORMATTER) : "");
+            notificationService.sendNotification(booking.getUserId(), "BOOKING_CANCELLED",
+                    "预约已取消", content,
+                    String.format("{\"bookingId\":%d}", booking.getId()));
+        } catch (Exception e) {
+            log.warn("发送预约取消通知失败，bookingId={}", bookingId, e);
+        }
     }
 
     // ==================== 查询 ====================

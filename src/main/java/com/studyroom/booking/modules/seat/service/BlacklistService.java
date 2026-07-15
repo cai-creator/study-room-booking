@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.studyroom.booking.common.ResultCode;
 import com.studyroom.booking.common.context.UserContext;
 import com.studyroom.booking.common.exception.BusinessException;
+import com.studyroom.booking.modules.notification.service.NotificationService;
 import com.studyroom.booking.modules.seat.dto.BlacklistVO;
 import com.studyroom.booking.modules.seat.entity.Blacklist;
 import com.studyroom.booking.modules.seat.entity.NoShowRecord;
@@ -34,6 +35,7 @@ public class BlacklistService {
 
     private final BlacklistMapper blacklistMapper;
     private final NoShowRecordMapper noShowRecordMapper;
+    private final NotificationService notificationService;
 
     /** 黑名单爽约阈值（7天内），默认3次 */
     @Value("${booking.rules.blacklist-threshold:3}")
@@ -150,6 +152,17 @@ public class BlacklistService {
 
         log.info("管理员 {} 将用户 {} 加入黑名单，结束时间: {}", operatorId, userId, endTimeStr);
 
+        // 发送加入黑名单通知
+        try {
+            String content = String.format("您已被管理员加入黑名单，原因：%s。解除时间：%s。在此期间您将无法预约座位。",
+                    reason, endTimeStr);
+            notificationService.sendNotification(userId, "BLACKLIST_ADDED",
+                    "已加入黑名单", content,
+                    String.format("{\"blacklistId\":%d}", blacklist.getId()));
+        } catch (Exception e) {
+            log.warn("发送加入黑名单通知失败，userId={}", userId, e);
+        }
+
         return convertToVO(blacklist);
     }
 
@@ -167,6 +180,16 @@ public class BlacklistService {
         blacklistMapper.updateById(blacklist);
 
         log.info("管理员 {} 将黑名单记录 {} 解除", UserContext.getUserId(), id);
+
+        // 发送解除黑名单通知
+        try {
+            String content = "您已被移出黑名单，可以正常预约座位了。请珍惜预约资源，按时签到。";
+            notificationService.sendNotification(blacklist.getUserId(), "BLACKLIST_REMOVED",
+                    "黑名单已解除", content,
+                    String.format("{\"blacklistId\":%d}", id));
+        } catch (Exception e) {
+            log.warn("发送解除黑名单通知失败，blacklistId={}", id, e);
+        }
     }
 
     // ===================== 自动管理（供定时任务调用） =====================
@@ -218,6 +241,17 @@ public class BlacklistService {
 
                     blacklistMapper.insert(blacklist);
 
+                    // 发送自动加入黑名单通知
+                    try {
+                        String content = String.format("您因 %d 天内累计爽约 %d 次，已被系统自动加入黑名单 %d 天。请珍惜预约资源。",
+                                7, count, blacklistDays);
+                        notificationService.sendNotification(userId, "BLACKLIST_ADDED",
+                                "已加入黑名单", content,
+                                String.format("{\"blacklistId\":%d}", blacklist.getId()));
+                    } catch (Exception e) {
+                        log.warn("发送自动加入黑名单通知失败，userId={}", userId, e);
+                    }
+
                     log.info("用户 {} 因{}天内爽约{}次，自动加入黑名单 {} 天",
                             userId, 7, count, blacklistDays);
                 }
@@ -241,6 +275,16 @@ public class BlacklistService {
         for (Blacklist blacklist : expiredList) {
             blacklist.setStatus(0);
             blacklistMapper.updateById(blacklist);
+
+            // 发送自动解除黑名单通知
+            try {
+                String content = "您的黑名单期限已满，已自动解除。现在可以正常预约座位了，请珍惜预约资源。";
+                notificationService.sendNotification(blacklist.getUserId(), "BLACKLIST_REMOVED",
+                        "黑名单已解除", content,
+                        String.format("{\"blacklistId\":%d}", blacklist.getId()));
+            } catch (Exception e) {
+                log.warn("发送自动解除黑名单通知失败，blacklistId={}", blacklist.getId(), e);
+            }
 
             log.info("用户 {} 的黑名单已到期自动解除", blacklist.getUserId());
         }

@@ -59,6 +59,12 @@
   --state-error-bg: #450A0A;
 }
   </style>
+  <script src="./js/config.js"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/request.js"></script>
+  <script src="./api/auth.js"></script>
+  <script src="./api/user.js"></script>
+  <script src="./api/notification.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
   <style type="text/tailwindcss">
   @theme inline {
@@ -102,16 +108,7 @@
         </div>
         <span class="text-base font-semibold" style="color: var(--color-text-primary);">智约自习</span>
       </a>
-      <nav class="hidden md:flex items-center gap-1">
-        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">首页</a>
-        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">自习室</a>
-        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">我的预约</a>
-        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">实时看板</a>
-        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">数据报表</a>
-        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">空间管理</a>
-        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">黑名单管理</a>
-        <a href="#" class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">用户权限</a>
-      </nav>
+      <nav id="top-nav" class="hidden md:flex items-center gap-1"></nav>
       <div class="flex items-center gap-2 shrink-0">
         <div id="nav-avatar" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium" style="background: var(--brand-primary); color: white;"></div>
         <span id="nav-name" class="hidden sm:block text-sm" style="color: var(--color-text-primary);"></span>
@@ -143,10 +140,10 @@
             <span class="text-xs px-2 py-0.5 rounded-lg whitespace-nowrap" style="background: var(--state-success-bg); color: var(--state-success);">正常</span>
           </div>
           <p id="profile-id" class="text-sm" style="color: var(--color-text-tertiary);">--</p>
-          <div class="flex items-center gap-4 mt-3 flex-wrap">
-            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">累计预约 <strong class="font-semibold" style="color: var(--color-text-primary);">47次</strong></span>
-            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">本月爽约 <strong class="font-semibold" style="color: var(--color-text-primary);">0次</strong></span>
-            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">信用评分 <strong class="font-semibold" style="color: var(--state-success);">良好</strong></span>
+          <div id="user-stats-row" class="flex items-center gap-4 mt-3 flex-wrap">
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">累计预约 <strong id="stats-bookings" class="font-semibold" style="color: var(--color-text-primary);">--次</strong></span>
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">本月爽约 <strong id="stats-noshow" class="font-semibold" style="color: var(--color-text-primary);">--次</strong></span>
+            <span class="text-xs whitespace-nowrap" style="color: var(--color-text-secondary);">信用评分 <strong id="stats-credit" class="font-semibold" style="color: var(--state-success);">--</strong></span>
           </div>
         </div>
       </div>
@@ -162,7 +159,7 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         修改密码
       </button>
-      <button class="tab-btn flex items-center gap-1.5" data-tab="notification" onclick="switchTab('notification')">
+      <button id="tab-notification" class="tab-btn flex items-center gap-1.5" data-tab="notification" onclick="switchTab('notification')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
         通知设置
       </button>
@@ -277,33 +274,40 @@
       <p class="text-xs mb-5" style="color: var(--color-text-tertiary);">选择你希望接收的通知类型</p>
       <div class="space-y-3">
         <label class="card-item flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
-          <input type="checkbox" id="notif-booking-reminder" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+          <input type="checkbox" id="notif-booking-reminder" class="w-4 h-4" style="accent-color: var(--brand-primary);">
           <div class="flex-1">
             <div class="text-sm font-medium" style="color: var(--color-text-primary);">预约提醒</div>
             <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">预约开始前15分钟提醒</div>
           </div>
         </label>
         <label class="card-item flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
-          <input type="checkbox" id="notif-checkin-reminder" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+          <input type="checkbox" id="notif-checkin-reminder" class="w-4 h-4" style="accent-color: var(--brand-primary);">
           <div class="flex-1">
             <div class="text-sm font-medium" style="color: var(--color-text-primary);">签到提醒</div>
             <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">签到截止前提醒</div>
           </div>
         </label>
         <label class="card-item flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
-          <input type="checkbox" id="notif-system" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+          <input type="checkbox" id="notif-system" class="w-4 h-4" style="accent-color: var(--brand-primary);">
           <div class="flex-1">
             <div class="text-sm font-medium" style="color: var(--color-text-primary);">系统通知</div>
             <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">系统公告和维护通知</div>
           </div>
         </label>
         <label class="card-item flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background: var(--color-bg-secondary);">
-          <input type="checkbox" id="notif-blacklist" checked class="w-4 h-4" style="accent-color: var(--brand-primary);">
+          <input type="checkbox" id="notif-blacklist" class="w-4 h-4" style="accent-color: var(--brand-primary);">
           <div class="flex-1">
             <div class="text-sm font-medium" style="color: var(--color-text-primary);">黑名单预警</div>
             <div class="text-xs mt-0.5" style="color: var(--color-text-tertiary);">接近爽约次数上限时提醒</div>
           </div>
         </label>
+      </div>
+      <div class="flex items-center justify-end mt-5">
+        <button type="button" id="notif-save-btn" onclick="saveNotificationPreference()" class="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium btn-primary" style="background: var(--brand-primary); color: white; border: none;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          保存设置
+        </button>
+        <span id="notif-save-msg" class="text-xs ml-3 hidden"></span>
       </div>
     </div>
 
@@ -358,13 +362,44 @@
       return;
     }
 
-    // 填充导航栏
+    function renderNav() {
+      var nav = document.getElementById('top-nav');
+      if (!nav) return;
+      var role = user && user.role;
+      var links = [];
+      if (role === 'STUDENT') {
+        links = [
+          { text: '首页', href: '../student/pages/home.html' },
+          { text: '自习室', href: '../student/pages/seat-selection.html' },
+          { text: '我的预约', href: '../student/pages/my-reservations.html' },
+          { text: '实时看板', href: '../student/pages/dashboard.html' }
+        ];
+      } else {
+        links = [
+          { text: '首页', href: '../admin/pages/dashboard.html' },
+          { text: '数据报表', href: '../admin/pages/reports.html' },
+          { text: '空间管理', href: '../admin/pages/space-management.html' },
+          { text: '黑名单管理', href: '../admin/pages/blacklist.html' },
+          { text: '用户权限', href: '../admin/pages/user-management.html' }
+        ];
+      }
+      nav.innerHTML = '';
+      links.forEach(function(item) {
+        var a = document.createElement('a');
+        a.href = item.href;
+        a.textContent = item.text;
+        a.className = 'px-3 py-1.5 rounded-lg text-sm whitespace-nowrap';
+        a.style.cssText = 'color: var(--color-text-secondary); text-decoration: none;';
+        nav.appendChild(a);
+      });
+    }
+    renderNav();
+
     var avatarEl = document.getElementById('nav-avatar');
     var nameEl = document.getElementById('nav-name');
     if (avatarEl) avatarEl.textContent = (user.realName || user.username || 'U').charAt(0);
     if (nameEl) nameEl.textContent = user.realName || user.username || '';
 
-    // 填充用户摘要卡片
     var dispName = document.getElementById('profile-display-name');
     var roleBadge = document.getElementById('profile-role-badge');
     var profileId = document.getElementById('profile-id');
@@ -379,7 +414,16 @@
       return map[role] || role;
     }
 
-    // ========== Tab 切换 ==========
+    function getCreditLabel(level) {
+      var map = { 'EXCELLENT': '优秀', 'GOOD': '良好', 'FAIR': '一般', 'POOR': '较差' };
+      return map[level] || level;
+    }
+
+    function getCreditColor(level) {
+      var map = { 'EXCELLENT': 'var(--state-success)', 'GOOD': 'var(--state-success)', 'FAIR': 'var(--state-warning)', 'POOR': 'var(--state-error)' };
+      return map[level] || 'var(--state-success)';
+    }
+
     window.switchTab = function(tab) {
       document.querySelectorAll('.tab-btn').forEach(function(btn) {
         var isActive = btn.getAttribute('data-tab') === tab;
@@ -390,21 +434,21 @@
       document.getElementById('panel-password').classList.toggle('hidden', tab !== 'password');
       document.getElementById('panel-notification').classList.toggle('hidden', tab !== 'notification');
       if (tab === 'profile') loadProfile();
+      if (tab === 'notification') loadNotificationPreference();
     };
 
-    // ========== 个人信息 ==========
     function loadProfile() {
-      if (window.AuthAPI && AuthAPI.getCurrentUser) {
-        AuthAPI.getCurrentUser().then(function(data) {
-          fillProfile(data);
-          Utils.setUser({
-            id: data.id, username: data.username, realName: data.realName,
-            role: data.role, email: data.email, phone: data.phone, status: data.status
-          });
-        }).catch(function() { fillProfile(Utils.getUser() || {}); });
-      } else {
+      AuthAPI.getCurrentUser().then(function(data) {
+        fillProfile(data);
+        Utils.setUser({
+          id: data.id, username: data.username, realName: data.realName,
+          role: data.role, email: data.email, phone: data.phone, status: data.status,
+          updatedAt: data.updatedAt
+        });
+        updateLastLogin(data.updatedAt);
+      }).catch(function() {
         fillProfile(Utils.getUser() || {});
-      }
+      });
     }
 
     function fillProfile(data) {
@@ -416,13 +460,14 @@
       document.getElementById('profile-email').value = data.email || '';
       document.getElementById('profile-phone').value = data.phone || '';
 
-      // 更新摘要卡片
       if (dispName) dispName.textContent = data.realName || data.username || '--';
       if (roleBadge) roleBadge.textContent = getRoleLabel(data.role);
       if (profileId) profileId.textContent = '学号: ' + (data.username || '--');
       if (profileAvatar) profileAvatar.textContent = (data.realName || data.username || 'U').charAt(0);
       if (avatarEl) avatarEl.textContent = (data.realName || data.username || 'U').charAt(0);
       if (nameEl) nameEl.textContent = data.realName || data.username || '';
+
+      updateLastLogin(data.updatedAt);
     }
 
     window.saveProfile = function() {
@@ -447,29 +492,20 @@
       if (email) data.email = email;
       if (phone) data.phone = phone;
 
-      if (window.UserAPI && UserAPI.updateUser) {
-        UserAPI.updateUser(user.id, data).then(function() {
-          showSuccess();
-          var cached = Utils.getUser() || {};
-          cached.realName = realName;
-          if (email) cached.email = email;
-          if (phone) cached.phone = phone;
-          Utils.setUser(cached);
-          fillProfile(cached);
-        }).catch(function(err) {
-          showMsg(msgEl, (err && err.message) || '保存失败', 'error');
-        }).finally(function() {
-          btn.disabled = false;
-          btn.style.opacity = '1';
-        });
-      } else {
-        // 模拟成功
-        setTimeout(function() {
-          showSuccess();
-          btn.disabled = false;
-          btn.style.opacity = '1';
-        }, 500);
-      }
+      UserAPI.updateUser(user.id, data).then(function() {
+        showSuccess();
+        var cached = Utils.getUser() || {};
+        cached.realName = realName;
+        if (email) cached.email = email;
+        if (phone) cached.phone = phone;
+        Utils.setUser(cached);
+        fillProfile(cached);
+      }).catch(function(err) {
+        showMsg(msgEl, (err && err.message) || '保存失败', 'error');
+      }).finally(function() {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      });
     };
 
     function showSuccess() {
@@ -485,7 +521,6 @@
       setTimeout(function() { el.classList.add('hidden'); }, 3000);
     }
 
-    // ========== 修改密码 ==========
     var pwdNew = document.getElementById('pwd-new');
     pwdNew.addEventListener('input', function() {
       var v = pwdNew.value;
@@ -497,7 +532,6 @@
         if (rules[rule]) { el.classList.add('met'); met++; }
         else { el.classList.remove('met'); }
       });
-      // 更新进度条
       var bars = [document.getElementById('bar-1'), document.getElementById('bar-2'), document.getElementById('bar-3'), document.getElementById('bar-4')];
       bars.forEach(function(bar, i) {
         if (bar) bar.style.background = i < met ? 'var(--brand-primary)' : 'var(--color-bg-tertiary)';
@@ -533,43 +567,113 @@
       btn.disabled = true;
       btn.style.opacity = '0.6';
 
-      if (window.UserAPI && UserAPI.updatePassword) {
-        UserAPI.updatePassword(user.id, { oldPassword: oldPwd, newPassword: newPwd }).then(function() {
-          showMsg(msgEl, '密码修改成功，下次登录时请使用新密码', 'success');
-          document.getElementById('pwd-old').value = '';
-          pwdNew.value = '';
-          pwdConfirm.value = '';
-          document.querySelectorAll('.pwd-rule').forEach(function(el) { el.classList.remove('met'); });
-          [1,2,3,4].forEach(function(i) {
-            var bar = document.getElementById('bar-' + i);
-            if (bar) bar.style.background = 'var(--color-bg-tertiary)';
-          });
-        }).catch(function(err) {
-          showMsg(msgEl, (err && err.message) || '修改失败，请检查当前密码', 'error');
-        }).finally(function() {
-          btn.disabled = false;
-          btn.style.opacity = '1';
+      UserAPI.updatePassword(user.id, { oldPassword: oldPwd, newPassword: newPwd }).then(function() {
+        showMsg(msgEl, '密码修改成功，下次登录时请使用新密码', 'success');
+        document.getElementById('pwd-old').value = '';
+        pwdNew.value = '';
+        pwdConfirm.value = '';
+        document.querySelectorAll('.pwd-rule').forEach(function(el) { el.classList.remove('met'); });
+        [1,2,3,4].forEach(function(i) {
+          var bar = document.getElementById('bar-' + i);
+          if (bar) bar.style.background = 'var(--color-bg-tertiary)';
         });
-      } else {
-        setTimeout(function() {
-          showMsg(msgEl, '密码修改成功（演示模式）', 'success');
-          btn.disabled = false;
-          btn.style.opacity = '1';
-        }, 500);
-      }
+      }).catch(function(err) {
+        showMsg(msgEl, (err && err.message) || '修改失败，请检查当前密码', 'error');
+      }).finally(function() {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      });
     };
 
-    // ========== 安全卡片时间 ==========
-    var lastLoginEl = document.getElementById('sec-last-login');
-    if (lastLoginEl) {
-      var now = new Date();
-      lastLoginEl.textContent = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    function loadUserStats() {
+      UserAPI.getUserStats(user.id).then(function(stats) {
+        var bookingsEl = document.getElementById('stats-bookings');
+        var noshowEl = document.getElementById('stats-noshow');
+        var creditEl = document.getElementById('stats-credit');
+
+        if (bookingsEl) bookingsEl.textContent = stats.totalBookings + '次';
+        if (noshowEl) noshowEl.textContent = stats.thisMonthNoShow + '次';
+        if (creditEl) {
+          creditEl.textContent = getCreditLabel(stats.creditLevel);
+          creditEl.style.color = getCreditColor(stats.creditLevel);
+        }
+      }).catch(function() {
+        var bookingsEl = document.getElementById('stats-bookings');
+        var noshowEl = document.getElementById('stats-noshow');
+        if (bookingsEl) bookingsEl.textContent = '--次';
+        if (noshowEl) noshowEl.textContent = '--次';
+      });
+    }
+
+    function loadNotificationPreference() {
+      NotificationAPI.getPreference().then(function(pref) {
+        document.getElementById('notif-booking-reminder').checked = pref.bookingReminder !== false;
+        document.getElementById('notif-checkin-reminder').checked = pref.checkinReminder !== false;
+        document.getElementById('notif-system').checked = pref.systemNotice !== false;
+        document.getElementById('notif-blacklist').checked = pref.blacklistAlert !== false;
+      }).catch(function() {
+        document.getElementById('notif-booking-reminder').checked = true;
+        document.getElementById('notif-checkin-reminder').checked = true;
+        document.getElementById('notif-system').checked = true;
+        document.getElementById('notif-blacklist').checked = true;
+      });
+    }
+
+    window.saveNotificationPreference = function() {
+      var msgEl = document.getElementById('notif-save-msg');
+      var btn = document.getElementById('notif-save-btn');
+
+      var data = {
+        bookingReminder: document.getElementById('notif-booking-reminder').checked,
+        checkinReminder: document.getElementById('notif-checkin-reminder').checked,
+        systemNotice: document.getElementById('notif-system').checked,
+        blacklistAlert: document.getElementById('notif-blacklist').checked
+      };
+
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      msgEl.classList.add('hidden');
+
+      NotificationAPI.savePreference(data).then(function() {
+        showMsg(msgEl, '保存成功', 'success');
+      }).catch(function(err) {
+        showMsg(msgEl, (err && err.message) || '保存失败', 'error');
+      }).finally(function() {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      });
+    };
+
+    function updateLastLogin(updatedAt) {
+      var lastLoginEl = document.getElementById('sec-last-login');
+      if (lastLoginEl && updatedAt) {
+        var date = new Date(updatedAt);
+        if (!isNaN(date.getTime())) {
+          lastLoginEl.textContent = date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+        } else {
+          lastLoginEl.textContent = '--';
+        }
+      }
     }
 
     function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
-    // 初始加载
+    function initByRole() {
+      var role = user && user.role;
+      var isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+      if (isAdmin) {
+        var statsRow = document.getElementById('user-stats-row');
+        if (statsRow) statsRow.style.display = 'none';
+        var tabNotif = document.getElementById('tab-notification');
+        if (tabNotif) tabNotif.style.display = 'none';
+      }
+    }
+
+    initByRole();
     loadProfile();
+    if (user && user.role === 'STUDENT') {
+      loadUserStats();
+    }
   })();
   </script>
 </body>

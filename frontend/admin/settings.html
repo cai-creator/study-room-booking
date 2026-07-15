@@ -57,9 +57,6 @@
           <div class="side-menu-item relative px-4 py-3 text-sm flex items-center gap-3" data-section="security" onclick="switchSection('security')" style="color:var(--color-text-secondary);">
             <i data-lucide="shield-check" style="width:16px;height:16px;"></i> 安全设置
           </div>
-          <div class="side-menu-item relative px-4 py-3 text-sm flex items-center gap-3" data-section="notification" onclick="switchSection('notification')" style="color:var(--color-text-secondary);">
-            <i data-lucide="bell" style="width:16px;height:16px;"></i> 通知设置
-          </div>
           <div class="side-menu-item relative px-4 py-3 text-sm flex items-center gap-3" data-section="workspace" onclick="switchSection('workspace')" style="color:var(--color-text-secondary);">
             <i data-lucide="layout-dashboard" style="width:16px;height:16px;"></i> 工作台
           </div>
@@ -197,49 +194,6 @@
           </div>
         </section>
 
-        <!-- 通知设置 -->
-        <section id="sec-notification" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
-          <div class="section-header">
-            <i data-lucide="bell"></i>
-            <h2 class="text-base font-semibold">通知设置</h2>
-          </div>
-          <p class="text-xs mb-5" style="color:var(--color-text-tertiary);">管理员工作通知</p>
-          <div class="space-y-3">
-            <label class="card-item flex items-center gap-4 p-4 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
-              <input type="checkbox" id="notif-new-user" checked class="w-4 h-4 accent-current" style="accent-color:var(--brand-primary);">
-              <div class="flex-1">
-                <div class="text-sm font-medium">新用户注册</div>
-                <div class="text-xs mt-0.5" style="color:var(--color-text-tertiary);">新学生注册账号时通知</div>
-              </div>
-            </label>
-            <label class="card-item flex items-center gap-4 p-4 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
-              <input type="checkbox" id="notif-blacklist" checked class="w-4 h-4 accent-current" style="accent-color:var(--brand-primary);">
-              <div class="flex-1">
-                <div class="text-sm font-medium">黑名单触发</div>
-                <div class="text-xs mt-0.5" style="color:var(--color-text-tertiary);">用户触发黑名单时通知</div>
-              </div>
-            </label>
-            <label class="card-item flex items-center gap-4 p-4 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
-              <input type="checkbox" id="notif-system" checked class="w-4 h-4 accent-current" style="accent-color:var(--brand-primary);">
-              <div class="flex-1">
-                <div class="text-sm font-medium">系统通知</div>
-                <div class="text-xs mt-0.5" style="color:var(--color-text-tertiary);">系统公告和维护通知</div>
-              </div>
-            </label>
-            <label class="card-item flex items-center gap-4 p-4 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
-              <input type="checkbox" id="notif-booking" class="w-4 h-4 accent-current" style="accent-color:var(--brand-primary);">
-              <div class="flex-1">
-                <div class="text-sm font-medium">预约高峰预警</div>
-                <div class="text-xs mt-0.5" style="color:var(--color-text-tertiary);">座位使用率超过阈值时通知</div>
-              </div>
-            </label>
-            <div class="flex items-center gap-3 pt-3">
-              <button type="button" onclick="saveNotification()" class="btn-primary px-5 py-2.5 rounded-lg text-sm font-medium" style="background:var(--brand-primary);color:white;border:none;cursor:pointer;">保存设置</button>
-              <span id="notif-msg" class="text-xs hidden"></span>
-            </div>
-          </div>
-        </section>
-
         <!-- 工作台 -->
         <section id="sec-workspace" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
           <div class="section-header">
@@ -347,7 +301,6 @@
       });
       if (name === 'profile') loadProfile();
       if (name === 'security') loadSecurity();
-      if (name === 'notification') loadNotificationPref();
       lucide.createIcons();
     };
 
@@ -418,27 +371,6 @@
       }).catch(function(err) { showMsg(msg, (err && err.message) || '修改失败', 'error'); });
     };
 
-    // 通知设置
-    function loadNotificationPref() {
-      var pref = Utils.getNotificationPref ? Utils.getNotificationPref() : {};
-      document.getElementById('notif-new-user').checked = pref.newUser !== false;
-      document.getElementById('notif-blacklist').checked = pref.blacklist !== false;
-      document.getElementById('notif-system').checked = pref.system !== false;
-      document.getElementById('notif-booking').checked = pref.booking === true;
-    }
-
-    window.saveNotification = function() {
-      var msg = document.getElementById('notif-msg');
-      var pref = {
-        newUser: document.getElementById('notif-new-user').checked,
-        blacklist: document.getElementById('notif-blacklist').checked,
-        system: document.getElementById('notif-system').checked,
-        booking: document.getElementById('notif-booking').checked
-      };
-      if (Utils.setNotificationPref) Utils.setNotificationPref(pref);
-      showMsg(msg, '通知设置已保存', 'success');
-    };
-
     // 安全
     function loadSecurity() {
       AuthAPI.getCurrentUser().then(function(data) {
@@ -466,7 +398,6 @@
     }
 
     loadProfile();
-    loadNotificationPref();
     lucide.createIcons();
   })();
   </script>

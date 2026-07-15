@@ -19,6 +19,7 @@ booking:
     min-advance-minutes: -50
     checkin-grace-minutes: 50
     checkin-deadline-minutes: 10
+    booking-reminder-minutes: 15
     temporary-absence-minutes: 30
     blacklist-threshold: 3
     blacklist-days: 7

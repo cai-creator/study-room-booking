@@ -103,5 +103,12 @@
    */
   UserAPI.updateStatus = function (id, status) { return Request.patch('/users/' + id + '/status?status=' + status); };
 
+  /**
+   * 获取用户统计信息
+   * @param {number} id 用户ID (必填)
+   * @returns {Promise<UserStatsVO>}
+   */
+  UserAPI.getUserStats = function (id) { return Request.get('/users/' + id + '/stats'); };
+
   window.UserAPI = UserAPI;
 })();

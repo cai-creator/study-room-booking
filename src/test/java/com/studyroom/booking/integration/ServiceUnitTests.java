@@ -159,7 +159,7 @@ class ServiceUnitTests {
             BookingVO created = bookingService.createBooking(req).get(0);
 
             checkinService.checkin(created.getCheckinCode(), 1L);
-            CheckinVO checkout = checkinService.checkout(created.getId(), 1L);
+            CheckinVO checkout = checkinService.checkout(created.getSeatCode(), created.getRoomId());
             assertNotNull(checkout);
             assertEquals("COMPLETED", checkout.getStatus());
         }
@@ -177,7 +177,7 @@ class ServiceUnitTests {
             BookingVO created = bookingService.createBooking(req).get(0);
 
             checkinService.checkin(created.getCheckinCode(), 1L);
-            checkinService.checkout(created.getId(), 1L);
+            checkinService.checkout(created.getSeatCode(), created.getRoomId());
 
             BookingVO found = bookingService.getBookingById(created.getId());
             assertNotNull(found);
@@ -197,10 +197,10 @@ class ServiceUnitTests {
             BookingVO created = bookingService.createBooking(req).get(0);
 
             checkinService.checkin(created.getCheckinCode(), 1L);
-            CheckinVO leave = checkinService.temporaryLeave(created.getId(), 1L);
+            CheckinVO leave = checkinService.temporaryLeave(created.getSeatCode(), created.getRoomId());
             assertEquals("TEMPORARY_LEAVE", leave.getStatus());
 
-            CheckinVO back = checkinService.returnToSeat(created.getId(), 1L);
+            CheckinVO back = checkinService.returnSeat(created.getSeatCode(), created.getRoomId());
             assertEquals("CHECKED_IN", back.getStatus());
         }
     }

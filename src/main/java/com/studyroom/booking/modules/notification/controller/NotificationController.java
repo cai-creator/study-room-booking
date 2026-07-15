@@ -3,8 +3,11 @@ package com.studyroom.booking.modules.notification.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.studyroom.booking.common.Result;
 import com.studyroom.booking.common.annotation.RequireRole;
+import com.studyroom.booking.modules.notification.dto.BroadcastNotificationRequest;
+import com.studyroom.booking.modules.notification.dto.NotificationPreferenceVO;
 import com.studyroom.booking.modules.notification.dto.SendNotificationRequest;
 import com.studyroom.booking.modules.notification.entity.Notification;
+import com.studyroom.booking.modules.notification.service.NotificationPreferenceService;
 import com.studyroom.booking.modules.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,6 +28,7 @@ import java.util.Map;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final NotificationPreferenceService preferenceService;
 
     @GetMapping
     @Operation(summary = "我的通知", description = "分页查询当前用户的通知")
@@ -80,5 +84,32 @@ public class NotificationController {
         notificationService.sendNotification(request.getUserId(), request.getType(),
                 request.getTitle(), request.getContent(), request.getData());
         return Result.success("发送成功", null);
+    }
+
+    @PostMapping("/broadcast")
+    @RequireRole({"ADMIN", "SUPER_ADMIN"})
+    @Operation(summary = "发布系统通知", description = "管理员向所有用户或指定角色用户广播系统通知")
+    public Result<Map<String, Object>> broadcastSystemNotification(
+            @Valid @RequestBody BroadcastNotificationRequest request,
+            @Parameter(hidden = true) @RequestAttribute("userId") Long userId) {
+        int count = notificationService.broadcastSystemNotification(
+                request.getTitle(), request.getContent(), request.getTargetRole(), userId);
+        Map<String, Object> data = new HashMap<>();
+        data.put("sentCount", count);
+        return Result.success("发布成功", data);
+    }
+
+    @GetMapping("/preference")
+    @Operation(summary = "通知偏好", description = "获取当前用户的通知偏好设置")
+    public Result<NotificationPreferenceVO> getPreference(@Parameter(hidden = true) @RequestAttribute("userId") Long userId) {
+        return Result.success(preferenceService.getPreference(userId));
+    }
+
+    @PutMapping("/preference")
+    @Operation(summary = "保存通知偏好", description = "保存当前用户的通知偏好设置")
+    public Result<NotificationPreferenceVO> savePreference(
+            @RequestBody NotificationPreferenceVO vo,
+            @Parameter(hidden = true) @RequestAttribute("userId") Long userId) {
+        return Result.success("保存成功", preferenceService.savePreference(userId, vo));
     }
 }

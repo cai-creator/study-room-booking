@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.studyroom.booking.modules.notification.entity.Notification;
 import com.studyroom.booking.modules.notification.handler.WebSocketSessionManager;
 import com.studyroom.booking.modules.notification.mapper.NotificationMapper;
+import com.studyroom.booking.modules.user.entity.User;
+import com.studyroom.booking.modules.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -22,6 +25,7 @@ import java.util.Map;
 public class NotificationService extends ServiceImpl<NotificationMapper, Notification> {
 
     private final WebSocketSessionManager sessionManager;
+    private final UserMapper userMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public void sendNotification(Long userId, String type, String title, String content, String data) {
@@ -43,6 +47,24 @@ public class NotificationService extends ServiceImpl<NotificationMapper, Notific
         for (Long userId : userIds) {
             sendNotification(userId, type, title, content, data);
         }
+    }
+
+    public int broadcastSystemNotification(String title, String content, String targetRole, Long senderId) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getStatus, 1);
+        if (targetRole != null && !targetRole.isEmpty() && !"ALL".equals(targetRole)) {
+            wrapper.eq(User::getRole, targetRole);
+        }
+        List<User> users = userMapper.selectList(wrapper);
+        if (users == null || users.isEmpty()) {
+            return 0;
+        }
+        List<Long> userIds = users.stream().map(User::getId).collect(Collectors.toList());
+        String data = "{\"senderId\":" + senderId + "}";
+        for (Long userId : userIds) {
+            sendNotification(userId, "SYSTEM_NOTICE", title, content, data);
+        }
+        return userIds.size();
     }
 
     private void pushToUser(Long userId, Notification notification) {
@@ -72,7 +94,7 @@ public class NotificationService extends ServiceImpl<NotificationMapper, Notific
         LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Notification::getUserId, userId);
         if (readFlag != null) wrapper.eq(Notification::getReadFlag, readFlag);
-        wrapper.le(Notification::getExpireAt, LocalDateTime.now());
+        wrapper.ge(Notification::getExpireAt, LocalDateTime.now());
         wrapper.orderByDesc(Notification::getCreatedAt);
         return page(new Page<>(pageNum, pageSize), wrapper);
     }
@@ -107,5 +129,16 @@ public class NotificationService extends ServiceImpl<NotificationMapper, Notific
         LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
         wrapper.lt(Notification::getExpireAt, LocalDateTime.now());
         remove(wrapper);
+    }
+
+    /**
+     * 检查用户是否已有指定类型且 data 包含指定内容的通知（用于幂等判断）
+     */
+    public boolean existsByUserIdAndTypeAndDataContains(Long userId, String type, String dataFragment) {
+        LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Notification::getUserId, userId)
+                .eq(Notification::getType, type)
+                .apply("data LIKE CONCAT('%', {0}, '%')", dataFragment);
+        return count(wrapper) > 0;
     }
 }

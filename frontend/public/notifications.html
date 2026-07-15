@@ -101,16 +101,7 @@
         </div>
         <span class="text-base font-semibold" style="color: var(--color-text-primary);">智约自习</span>
       </a>
-      <nav class="hidden lg:flex items-center gap-1">
-        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">首页</a>
-        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">自习室</a>
-        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">我的预约</a>
-        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">实时看板</a>
-        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">数据报表</a>
-        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">空间管理</a>
-        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">黑名单管理</a>
-        <a href="#" class="px-3 py-2 text-sm rounded-lg whitespace-nowrap" style="color: var(--color-text-secondary); text-decoration: none;">用户权限</a>
-      </nav>
+      <nav id="top-nav" class="hidden lg:flex items-center gap-1"></nav>
       <div class="flex items-center gap-2 shrink-0">
         <div id="nav-avatar" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium" style="background: var(--brand-primary); color: white;"></div>
         <span id="nav-name" class="hidden sm:block text-sm" style="color: var(--color-text-primary);"></span>
@@ -152,15 +143,23 @@
     </div>
 
     <!-- Action Bar -->
-    <div class="flex items-center justify-end gap-2 mb-4 flex-wrap">
-      <button onclick="markAllRead()" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg action-btn" style="color: var(--brand-primary); background: var(--brand-primary-lighter); border: none;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></svg>
-        全部已读
-      </button>
-      <button onclick="loadNotifications()" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg action-btn" style="color: var(--color-text-secondary); background: var(--color-bg-tertiary); border: 1px solid var(--color-border);">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-        刷新
-      </button>
+    <div class="flex items-center justify-between gap-2 mb-4 flex-wrap">
+      <div id="admin-actions" class="hidden flex items-center gap-2">
+        <button onclick="openBroadcastModal()" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg action-btn" style="color: white; background: var(--brand-primary); border: none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          发布系统通知
+        </button>
+      </div>
+      <div class="flex items-center gap-2 ml-auto">
+        <button onclick="markAllRead()" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg action-btn" style="color: var(--brand-primary); background: var(--brand-primary-lighter); border: none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></svg>
+          全部已读
+        </button>
+        <button onclick="loadNotifications()" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg action-btn" style="color: var(--color-text-secondary); background: var(--color-bg-tertiary); border: 1px solid var(--color-border);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+          刷新
+        </button>
+      </div>
     </div>
 
     <!-- Tab Bar -->
@@ -198,8 +197,8 @@
       </div>
     </div>
 
-    <!-- Notification Settings Card -->
-    <div class="rounded-xl p-5 sm:p-6 mt-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+    <!-- Notification Settings Card (学生) -->
+    <div id="pref-card" class="rounded-xl p-5 sm:p-6 mt-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
       <div class="flex items-center gap-2 mb-1">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
         <h2 class="text-base font-semibold" style="color: var(--color-text-primary);">通知偏好</h2>
@@ -239,9 +238,45 @@
 
   </main>
 
+  <!-- Broadcast Modal (admin only) -->
+  <div id="broadcast-modal" class="fixed inset-0 z-50 hidden items-center justify-center" style="background: rgba(0,0,0,0.5);">
+    <div class="rounded-xl p-6 w-full mx-4" style="max-width: 480px; background: var(--surface-card);">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-semibold" style="color: var(--color-text-primary);">发布系统通知</h3>
+        <button onclick="closeBroadcastModal()" class="p-1 rounded-lg action-btn" style="color: var(--color-text-tertiary); background: transparent; border: none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="text-sm font-medium block mb-1.5" style="color: var(--color-text-primary);">接收对象</label>
+          <select id="broadcast-role" class="w-full px-3 py-2 rounded-lg text-sm outline-none" style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); color: var(--color-text-primary);">
+            <option value="ALL">所有用户</option>
+            <option value="STUDENT">仅学生</option>
+            <option value="ADMIN">仅管理员</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm font-medium block mb-1.5" style="color: var(--color-text-primary);">通知标题</label>
+          <input id="broadcast-title" type="text" placeholder="请输入通知标题" class="w-full px-3 py-2 rounded-lg text-sm outline-none" style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); color: var(--color-text-primary);">
+        </div>
+        <div>
+          <label class="text-sm font-medium block mb-1.5" style="color: var(--color-text-primary);">通知内容</label>
+          <textarea id="broadcast-content" rows="4" placeholder="请输入通知内容" class="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none" style="background: var(--color-bg-secondary); border: 1px solid var(--color-border); color: var(--color-text-primary);"></textarea>
+        </div>
+        <div id="broadcast-msg" class="text-xs hidden"></div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button onclick="closeBroadcastModal()" class="px-4 py-2 rounded-lg text-sm font-medium action-btn" style="background: var(--color-bg-tertiary); color: var(--color-text-secondary); border: none;">取消</button>
+          <button id="broadcast-submit" onclick="submitBroadcast()" class="px-4 py-2 rounded-lg text-sm font-medium action-btn" style="background: var(--brand-primary); color: white; border: none;">发布</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/request.js"></script>
+  <script src="api/notification.js"></script>
 
   <script>
   (function() {
@@ -259,6 +294,40 @@
       window.location.replace((window.AppConfig && AppConfig.loginUrl) || '/public/login.html');
       return;
     }
+
+    // 渲染顶部导航栏
+    function renderNav() {
+      var nav = document.getElementById('top-nav');
+      if (!nav) return;
+      var role = user && user.role;
+      var links = [];
+      if (role === 'STUDENT') {
+        links = [
+          { text: '首页', href: '../student/pages/home.html' },
+          { text: '自习室', href: '../student/pages/seat-selection.html' },
+          { text: '我的预约', href: '../student/pages/my-reservations.html' },
+          { text: '实时看板', href: '../student/pages/dashboard.html' }
+        ];
+      } else {
+        links = [
+          { text: '首页', href: '../admin/pages/dashboard.html' },
+          { text: '数据报表', href: '../admin/pages/reports.html' },
+          { text: '空间管理', href: '../admin/pages/space-management.html' },
+          { text: '黑名单管理', href: '../admin/pages/blacklist.html' },
+          { text: '用户权限', href: '../admin/pages/user-management.html' }
+        ];
+      }
+      nav.innerHTML = '';
+      links.forEach(function(item) {
+        var a = document.createElement('a');
+        a.href = item.href;
+        a.textContent = item.text;
+        a.className = 'px-3 py-2 text-sm rounded-lg whitespace-nowrap';
+        a.style.cssText = 'color: var(--color-text-secondary); text-decoration: none;';
+        nav.appendChild(a);
+      });
+    }
+    renderNav();
 
     // 填充导航栏用户信息
     var avatarEl = document.getElementById('nav-avatar');
@@ -487,6 +556,76 @@
       } catch (e) { console.warn('WebSocket初始化失败', e); }
     }
 
+    function initByRole() {
+      var role = user && user.role;
+      var isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+      if (isAdmin) {
+        var adminActions = document.getElementById('admin-actions');
+        if (adminActions) adminActions.classList.remove('hidden');
+        var prefCard = document.getElementById('pref-card');
+        if (prefCard) prefCard.style.display = 'none';
+      }
+    }
+
+    window.openBroadcastModal = function() {
+      var modal = document.getElementById('broadcast-modal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('broadcast-title').value = '';
+      document.getElementById('broadcast-content').value = '';
+      document.getElementById('broadcast-role').value = 'ALL';
+      document.getElementById('broadcast-msg').classList.add('hidden');
+    };
+
+    window.closeBroadcastModal = function() {
+      var modal = document.getElementById('broadcast-modal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    };
+
+    window.submitBroadcast = function() {
+      var title = document.getElementById('broadcast-title').value.trim();
+      var content = document.getElementById('broadcast-content').value.trim();
+      var targetRole = document.getElementById('broadcast-role').value;
+      var msgEl = document.getElementById('broadcast-msg');
+      var btn = document.getElementById('broadcast-submit');
+
+      if (!title) {
+        msgEl.textContent = '请输入通知标题';
+        msgEl.style.color = 'var(--state-error)';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+      if (!content) {
+        msgEl.textContent = '请输入通知内容';
+        msgEl.style.color = 'var(--state-error)';
+        msgEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      msgEl.classList.add('hidden');
+
+      NotificationAPI.broadcast({ title: title, content: content, targetRole: targetRole }).then(function(res) {
+        msgEl.textContent = '发布成功，已发送给 ' + (res && res.sentCount ? res.sentCount : 0) + ' 位用户';
+        msgEl.style.color = 'var(--state-success)';
+        msgEl.classList.remove('hidden');
+        setTimeout(function() { closeBroadcastModal(); }, 1500);
+        loadNotifications();
+      }).catch(function(err) {
+        msgEl.textContent = (err && err.message) || '发布失败';
+        msgEl.style.color = 'var(--state-error)';
+        msgEl.classList.remove('hidden');
+      }).finally(function() {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      });
+    };
+
+    initByRole();
     loadNotifications();
     initWebSocket();
   })();

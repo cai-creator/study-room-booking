@@ -5,13 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.studyroom.booking.common.ResultCode;
 import com.studyroom.booking.common.exception.BusinessException;
-import com.studyroom.booking.modules.user.dto.CreateUserRequest;
-import com.studyroom.booking.modules.user.dto.LoginRequest;
-import com.studyroom.booking.modules.user.dto.LoginVO;
-import com.studyroom.booking.modules.user.dto.RegisterRequest;
-import com.studyroom.booking.modules.user.dto.UpdateUserRequest;
-import com.studyroom.booking.modules.user.dto.ChangePasswordRequest;
-import com.studyroom.booking.modules.user.dto.UserVO;
+import com.studyroom.booking.modules.reservation.entity.Booking;
+import com.studyroom.booking.modules.reservation.mapper.BookingMapper;
+import com.studyroom.booking.modules.seat.entity.NoShowRecord;
+import com.studyroom.booking.modules.seat.mapper.NoShowRecordMapper;
+import com.studyroom.booking.modules.user.dto.*;
 import com.studyroom.booking.modules.user.entity.RefreshToken;
 import com.studyroom.booking.modules.user.entity.User;
 import com.studyroom.booking.modules.user.mapper.UserMapper;
@@ -36,6 +34,8 @@ public class UserService {
     private final RefreshTokenService refreshTokenService;
     private final LoginAttemptService loginAttemptService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final BookingMapper bookingMapper;
+    private final NoShowRecordMapper noShowRecordMapper;
 
     /**
      * 用户登录
@@ -583,6 +583,44 @@ public class UserService {
         vo.setAvatar(user.getAvatar());
         vo.setStatus(user.getStatus());
         vo.setCreatedAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null);
+        vo.setUpdatedAt(user.getUpdatedAt() != null ? user.getUpdatedAt().toString() : null);
         return vo;
+    }
+
+    /**
+     * 获取用户统计信息
+     */
+    public UserStatsVO getUserStats(Long userId) {
+        LocalDateTime now = LocalDateTime.now();
+
+        long totalBookings = bookingMapper.selectCount(
+                new LambdaQueryWrapper<Booking>()
+                        .eq(Booking::getUserId, userId)
+                        .eq(Booking::getDeleted, 0)
+        );
+
+        LocalDateTime monthStart = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        long thisMonthNoShow = noShowRecordMapper.selectCount(
+                new LambdaQueryWrapper<NoShowRecord>()
+                        .eq(NoShowRecord::getUserId, userId)
+                        .ge(NoShowRecord::getRecordDate, monthStart)
+        );
+
+        String creditLevel;
+        if (thisMonthNoShow == 0) {
+            creditLevel = "EXCELLENT";
+        } else if (thisMonthNoShow == 1) {
+            creditLevel = "GOOD";
+        } else if (thisMonthNoShow == 2) {
+            creditLevel = "FAIR";
+        } else {
+            creditLevel = "POOR";
+        }
+
+        return UserStatsVO.builder()
+                .totalBookings((int) totalBookings)
+                .thisMonthNoShow((int) thisMonthNoShow)
+                .creditLevel(creditLevel)
+                .build();
     }
 }

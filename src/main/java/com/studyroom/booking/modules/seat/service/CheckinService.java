@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.studyroom.booking.common.ResultCode;
 import com.studyroom.booking.common.context.UserContext;
 import com.studyroom.booking.common.exception.BusinessException;
+import com.studyroom.booking.modules.notification.service.NotificationService;
 import com.studyroom.booking.modules.seat.dto.CheckinVO;
 import com.studyroom.booking.modules.seat.entity.Reservation;
 import com.studyroom.booking.modules.seat.entity.SeatControl;
@@ -30,16 +31,17 @@ public class CheckinService {
 
     private final ReservationMapper reservationMapper;
     private final SeatControlMapper seatMapper;
+    private final NotificationService notificationService;
 
-    /** 签到宽限时间（分钟），开始时间后多久判定爽约，默认50 */
+    /** 签到提前宽限时间（分钟），预约开始前多久可以开始签到，默认50 */
     @Value("${booking.rules.checkin-grace-minutes:50}")
     private int checkinGraceMinutes;
 
-    /** 签到截止时间（分钟），预约创建后必须在此时间内签到，默认10 */
+    /** 签到截止期限（分钟），预约开始后/当场预约后多久必须签到，默认10 */
     @Value("${booking.rules.checkin-deadline-minutes:10}")
     private int checkinDeadlineMinutes;
 
-    /** 暂离保留时间（分钟），默认30分钟 */
+    /** 暂离保留时间（分钟），默认30 */
     @Value("${booking.rules.temporary-absence-minutes:30}")
     private int temporaryAbsenceMinutes;
 
@@ -94,18 +96,22 @@ public class CheckinService {
         }
 
         // 4. 验证签到时间
-        // 提前预约（创建时间 < 开始时间）：签到窗口为开始时间 ~ 开始时间+checkinGraceMinutes
-        // 开始后预约（创建时间 >= 开始时间）：签到窗口为创建时间 ~ 创建时间+checkinGraceMinutes
+        // 提前预约（创建时间 < 开始时间）：
+        //   最早签到 = startTime - checkinGraceMinutes（可提前签到）
+        //   最晚签到 = startTime + checkinDeadlineMinutes（开始后必须在这段时间内签到）
+        // 当场预约（创建时间 >= 开始时间）：
+        //   最早签到 = createdAt（创建后即可签到）
+        //   最晚签到 = createdAt + checkinDeadlineMinutes
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime earliestCheckin;
         LocalDateTime latestCheckin;
 
         if (reservation.getCreatedAt().isBefore(reservation.getStartTime())) {
-            earliestCheckin = reservation.getStartTime();
-            latestCheckin = reservation.getStartTime().plusMinutes(checkinGraceMinutes);
+            earliestCheckin = reservation.getStartTime().minusMinutes(checkinGraceMinutes);
+            latestCheckin = reservation.getStartTime().plusMinutes(checkinDeadlineMinutes);
         } else {
             earliestCheckin = reservation.getCreatedAt();
-            latestCheckin = reservation.getCreatedAt().plusMinutes(checkinGraceMinutes);
+            latestCheckin = reservation.getCreatedAt().plusMinutes(checkinDeadlineMinutes);
         }
 
         if (now.isBefore(earliestCheckin)) {
@@ -123,6 +129,19 @@ public class CheckinService {
         reservationMapper.updateById(reservation);
 
         log.info("用户 {} 签到成功，预约ID: {}, 座位: {}", userId, reservation.getId(), seatCode);
+
+        // 发送签到成功通知
+        try {
+            String content = String.format("您已成功签到，座位：%s，时间：%s ~ %s。",
+                    seatCode,
+                    reservation.getStartTime() != null ? reservation.getStartTime().format(FORMATTER) : "",
+                    reservation.getEndTime() != null ? reservation.getEndTime().format(FORMATTER) : "");
+            notificationService.sendNotification(userId, "CHECKIN_SUCCESS",
+                    "签到成功", content,
+                    String.format("{\"reservationId\":%d,\"seatCode\":\"%s\"}", reservation.getId(), seatCode));
+        } catch (Exception e) {
+            log.warn("发送签到成功通知失败，userId={}, reservationId={}", userId, reservation.getId(), e);
+        }
 
         // 6. 构建返回对象
         return buildCheckinVO(reservation, seat);
@@ -160,6 +179,19 @@ public class CheckinService {
 
         log.info("用户 {} 签退成功，预约ID: {}", userId, reservation.getId());
 
+        // 发送签退成功通知
+        try {
+            String content = String.format("您已成功签退，座位：%s，时长：%s ~ %s。",
+                    seatCode,
+                    reservation.getStartTime() != null ? reservation.getStartTime().format(FORMATTER) : "",
+                    reservation.getCheckoutTime() != null ? reservation.getCheckoutTime().format(FORMATTER) : "");
+            notificationService.sendNotification(userId, "CHECKOUT_SUCCESS",
+                    "签退成功", content,
+                    String.format("{\"reservationId\":%d,\"seatCode\":\"%s\"}", reservation.getId(), seatCode));
+        } catch (Exception e) {
+            log.warn("发送签退成功通知失败，userId={}, reservationId={}", userId, reservation.getId(), e);
+        }
+
         return vo;
     }
 
@@ -195,6 +227,17 @@ public class CheckinService {
 
         log.info("用户 {} 暂离，预约ID: {}, 暂离截止: {}分钟后",
                 userId, reservation.getId(), temporaryAbsenceMinutes);
+
+        // 发送暂离通知
+        try {
+            String content = String.format("您已暂离座位 %s，请在 %d 分钟内返回，否则将被记录为爽约。",
+                    seatCode, temporaryAbsenceMinutes);
+            notificationService.sendNotification(userId, "TEMPORARY_LEAVE",
+                    "已暂离", content,
+                    String.format("{\"reservationId\":%d,\"seatCode\":\"%s\"}", reservation.getId(), seatCode));
+        } catch (Exception e) {
+            log.warn("发送暂离通知失败，userId={}, reservationId={}", userId, reservation.getId(), e);
+        }
 
         return buildCheckinVO(reservation, null);
     }
@@ -236,6 +279,16 @@ public class CheckinService {
         reservationMapper.updateById(reservation);
 
         log.info("用户 {} 返回座位，预约ID: {}", userId, reservation.getId());
+
+        // 发送返回座位通知
+        try {
+            String content = String.format("您已返回座位 %s，继续您的学习吧。", seatCode);
+            notificationService.sendNotification(userId, "RETURN_SEAT",
+                    "已返回座位", content,
+                    String.format("{\"reservationId\":%d,\"seatCode\":\"%s\"}", reservation.getId(), seatCode));
+        } catch (Exception e) {
+            log.warn("发送返回座位通知失败，userId={}, reservationId={}", userId, reservation.getId(), e);
+        }
 
         return buildCheckinVO(reservation, null);
     }

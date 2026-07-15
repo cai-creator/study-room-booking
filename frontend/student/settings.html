@@ -267,6 +267,8 @@
   <script src="../public/js/request.js"></script>
   <script src="../public/api/auth.js"></script>
   <script src="../public/api/user.js"></script>
+  <script src="../public/api/notification.js"></script>
+  <script src="../public/api/space.js"></script>
   <script src="../public/js/navbar.js"></script>
 
   <script>
@@ -371,38 +373,64 @@
 
     // ========== 偏好设置 ==========
     function loadPreference() {
-      var pref = Utils.getPreference ? Utils.getPreference() : {};
-      document.getElementById('pref-campus').value = pref.campus || '';
-      document.getElementById('pref-roomtype').value = pref.roomType || '';
+      SpaceAPI.getCampuses().then(function(campuses) {
+        var campusSelect = document.getElementById('pref-campus');
+        campusSelect.innerHTML = '<option value="">不指定</option>';
+        campuses.forEach(function(c) {
+          var option = document.createElement('option');
+          option.value = c.id;
+          option.textContent = c.name;
+          campusSelect.appendChild(option);
+        });
+        NotificationAPI.getPreference().then(function(pref) {
+          campusSelect.value = pref.campusId || '';
+          document.getElementById('pref-roomtype').value = pref.roomType || '';
+        }).catch(function() {});
+      }).catch(function() {
+        document.getElementById('pref-roomtype').value = '';
+      });
     }
     window.savePreference = function() {
       var msg = document.getElementById('pref-msg');
+      var campusId = document.getElementById('pref-campus').value;
       var pref = {
-        campus: document.getElementById('pref-campus').value,
-        roomType: document.getElementById('pref-roomtype').value
+        campusId: campusId ? parseInt(campusId) : null,
+        roomType: document.getElementById('pref-roomtype').value || null
       };
-      if (Utils.setPreference) Utils.setPreference(pref);
-      showMsg(msg, '偏好已保存', 'success');
+      NotificationAPI.savePreference(pref).then(function() {
+        showMsg(msg, '偏好已保存', 'success');
+      }).catch(function(err) {
+        showMsg(msg, (err && err.message) || '保存失败', 'error');
+      });
     };
 
     // ========== 通知设置 ==========
     function loadNotificationPref() {
-      var pref = Utils.getNotificationPref ? Utils.getNotificationPref() : {};
-      document.getElementById('notif-booking-reminder').checked = pref.bookingReminder !== false;
-      document.getElementById('notif-checkin-reminder').checked = pref.checkinReminder !== false;
-      document.getElementById('notif-system').checked = pref.system !== false;
-      document.getElementById('notif-blacklist').checked = pref.blacklist !== false;
+      NotificationAPI.getPreference().then(function(pref) {
+        document.getElementById('notif-booking-reminder').checked = pref.bookingReminder !== false;
+        document.getElementById('notif-checkin-reminder').checked = pref.checkinReminder !== false;
+        document.getElementById('notif-system').checked = pref.systemNotice !== false;
+        document.getElementById('notif-blacklist').checked = pref.blacklistAlert !== false;
+      }).catch(function() {
+        document.getElementById('notif-booking-reminder').checked = true;
+        document.getElementById('notif-checkin-reminder').checked = true;
+        document.getElementById('notif-system').checked = true;
+        document.getElementById('notif-blacklist').checked = true;
+      });
     }
     window.saveNotification = function() {
       var msg = document.getElementById('notif-msg');
       var pref = {
         bookingReminder: document.getElementById('notif-booking-reminder').checked,
         checkinReminder: document.getElementById('notif-checkin-reminder').checked,
-        system: document.getElementById('notif-system').checked,
-        blacklist: document.getElementById('notif-blacklist').checked
+        systemNotice: document.getElementById('notif-system').checked,
+        blacklistAlert: document.getElementById('notif-blacklist').checked
       };
-      if (Utils.setNotificationPref) Utils.setNotificationPref(pref);
-      showMsg(msg, '通知设置已保存', 'success');
+      NotificationAPI.savePreference(pref).then(function() {
+        showMsg(msg, '通知设置已保存', 'success');
+      }).catch(function(err) {
+        showMsg(msg, (err && err.message) || '保存失败', 'error');
+      });
     };
 
     // ========== 安全日志 ==========

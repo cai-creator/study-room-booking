@@ -28,6 +28,7 @@ booking:
     advance-booking-hours: 24
     min-advance-minutes: 15
     checkin-grace-minutes: 15
+    booking-reminder-minutes: 15
     temporary-absence-minutes: 30
     blacklist-threshold: 3
     blacklist-days: 7
