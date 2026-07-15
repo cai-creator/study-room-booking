@@ -168,17 +168,37 @@ CREATE TABLE IF NOT EXISTS sys_config (
 -- 操作审计日志表
 CREATE TABLE IF NOT EXISTS operation_log (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    username VARCHAR(50) NOT NULL,
-    module VARCHAR(50) NOT NULL,
-    operation VARCHAR(100) NOT NULL,
-    method VARCHAR(20),
-    request_url VARCHAR(255),
-    request_params TEXT,
+    user_id BIGINT,
+    username VARCHAR(50),
+    role VARCHAR(20),
+    module VARCHAR(50),
+    operation VARCHAR(100),
+    target_type VARCHAR(50),
+    target_id BIGINT,
+    target_name VARCHAR(100),
+    action VARCHAR(50),
+    detail TEXT,
+    result TINYINT,
+    error_message VARCHAR(500),
     ip VARCHAR(50),
-    status TINYINT NOT NULL DEFAULT 1,
-    error_msg VARCHAR(500),
-    cost_time BIGINT,
+    user_agent VARCHAR(500),
+    request_uri VARCHAR(255),
+    request_method VARCHAR(20),
+    duration_ms BIGINT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP()
+);
+
+-- 消息通知表
+CREATE TABLE IF NOT EXISTS notification (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    content TEXT NOT NULL,
+    data TEXT,
+    read_flag TINYINT NOT NULL DEFAULT 0,
+    sender_id BIGINT,
+    expire_at DATETIME,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP()
 );
 
