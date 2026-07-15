@@ -283,7 +283,7 @@
       return;
     }
 
-    fetch('../partials/navbar.html').then(function(r) { return r.text(); }).then(function(html) {
+    fetch('partials/navbar.html').then(function(r) { return r.text(); }).then(function(html) {
       document.getElementById('navbar-placeholder').innerHTML = html;
       if (window.initNavbarUI) initNavbarUI();
       lucide.createIcons();
