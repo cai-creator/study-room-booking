@@ -34,6 +34,7 @@ study-room-booking/
 │   │   │   │   ├── space/                          # 空间管理（成员B）
 │   │   │   │   ├── reservation/                    # 预约核心（成员C）
 │   │   │   │   ├── seat/                           # 座位管控（成员D）
+│   │   │   │   ├── notification/                   # 消息通知（成员D）
 │   │   │   │   └── dashboard/                      # 仪表盘（成员C）
 │   │   │   └── utils/                              # 工具类
 │   │   └── resources/
@@ -57,7 +58,8 @@ study-room-booking/
 | `modules/user/` | 用户与权限 | 蔡俊晨 | 用户认证、RBAC权限、账号管理 |
 | `modules/space/` | 空间管理 | 陈梦涵 | 校区/楼栋/楼层/自习室/座位的CRUD、批量导入、座位排布 |
 | `modules/reservation/` | 预约核心 | 郭学威 | 预约创建/取消/查询、规则引擎、并发控制、实时状态 |
-| `modules/seat/` | 座位管控 | 邓祺然 | 签到/签退/暂离、定时任务、黑名单、消息通知 |
+| `modules/seat/` | 座位管控 | 邓祺然 | 签到/签退/暂离、定时任务、黑名单、数据报表 |
+| `modules/notification/` | 消息通知 | 邓祺然 | 消息推送、通知偏好、系统通知发布 |
 | `modules/dashboard/` | 仪表盘 | 郭学威 | 校园/楼栋/自习室三级使用率实时概览 |
 | `common/` | 公共组件 | 蔡俊晨 | 统一响应、异常处理、配置类、自定义注解等公共基础设施 |
 | `utils/` | 工具类 | 蔡俊晨（可由各成员补充） | 通用工具方法，各模块开发中遇到可往里补充 |
@@ -619,9 +621,70 @@ Authorization: Bearer {token}
 
 ---
 
-### 模块五：实时看板与数据报表
+### 模块五：消息通知（成员D负责）
 
-#### 5.1 实时看板
+#### 5.1 消息通知管理
+
+| 接口 | 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|------|
+| 我的消息列表 | GET | `/api/notifications` | 获取我的消息通知列表（分页） | 所有登录用户 |
+| 消息详情 | GET | `/api/notifications/{id}` | 获取消息详情 | 所有登录用户 |
+| 标记已读 | PUT | `/api/notifications/{id}/read` | 标记单条消息已读 | 所有登录用户 |
+| 全部已读 | PUT | `/api/notifications/read-all` | 标记所有消息已读 | 所有登录用户 |
+| 删除消息 | DELETE | `/api/notifications/{id}` | 删除消息 | 所有登录用户 |
+| 未读消息数 | GET | `/api/notifications/unread-count` | 获取未读消息数量 | 所有登录用户 |
+
+**消息类型枚举:**
+| 类型 | 说明 |
+|------|------|
+| BOOKING_REMINDER | 预约提醒 |
+| CHECKIN_REMINDER | 签到提醒 |
+| SYSTEM_NOTICE | 系统通知 |
+| BLACKLIST_ALERT | 黑名单预警 |
+
+#### 5.2 通知偏好设置
+
+| 接口 | 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|------|
+| 获取偏好 | GET | `/api/notifications/preference` | 获取当前用户通知偏好 | 所有登录用户 |
+| 保存偏好 | PUT | `/api/notifications/preference` | 更新通知偏好设置 | 所有登录用户 |
+
+**通知偏好字段:**
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| bookingReminder | Boolean | 预约提醒开关 |
+| checkinReminder | Boolean | 签到提醒开关 |
+| systemNotice | Boolean | 系统通知开关 |
+| blacklistAlert | Boolean | 黑名单预警开关 |
+| campusId | Long | 偏好校区（预约偏好） |
+| roomType | String | 偏好自习室类型（预约偏好） |
+
+#### 5.3 系统通知发布（管理员）
+
+| 接口 | 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|------|
+| 发布系统通知 | POST | `/api/notifications/broadcast` | 管理员发布系统通知 | ADMIN/SUPER_ADMIN |
+
+**发布系统通知请求:**
+```json
+{
+  "title": "系统维护通知",
+  "content": "系统将于今晚23:00-00:00进行维护升级",
+  "targetRole": "ALL"
+}
+```
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| title | String | 是 | 通知标题 |
+| content | String | 是 | 通知内容 |
+| targetRole | String | 否 | 接收对象：ALL(所有用户)/STUDENT(仅学生)/ADMIN(仅管理员)，默认ALL |
+
+---
+
+### 模块六：实时看板与数据报表
+
+#### 6.1 实时看板
 
 | 接口 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|------|
@@ -649,7 +712,7 @@ Authorization: Bearer {token}
 }
 ```
 
-#### 5.2 数据报表
+#### 6.2 数据报表
 
 | 接口 | 方法 | 路径 | 说明 | 权限 | 负责人 |
 |------|------|------|------|------|--------|
@@ -681,7 +744,9 @@ Authorization: Bearer {token}
 sys_user (用户表)
     ├── reservation (预约记录)
     ├── blacklist (黑名单)
-    └── no_show_record (爽约记录)
+    ├── no_show_record (爽约记录)
+    ├── notification (消息通知)
+    └── notification_preference (通知偏好)
 
 campus (校区)
     └── building (楼栋)
@@ -706,9 +771,11 @@ campus (校区)
 | reservation | 预约记录表 | id, user_id, seat_id, room_id, start_time, end_time, status, version |
 | blacklist | 黑名单表 | id, user_id, reason, start_time, end_time, status |
 | no_show_record | 爽约记录表 | id, user_id, reservation_id, reason, record_date |
+| notification | 消息通知表 | id, user_id, type, title, content, read_flag, sender_id |
+| notification_preference | 通知偏好设置表 | id, user_id, booking_reminder, checkin_reminder, system_notice, blacklist_alert, campus_id, room_type |
 | operation_log | 操作审计日志 | id, user_id, module, operation, ip, status |
 
-详细建表脚本见: [docs/sql/schema.sql](docs/sql/schema.sql)
+详细建表脚本见: [src/main/resources/schema-h2.sql](src/main/resources/schema-h2.sql)
 
 ---
 

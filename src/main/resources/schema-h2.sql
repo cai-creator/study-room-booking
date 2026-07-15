@@ -110,6 +110,22 @@ CREATE TABLE IF NOT EXISTS seat (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP()
 );
 
+-- 座位不可用时间表
+CREATE TABLE IF NOT EXISTS seat_unavailable (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    seat_id BIGINT NOT NULL,
+    repeat_type VARCHAR(20),
+    start_date_time DATETIME,
+    end_date_time DATETIME,
+    day_of_week INT,
+    day_of_month INT,
+    reason VARCHAR(255),
+    status TINYINT NOT NULL DEFAULT 1,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP()
+);
+
 -- 预约记录表
 CREATE TABLE IF NOT EXISTS reservation (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -200,6 +216,20 @@ CREATE TABLE IF NOT EXISTS notification (
     sender_id BIGINT,
     expire_at DATETIME,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP()
+);
+
+-- 通知偏好设置表
+CREATE TABLE IF NOT EXISTS notification_preference (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE,
+    booking_reminder BOOLEAN NOT NULL DEFAULT TRUE,
+    checkin_reminder BOOLEAN NOT NULL DEFAULT TRUE,
+    system_notice BOOLEAN NOT NULL DEFAULT TRUE,
+    blacklist_alert BOOLEAN NOT NULL DEFAULT TRUE,
+    campus_id BIGINT,
+    room_type VARCHAR(20),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP()
 );
 
 -- 初始化管理员账号（密码: admin123，使用BCrypt加密）
