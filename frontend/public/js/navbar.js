@@ -98,7 +98,32 @@
     });
 
     if (window.lucide) lucide.createIcons();
+    updateNotificationBadge();
   };
+
+  function updateNotificationBadge() {
+    var token = (window.Utils && Utils.getToken) ? Utils.getToken() : null;
+    if (!token) return;
+    fetch((window.AppConfig && AppConfig.apiBase ? AppConfig.apiBase : '') + '/notifications/unread-count', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res && res.code === 200 && res.data) {
+          var count = res.data.unreadCount || 0;
+          var badge = document.getElementById('nav-notification-badge');
+          if (badge) {
+            if (count > 0) {
+              badge.textContent = count > 99 ? '99+' : count;
+              badge.classList.remove('hidden');
+            } else {
+              badge.classList.add('hidden');
+            }
+          }
+        }
+      })
+      .catch(function () { /* 静默失败 */ });
+  }
 
   // 向后兼容：保留旧函数名作为别名
   window.initAdminNavbarUI = window.initNavbarUI;

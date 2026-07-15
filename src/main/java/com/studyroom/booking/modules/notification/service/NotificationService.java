@@ -3,19 +3,26 @@ package com.studyroom.booking.modules.notification.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.studyroom.booking.modules.notification.entity.Notification;
+import com.studyroom.booking.modules.notification.handler.WebSocketSessionManager;
 import com.studyroom.booking.modules.notification.mapper.NotificationMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService extends ServiceImpl<NotificationMapper, Notification> {
+
+    private final WebSocketSessionManager sessionManager;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public void sendNotification(Long userId, String type, String title, String content, String data) {
         Notification notification = new Notification();
@@ -28,11 +35,36 @@ public class NotificationService extends ServiceImpl<NotificationMapper, Notific
         notification.setExpireAt(LocalDateTime.now().plusDays(7));
         notification.setCreatedAt(LocalDateTime.now());
         save(notification);
+
+        pushToUser(userId, notification);
     }
 
     public void sendBatchNotification(List<Long> userIds, String type, String title, String content, String data) {
         for (Long userId : userIds) {
             sendNotification(userId, type, title, content, data);
+        }
+    }
+
+    private void pushToUser(Long userId, Notification notification) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("type", "NOTIFICATION");
+            payload.put("id", notification.getId());
+            payload.put("notificationType", notification.getType());
+            payload.put("title", notification.getTitle());
+            payload.put("content", notification.getContent());
+            payload.put("data", notification.getData());
+            payload.put("createdAt", notification.getCreatedAt());
+
+            String message = objectMapper.writeValueAsString(payload);
+            boolean sent = sessionManager.sendToUser(userId, message);
+            if (sent) {
+                log.debug("已通过WebSocket向用户 {} 推送通知: {}", userId, notification.getTitle());
+            } else {
+                log.debug("用户 {} 不在线, 仅入库, 待上线后查询", userId);
+            }
+        } catch (Exception e) {
+            log.warn("WebSocket推送失败: {}", e.getMessage());
         }
     }
 

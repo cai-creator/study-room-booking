@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人设置 - 智约自习·管理端</title>
+  <link rel="stylesheet" href="../colors_and_type.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+  <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+  <style type="text/tailwindcss">
+    @theme inline { --color-primary: var(--brand-primary); }
+    @layer base {
+      body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); }
+    }
+  </style>
+  <style>
+    .side-menu-item { transition: all 0.15s; cursor: pointer; }
+    .side-menu-item:hover { background: var(--color-bg-tertiary); }
+    .side-menu-item.active { background: var(--brand-primary-lighter); color: var(--brand-primary); border-left: 3px solid var(--brand-primary); }
+    .pwd-rule.met { background: var(--state-success-bg) !important; color: var(--state-success) !important; }
+    .stat-card { transition: all 0.2s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  </style>
+</head>
+<body class="min-h-screen" style="background: var(--color-bg-secondary);">
+  <div id="navbar-placeholder"></div>
+
+  <main class="mx-auto px-4 sm:px-6 py-6" style="max-width: 1200px;">
+    <div class="flex items-center gap-3 mb-6">
+      <a href="pages/space-management.html" class="flex items-center gap-1 text-sm transition-colors no-underline" style="color:var(--brand-primary);">
+        <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> 返回管理端
+      </a>
+      <span class="text-sm" style="color:var(--color-text-tertiary);">/</span>
+      <h1 class="text-xl font-bold">个人设置</h1>
+    </div>
+
+    <div class="grid grid-cols-12 gap-6">
+      <!-- 左侧菜单 -->
+      <aside class="col-span-12 md:col-span-3">
+        <div class="rounded-xl p-3" style="background: var(--surface-card); border: var(--surface-card-border);">
+          <div class="side-menu-item active px-4 py-3 rounded-lg text-sm font-medium flex items-center gap-2" data-section="profile" onclick="switchSection('profile')">
+            <i data-lucide="user" style="width:16px;height:16px;"></i> 个人信息
+          </div>
+          <div class="side-menu-item px-4 py-3 rounded-lg text-sm flex items-center gap-2" data-section="password" onclick="switchSection('password')" style="color:var(--color-text-secondary);">
+            <i data-lucide="lock" style="width:16px;height:16px;"></i> 修改密码
+          </div>
+          <div class="side-menu-item px-4 py-3 rounded-lg text-sm flex items-center gap-2" data-section="security" onclick="switchSection('security')" style="color:var(--color-text-secondary);">
+            <i data-lucide="shield-check" style="width:16px;height:16px;"></i> 安全设置
+          </div>
+          <div class="side-menu-item px-4 py-3 rounded-lg text-sm flex items-center gap-2" data-section="notification" onclick="switchSection('notification')" style="color:var(--color-text-secondary);">
+            <i data-lucide="bell" style="width:16px;height:16px;"></i> 通知设置
+          </div>
+          <div class="side-menu-item px-4 py-3 rounded-lg text-sm flex items-center gap-2" data-section="workspace" onclick="switchSection('workspace')" style="color:var(--color-text-secondary);">
+            <i data-lucide="layout-dashboard" style="width:16px;height:16px;"></i> 工作台
+          </div>
+        </div>
+      </aside>
+
+      <!-- 右侧内容 -->
+      <div class="col-span-12 md:col-span-9 space-y-6">
+        <!-- 个人信息 -->
+        <section id="sec-profile" class="rounded-xl p-6" style="background: var(--surface-card); border: var(--surface-card-border);">
+          <h2 class="text-base font-semibold mb-1">个人信息</h2>
+          <p class="text-xs mb-5" style="color:var(--color-text-tertiary);">管理员账号信息</p>
+          <div id="profile-loading" class="py-4 text-center text-sm" style="color:var(--color-text-tertiary);">加载中...</div>
+          <form id="profile-form" class="hidden space-y-4" onsubmit="return false;">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">用户名</label>
+                <input id="profile-username" readonly class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg-secondary);color:var(--color-text-tertiary);">
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">角色</label>
+                <input id="profile-role" readonly class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg-secondary);color:var(--color-text-tertiary);">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">真实姓名 <span style="color:var(--state-error);">*</span></label>
+              <input id="profile-realname" maxlength="50" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">邮箱</label>
+                <input id="profile-email" type="email" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">手机号</label>
+                <input id="profile-phone" type="tel" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
+              </div>
+            </div>
+            <div class="flex items-center gap-3 pt-2">
+              <button type="button" onclick="saveProfile()" class="px-5 py-2 rounded-lg text-sm font-medium" style="background:var(--brand-primary);color:white;border:none;cursor:pointer;">保存修改</button>
+              <span id="profile-msg" class="text-xs hidden"></span>
+            </div>
+          </form>
+        </section>
+
+        <!-- 修改密码 -->
+        <section id="sec-password" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border);">
+          <h2 class="text-base font-semibold mb-1">修改密码</h2>
+          <p class="text-xs mb-5" style="color:var(--color-text-tertiary);">至少6位，必须包含大小写字母和数字</p>
+          <form class="space-y-4" onsubmit="return false;">
+            <div>
+              <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">当前密码</label>
+              <input id="pwd-old" type="password" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">新密码</label>
+              <input id="pwd-new" type="password" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
+              <div class="mt-2 flex flex-wrap gap-2">
+                <span class="pwd-rule text-xs px-2 py-0.5 rounded" data-rule="length" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">≥6位</span>
+                <span class="pwd-rule text-xs px-2 py-0.5 rounded" data-rule="upper" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">大写字母</span>
+                <span class="pwd-rule text-xs px-2 py-0.5 rounded" data-rule="lower" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">小写字母</span>
+                <span class="pwd-rule text-xs px-2 py-0.5 rounded" data-rule="digit" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">数字</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1.5" style="color:var(--color-text-secondary);">确认新密码</label>
+              <input id="pwd-confirm" type="password" class="w-full px-3 py-2.5 rounded-lg text-sm outline-none" style="border:1px solid var(--color-border);background:var(--color-bg);">
+            </div>
+            <div class="flex items-center gap-3 pt-2">
+              <button type="button" onclick="changePassword()" class="px-5 py-2 rounded-lg text-sm font-medium" style="background:var(--brand-primary);color:white;border:none;cursor:pointer;">修改密码</button>
+              <span id="pwd-msg" class="text-xs hidden"></span>
+            </div>
+          </form>
+        </section>
+
+        <!-- 安全设置 -->
+        <section id="sec-security" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border);">
+          <h2 class="text-base font-semibold mb-1">安全设置</h2>
+          <p class="text-xs mb-5" style="color:var(--color-text-tertiary);">管理员账号安全配置</p>
+          <div class="space-y-3" id="security-info">
+            <div class="p-4 rounded-lg" style="background:var(--color-bg-secondary);">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-sm font-medium">账号状态</div>
+                  <div id="sec-status" class="text-xs mt-1" style="color:var(--color-text-tertiary);">加载中...</div>
+                </div>
+                <i data-lucide="check-circle" style="width:24px;height:24px;color:var(--state-success);"></i>
+              </div>
+            </div>
+            <div class="p-4 rounded-lg" style="background:var(--color-bg-secondary);">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-sm font-medium">登录设备管理</div>
+                  <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">查看活跃会话并退出其他设备</div>
+                </div>
+                <button onclick="forceLogoutOtherDevices()" class="text-sm px-3 py-1.5 rounded transition-colors" style="color:var(--state-error);background:var(--state-error-bg);border:none;cursor:pointer;">退出其他设备</button>
+              </div>
+            </div>
+            <div class="p-4 rounded-lg" style="background:var(--color-bg-secondary);">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-sm font-medium">登录失败锁定</div>
+                  <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">连续5次登录失败将自动锁定30分钟</div>
+                </div>
+                <i data-lucide="shield-check" style="width:24px;height:24px;color:var(--state-success);"></i>
+              </div>
+            </div>
+            <div class="p-4 rounded-lg" style="background:var(--color-bg-secondary);">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-sm font-medium">二次验证（2FA）</div>
+                  <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">管理员敏感操作二次身份验证</div>
+                </div>
+                <span class="text-xs px-2 py-1 rounded" style="background:var(--color-bg-tertiary);color:var(--color-text-tertiary);">待启用</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 通知设置 -->
+        <section id="sec-notification" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border);">
+          <h2 class="text-base font-semibold mb-1">通知设置</h2>
+          <p class="text-xs mb-5" style="color:var(--color-text-tertiary);">管理员工作通知</p>
+          <div class="space-y-3">
+            <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
+              <input type="checkbox" id="notif-new-user" checked class="w-4 h-4">
+              <div class="flex-1">
+                <div class="text-sm font-medium">新用户注册</div>
+                <div class="text-xs" style="color:var(--color-text-tertiary);">新学生注册账号时通知</div>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
+              <input type="checkbox" id="notif-blacklist" checked class="w-4 h-4">
+              <div class="flex-1">
+                <div class="text-sm font-medium">黑名单触发</div>
+                <div class="text-xs" style="color:var(--color-text-tertiary);">用户触发黑名单时通知</div>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
+              <input type="checkbox" id="notif-system" checked class="w-4 h-4">
+              <div class="flex-1">
+                <div class="text-sm font-medium">系统通知</div>
+                <div class="text-xs" style="color:var(--color-text-tertiary);">系统公告和维护通知</div>
+              </div>
+            </label>
+            <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer" style="background:var(--color-bg-secondary);">
+              <input type="checkbox" id="notif-booking" class="w-4 h-4">
+              <div class="flex-1">
+                <div class="text-sm font-medium">预约高峰预警</div>
+                <div class="text-xs" style="color:var(--color-text-tertiary);">座位使用率超过阈值时通知</div>
+              </div>
+            </label>
+            <div class="flex items-center gap-3 pt-2">
+              <button type="button" onclick="saveNotification()" class="px-5 py-2 rounded-lg text-sm font-medium" style="background:var(--brand-primary);color:white;border:none;cursor:pointer;">保存设置</button>
+              <span id="notif-msg" class="text-xs hidden"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 工作台 -->
+        <section id="sec-workspace" class="rounded-xl p-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border);">
+          <h2 class="text-base font-semibold mb-1">工作台</h2>
+          <p class="text-xs mb-5" style="color:var(--color-text-tertiary);">管理员工作概览</p>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <a href="pages/space-management.html" class="stat-card rounded-lg p-4 text-center no-underline" style="background:var(--color-bg-secondary);color:var(--color-text-primary);">
+              <i data-lucide="layout-grid" style="width:24px;height:24px;color:var(--brand-primary);margin:0 auto 8px;display:block;"></i>
+              <div class="text-sm font-medium">空间管理</div>
+              <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">校区·楼栋·楼层·自习室</div>
+            </a>
+            <a href="pages/user-management.html" class="stat-card rounded-lg p-4 text-center no-underline" style="background:var(--color-bg-secondary);color:var(--color-text-primary);">
+              <i data-lucide="users" style="width:24px;height:24px;color:var(--brand-primary);margin:0 auto 8px;display:block;"></i>
+              <div class="text-sm font-medium">用户管理</div>
+              <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">学生/管理员</div>
+            </a>
+            <a href="pages/blacklist.html" class="stat-card rounded-lg p-4 text-center no-underline" style="background:var(--color-bg-secondary);color:var(--color-text-primary);">
+              <i data-lucide="shield-x" style="width:24px;height:24px;color:var(--brand-primary);margin:0 auto 8px;display:block;"></i>
+              <div class="text-sm font-medium">黑名单</div>
+              <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">爽约管理</div>
+            </a>
+            <a href="pages/reports.html" class="stat-card rounded-lg p-4 text-center no-underline" style="background:var(--color-bg-secondary);color:var(--color-text-primary);">
+              <i data-lucide="bar-chart-3" style="width:24px;height:24px;color:var(--brand-primary);margin:0 auto 8px;display:block;"></i>
+              <div class="text-sm font-medium">数据报表</div>
+              <div class="text-xs mt-1" style="color:var(--color-text-tertiary);">使用率分析</div>
+            </a>
+          </div>
+          <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <a href="../public/notifications.html" class="rounded-lg p-4 flex items-center gap-3 no-underline transition-colors" style="background:var(--color-bg-secondary);color:var(--color-text-primary);">
+              <i data-lucide="bell" style="width:20px;height:20px;color:var(--brand-primary);"></i>
+              <div>
+                <div class="text-sm font-medium">消息通知</div>
+                <div class="text-xs" style="color:var(--color-text-tertiary);">查看所有消息</div>
+              </div>
+            </a>
+            <a href="../public/settings.html" class="rounded-lg p-4 flex items-center gap-3 no-underline transition-colors" style="background:var(--color-bg-secondary);color:var(--color-text-primary);">
+              <i data-lucide="settings" style="width:20px;height:20px;color:var(--brand-primary);"></i>
+              <div>
+                <div class="text-sm font-medium">基础设置</div>
+                <div class="text-xs" style="color:var(--color-text-tertiary);">切换简化版设置</div>
+              </div>
+            </a>
+            <button onclick="Utils.toast && Utils.toast('操作日志查看: 待后续对接', 'info')" class="rounded-lg p-4 flex items-center gap-3 text-left transition-colors" style="background:var(--color-bg-secondary);color:var(--color-text-primary);border:none;cursor:pointer;">
+              <i data-lucide="file-clock" style="width:20px;height:20px;color:var(--brand-primary);"></i>
+              <div>
+                <div class="text-sm font-medium">操作日志</div>
+                <div class="text-xs" style="color:var(--color-text-tertiary);">审计历史操作</div>
+              </div>
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="../public/js/config.js"></script>
+  <script src="../public/js/utils.js"></script>
+  <script src="../public/js/request.js"></script>
+  <script src="../public/api/auth.js"></script>
+  <script src="../public/api/user.js"></script>
+  <script src="../public/js/navbar.js"></script>
+
+  <script>
+  (function() {
+    'use strict';
+
+    var user = Utils.getUser();
+    var token = Utils.getToken();
+    if (!token || !user) {
+      window.location.replace(AppConfig.loginUrl || (BasePath ? BasePath.public + '/login.html' : '/public/login.html'));
+      return;
+    }
+
+    fetch('../partials/navbar.html').then(function(r) { return r.text(); }).then(function(html) {
+      document.getElementById('navbar-placeholder').innerHTML = html;
+      if (window.initNavbarUI) initNavbarUI();
+      lucide.createIcons();
+    });
+
+    window.switchSection = function(name) {
+      document.querySelectorAll('.side-menu-item').forEach(function(el) {
+        var isActive = el.getAttribute('data-section') === name;
+        el.classList.toggle('active', isActive);
+        if (isActive) el.style.color = 'var(--brand-primary)';
+        else el.style.color = 'var(--color-text-secondary)';
+      });
+      document.querySelectorAll('section[id^="sec-"]').forEach(function(sec) {
+        sec.classList.toggle('hidden', sec.id !== 'sec-' + name);
+      });
+      if (name === 'profile') loadProfile();
+      if (name === 'security') loadSecurity();
+      if (name === 'notification') loadNotificationPref();
+    };
+
+    // 个人信息
+    function loadProfile() {
+      AuthAPI.getCurrentUser().then(function(data) {
+        document.getElementById('profile-loading').classList.add('hidden');
+        document.getElementById('profile-form').classList.remove('hidden');
+        document.getElementById('profile-username').value = data.username || '';
+        document.getElementById('profile-role').value = Utils.getStatusLabel(data.role, 'role');
+        document.getElementById('profile-realname').value = data.realName || '';
+        document.getElementById('profile-email').value = data.email || '';
+        document.getElementById('profile-phone').value = data.phone || '';
+        Utils.setUser(Object.assign({}, Utils.getUser() || {}, data));
+      }).catch(function() {
+        document.getElementById('profile-loading').classList.add('hidden');
+        document.getElementById('profile-form').classList.remove('hidden');
+        var u = Utils.getUser() || {};
+        document.getElementById('profile-username').value = u.username || '';
+        document.getElementById('profile-role').value = Utils.getStatusLabel(u.role, 'role');
+        document.getElementById('profile-realname').value = u.realName || '';
+        document.getElementById('profile-email').value = u.email || '';
+        document.getElementById('profile-phone').value = u.phone || '';
+      });
+    }
+
+    window.saveProfile = function() {
+      var msg = document.getElementById('profile-msg');
+      var realName = document.getElementById('profile-realname').value.trim();
+      var email = document.getElementById('profile-email').value.trim();
+      var phone = document.getElementById('profile-phone').value.trim();
+      if (!realName) { showMsg(msg, '真实姓名不能为空', 'error'); return; }
+      UserAPI.updateUser(user.id, { realName: realName, email: email, phone: phone }).then(function() {
+        showMsg(msg, '保存成功', 'success');
+        var cached = Utils.getUser() || {};
+        cached.realName = realName; cached.email = email; cached.phone = phone;
+        Utils.setUser(cached);
+        if (window.initNavbarUI) initNavbarUI();
+      }).catch(function(err) { showMsg(msg, (err && err.message) || '保存失败', 'error'); });
+    };
+
+    // 修改密码
+    var pwdNew = document.getElementById('pwd-new');
+    pwdNew.addEventListener('input', function() {
+      var v = pwdNew.value;
+      var rules = { length: v.length >= 6, upper: /[A-Z]/.test(v), lower: /[a-z]/.test(v), digit: /[0-9]/.test(v) };
+      Object.keys(rules).forEach(function(rule) {
+        var el = document.querySelector('.pwd-rule[data-rule="' + rule + '"]');
+        if (!el) return;
+        if (rules[rule]) el.classList.add('met'); else el.classList.remove('met');
+      });
+    });
+
+    window.changePassword = function() {
+      var msg = document.getElementById('pwd-msg');
+      var oldPwd = document.getElementById('pwd-old').value;
+      var newPwd = pwdNew.value;
+      var confirmPwd = document.getElementById('pwd-confirm').value;
+      if (!oldPwd) { showMsg(msg, '请输入当前密码', 'error'); return; }
+      if (newPwd.length < 6 || !/[A-Z]/.test(newPwd) || !/[a-z]/.test(newPwd) || !/[0-9]/.test(newPwd)) {
+        showMsg(msg, '新密码需至少6位且包含大小写字母和数字', 'error'); return;
+      }
+      if (newPwd !== confirmPwd) { showMsg(msg, '两次输入的密码不一致', 'error'); return; }
+      UserAPI.updatePassword(user.id, { oldPassword: oldPwd, newPassword: newPwd }).then(function() {
+        showMsg(msg, '密码修改成功', 'success');
+        document.getElementById('pwd-old').value = ''; pwdNew.value = ''; document.getElementById('pwd-confirm').value = '';
+        document.querySelectorAll('.pwd-rule').forEach(function(el) { el.classList.remove('met'); });
+      }).catch(function(err) { showMsg(msg, (err && err.message) || '修改失败', 'error'); });
+    };
+
+    // 通知设置
+    function loadNotificationPref() {
+      var pref = Utils.getNotificationPref ? Utils.getNotificationPref() : {};
+      document.getElementById('notif-new-user').checked = pref.newUser !== false;
+      document.getElementById('notif-blacklist').checked = pref.blacklist !== false;
+      document.getElementById('notif-system').checked = pref.system !== false;
+      document.getElementById('notif-booking').checked = pref.booking === true;
+    }
+
+    window.saveNotification = function() {
+      var msg = document.getElementById('notif-msg');
+      var pref = {
+        newUser: document.getElementById('notif-new-user').checked,
+        blacklist: document.getElementById('notif-blacklist').checked,
+        system: document.getElementById('notif-system').checked,
+        booking: document.getElementById('notif-booking').checked
+      };
+      if (Utils.setNotificationPref) Utils.setNotificationPref(pref);
+      showMsg(msg, '通知设置已保存', 'success');
+    };
+
+    // 安全
+    function loadSecurity() {
+      AuthAPI.getCurrentUser().then(function(data) {
+        document.getElementById('sec-status').textContent = data.status === 1 ? '● 正常' : '● 已禁用';
+      }).catch(function() {
+        document.getElementById('sec-status').textContent = '--';
+      });
+    }
+
+    window.forceLogoutOtherDevices = function() {
+      if (!confirm('确定要退出其他所有设备的登录吗？')) return;
+      Utils.toast && Utils.toast('该功能待后续对接', 'info');
+    };
+
+    function showMsg(el, text, type) {
+      el.textContent = text;
+      el.style.color = type === 'success' ? 'var(--state-success)' : 'var(--state-error)';
+      el.classList.remove('hidden');
+      setTimeout(function() { el.classList.add('hidden'); }, 3000);
+    }
+
+    loadProfile();
+    loadNotificationPref();
+    lucide.createIcons();
+  })();
+  </script>
+</body>
+</html>

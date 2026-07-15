@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>消息通知 - 智约自习</title>
+  <link rel="stylesheet" href="colors_and_type.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+  <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+  <style type="text/tailwindcss">
+    @theme inline { --color-primary: var(--brand-primary); }
+    @layer base {
+      body { background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-family); }
+    }
+  </style>
+  <style>
+    .tab-btn.active { color: var(--brand-primary) !important; border-bottom: 2px solid var(--brand-primary); }
+    .notif-item { transition: all 0.15s; }
+    .notif-item:hover { background: var(--color-bg-secondary); }
+    .notif-item.unread { background: var(--brand-primary-lightest); }
+  </style>
+</head>
+<body class="min-h-screen" style="background: var(--color-bg-secondary);">
+  <div id="navbar-placeholder"></div>
+
+  <main class="mx-auto px-4 sm:px-6 py-6" style="max-width: 900px;">
+    <div class="flex items-center gap-3 mb-6">
+      <button onclick="history.back()" class="flex items-center gap-1 text-sm transition-colors" style="color:var(--brand-primary);background:none;border:none;cursor:pointer;">
+        <i data-lucide="arrow-left" style="width:16px;height:16px;"></i> 返回
+      </button>
+      <span class="text-sm" style="color:var(--color-text-tertiary);">/</span>
+      <h1 class="text-xl font-bold">消息通知</h1>
+    </div>
+
+    <!-- Tab + 操作栏 -->
+    <div class="rounded-t-xl flex items-center justify-between px-4 py-3" style="background: var(--surface-card); border: var(--surface-card-border); border-bottom: 0;">
+      <div class="flex gap-4">
+        <button class="tab-btn active pb-2 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="all" onclick="switchTab('all')">全部</button>
+        <button class="tab-btn pb-2 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="unread" onclick="switchTab('unread')" style="color:var(--color-text-tertiary);">未读</button>
+        <button class="tab-btn pb-2 text-sm font-medium border-0 bg-transparent cursor-pointer" data-tab="read" onclick="switchTab('read')" style="color:var(--color-text-tertiary);">已读</button>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="markAllRead()" class="text-xs px-3 py-1.5 rounded-md transition-colors flex items-center gap-1" style="color:var(--brand-primary);background:var(--brand-primary-lighter);border:none;cursor:pointer;">
+          <i data-lucide="check-check" style="width:13px;height:13px;"></i> 全部已读
+        </button>
+        <button onclick="loadNotifications()" class="text-xs px-3 py-1.5 rounded-md transition-colors flex items-center gap-1" style="color:var(--color-text-secondary);background:var(--color-bg-tertiary);border:none;cursor:pointer;">
+          <i data-lucide="refresh-cw" style="width:13px;height:13px;"></i> 刷新
+        </button>
+      </div>
+    </div>
+
+    <!-- 通知列表 -->
+    <div id="notif-list" class="rounded-b-xl divide-y" style="background: var(--surface-card); border: var(--surface-card-border);">
+      <div class="py-12 text-center text-sm" style="color:var(--color-text-tertiary);">
+        <i data-lucide="bell" style="width:32px;height:32px;display:block;margin:0 auto 8px;opacity:0.3;"></i>
+        加载中...
+      </div>
+    </div>
+
+    <!-- 分页 -->
+    <div id="notif-pagination" class="mt-4 flex items-center justify-center gap-2 hidden">
+      <button onclick="changePage(-1)" class="px-3 py-1.5 rounded-md text-sm transition-colors" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);">上一页</button>
+      <span id="page-info" class="text-sm" style="color:var(--color-text-secondary);">第 1 页 / 共 1 页</span>
+      <button onclick="changePage(1)" class="px-3 py-1.5 rounded-md text-sm transition-colors" style="background:var(--surface-card);border:1px solid var(--color-border);color:var(--color-text-primary);">下一页</button>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/request.js"></script>
+  <script src="js/navbar.js"></script>
+
+  <script>
+  (function() {
+    'use strict';
+
+    var currentTab = 'all';
+    var currentPage = 1;
+    var pageSize = 20;
+    var totalPages = 1;
+    var ws = null;
+
+    var user = Utils.getUser();
+    var token = Utils.getToken();
+    if (!token || !user) {
+      window.location.replace(AppConfig.loginUrl || (BasePath ? BasePath.public + '/login.html' : '/public/login.html'));
+      return;
+    }
+
+    var isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+    var navbarUrl = isAdmin ? '../admin/partials/navbar.html' : '../student/partials/navbar.html';
+    fetch(navbarUrl).then(function(r) { return r.text(); }).then(function(html) {
+      document.getElementById('navbar-placeholder').innerHTML = html;
+      if (window.initNavbarUI) initNavbarUI();
+      lucide.createIcons();
+    });
+
+    function getReadFlag() {
+      if (currentTab === 'unread') return 0;
+      if (currentTab === 'read') return 1;
+      return null;
+    }
+
+    window.switchTab = function(tab) {
+      currentTab = tab;
+      currentPage = 1;
+      document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        var isActive = btn.getAttribute('data-tab') === tab;
+        btn.classList.toggle('active', isActive);
+        btn.style.color = isActive ? 'var(--brand-primary)' : 'var(--color-text-tertiary)';
+      });
+      loadNotifications();
+    };
+
+    window.loadNotifications = function() {
+      var readFlag = getReadFlag();
+      var url = (AppConfig.apiBaseUrl || '') + '/notifications?pageNum=' + currentPage + '&pageSize=' + pageSize;
+      if (readFlag !== null) url += '&readFlag=' + readFlag;
+
+      fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+          if (res && res.code === 200) {
+            renderList(res.data && res.data.records ? res.data.records : []);
+            totalPages = (res.data && res.data.pages) || 1;
+            updatePagination();
+            if (window.initNavbarUI) initNavbarUI();
+          } else {
+            document.getElementById('notif-list').innerHTML =
+              '<div class="py-12 text-center text-sm" style="color:var(--state-error);">加载失败：' + (res.message || '未知错误') + '</div>';
+          }
+        })
+        .catch(function(err) {
+          document.getElementById('notif-list').innerHTML =
+            '<div class="py-12 text-center text-sm" style="color:var(--state-error);">网络错误，请稍后重试</div>';
+        });
+    };
+
+    function renderList(list) {
+      var container = document.getElementById('notif-list');
+      if (!list || list.length === 0) {
+        container.innerHTML =
+          '<div class="py-16 text-center text-sm" style="color:var(--color-text-tertiary);">' +
+          '<i data-lucide="inbox" style="width:40px;height:40px;display:block;margin:0 auto 8px;opacity:0.3;"></i>' +
+          '暂无消息</div>';
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+      var html = '';
+      list.forEach(function(n) {
+        var typeInfo = getTypeInfo(n.type);
+        var unread = n.readFlag === 0 ? ' unread' : '';
+        var time = formatTime(n.createdAt);
+        html +=
+          '<div class="notif-item' + unread + ' px-5 py-4 flex items-start gap-4 cursor-pointer" onclick="markAsRead(' + n.id + ')" data-id="' + n.id + '">' +
+          '  <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style="background:' + typeInfo.bg + ';color:' + typeInfo.color + ';">' +
+          '    <i data-lucide="' + typeInfo.icon + '" style="width:18px;height:18px;"></i>' +
+          '  </div>' +
+          '  <div class="flex-1 min-w-0">' +
+          '    <div class="flex items-center gap-2 mb-1">' +
+          '      <span class="text-sm font-semibold" style="color:var(--color-text-primary);">' + escapeHtml(n.title) + '</span>' +
+          (n.readFlag === 0 ? '<span class="w-2 h-2 rounded-full" style="background:var(--state-error);"></span>' : '') +
+          '    </div>' +
+          '    <p class="text-sm mb-1" style="color:var(--color-text-secondary);">' + escapeHtml(n.content) + '</p>' +
+          '    <span class="text-xs" style="color:var(--color-text-tertiary);">' + time + '</span>' +
+          '  </div>' +
+          (n.readFlag === 1
+            ? '<button onclick="event.stopPropagation();deleteNotification(' + n.id + ')" class="text-xs px-2 py-1 rounded transition-colors" style="color:var(--color-text-tertiary);background:transparent;border:none;cursor:pointer;" title="删除">' +
+              '<i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>'
+            : '<button onclick="event.stopPropagation();markAsRead(' + n.id + ')" class="text-xs px-2 py-1 rounded transition-colors" style="color:var(--brand-primary);background:var(--brand-primary-lighter);border:none;cursor:pointer;" title="标记已读">' +
+              '<i data-lucide="check" style="width:14px;height:14px;"></i></button>') +
+          '</div>';
+      });
+      container.innerHTML = html;
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function getTypeInfo(type) {
+      var map = {
+        'BOOKING_REMINDER': { icon: 'calendar-clock', color: 'var(--brand-primary)', bg: 'var(--brand-primary-lighter)' },
+        'BOOKING_SUCCESS': { icon: 'check-circle', color: 'var(--state-success)', bg: 'var(--state-success-bg)' },
+        'CHECKIN_REMINDER': { icon: 'log-in', color: 'var(--state-warning)', bg: 'var(--state-warning-bg)' },
+        'SYSTEM_NOTICE': { icon: 'info', color: 'var(--state-info)', bg: 'var(--state-info-bg)' },
+        'BLACKLIST_WARN': { icon: 'shield-alert', color: 'var(--state-error)', bg: 'var(--state-error-bg)' }
+      };
+      return map[type] || { icon: 'bell', color: 'var(--color-text-secondary)', bg: 'var(--color-bg-tertiary)' };
+    }
+
+    function formatTime(timeStr) {
+      if (!timeStr) return '';
+      try {
+        var d = new Date(timeStr);
+        var now = new Date();
+        var diff = (now - d) / 1000;
+        if (diff < 60) return '刚刚';
+        if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+        if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+        if (diff < 604800) return Math.floor(diff / 86400) + '天前';
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      } catch (e) { return timeStr; }
+    }
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function escapeHtml(s) {
+      if (!s) return '';
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function updatePagination() {
+      var pag = document.getElementById('notif-pagination');
+      if (totalPages <= 1) { pag.classList.add('hidden'); return; }
+      pag.classList.remove('hidden');
+      document.getElementById('page-info').textContent = '第 ' + currentPage + ' 页 / 共 ' + totalPages + ' 页';
+    }
+
+    window.changePage = function(delta) {
+      var next = currentPage + delta;
+      if (next < 1 || next > totalPages) return;
+      currentPage = next;
+      loadNotifications();
+    };
+
+    window.markAsRead = function(id) {
+      fetch((AppConfig.apiBaseUrl || '') + '/notifications/' + id + '/read', {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + token }
+      }).then(function(r) { return r.json(); })
+        .then(function(res) {
+          if (res && res.code === 200) {
+            loadNotifications();
+          }
+        });
+    };
+
+    window.markAllRead = function() {
+      fetch((AppConfig.apiBaseUrl || '') + '/notifications/read-all', {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + token }
+      }).then(function(r) { return r.json(); })
+        .then(function(res) {
+          if (res && res.code === 200) {
+            Utils.toast && Utils.toast('已全部标记为已读', 'success');
+            loadNotifications();
+          } else {
+            Utils.toast && Utils.toast(res.message || '操作失败', 'error');
+          }
+        });
+    };
+
+    window.deleteNotification = function(id) {
+      if (!confirm('确定删除该通知吗？')) return;
+      fetch((AppConfig.apiBaseUrl || '') + '/notifications/' + id, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+      }).then(function(r) { return r.json(); })
+        .then(function(res) {
+          if (res && res.code === 200) {
+            loadNotifications();
+          } else {
+            Utils.toast && Utils.toast(res.message || '删除失败', 'error');
+          }
+        });
+    };
+
+    // ===== WebSocket 实时接收 =====
+    function initWebSocket() {
+      try {
+        var baseUrl = (AppConfig.apiBaseUrl || 'http://localhost:8081/api').replace(/\/api$/, '');
+        var wsUrl = baseUrl.replace(/^http/, 'ws') + '/ws/notifications?token=' + encodeURIComponent(token);
+        ws = new WebSocket(wsUrl);
+        ws.onmessage = function(evt) {
+          try {
+            var msg = JSON.parse(evt.data);
+            if (msg.type === 'NOTIFICATION') {
+              Utils.toast && Utils.toast('收到新消息：' + msg.title, 'info');
+              loadNotifications();
+            }
+          } catch (e) { /* ignore */ }
+        };
+        ws.onclose = function() { setTimeout(initWebSocket, 5000); };
+        ws.onerror = function() { /* ignore */ };
+      } catch (e) {
+        console.warn('WebSocket初始化失败', e);
+      }
+    }
+
+    loadNotifications();
+    initWebSocket();
+    lucide.createIcons();
+  })();
+  </script>
+</body>
+</html>

@@ -313,6 +313,33 @@
     return null;
   };
 
+  /* ========== 本地偏好设置（localStorage） ========== */
+
+  var PREF_KEY = 'app:preference:booking';
+  var NOTIF_PREF_KEY = 'app:preference:notification';
+
+  Utils.getPreference = function () {
+    try {
+      var raw = localStorage.getItem(PREF_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  };
+
+  Utils.setPreference = function (pref) {
+    try { localStorage.setItem(PREF_KEY, JSON.stringify(pref || {})); } catch (e) {}
+  };
+
+  Utils.getNotificationPref = function () {
+    try {
+      var raw = localStorage.getItem(NOTIF_PREF_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  };
+
+  Utils.setNotificationPref = function (pref) {
+    try { localStorage.setItem(NOTIF_PREF_KEY, JSON.stringify(pref || {})); } catch (e) {}
+  };
+
   // 导出到全局
   window.Utils = Utils;
 })();

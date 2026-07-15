@@ -25,6 +25,12 @@
 
     <!-- 右侧：用户信息 -->
     <div class="flex items-center gap-3">
+      <!-- 消息通知按钮 -->
+      <a href="../../public/notifications.html" id="nav-notification-bell" class="relative p-2 rounded-md transition-colors no-underline" style="color: var(--color-text-secondary);" title="消息通知">
+        <i data-lucide="mail" style="width: 20px; height: 20px;"></i>
+        <span id="nav-notification-badge" class="hidden absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold flex items-center justify-center" style="background: var(--state-error); color: #fff;">0</span>
+      </a>
+
       <div class="flex items-center gap-2 cursor-pointer relative" id="user-menu-trigger" onclick="toggleUserMenu()">
         <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold" style="background: var(--brand-primary-lighter); color: var(--brand-primary);">
           <span id="navbar-user-avatar">U</span>
