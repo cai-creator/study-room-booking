@@ -11,6 +11,8 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -42,9 +44,14 @@ public class RoleInterceptor implements HandlerInterceptor {
             throw new BusinessException(ResultCode.UNAUTHORIZED);
         }
 
-        // 检查角色是否匹配
+        // 检查角色是否匹配（支持角色层级继承：SUPER_ADMIN 自动继承 ADMIN 的权限）
         String[] requiredRoles = annotation.value();
-        boolean hasRole = Arrays.asList(requiredRoles).contains(currentRole);
+        List<String> effectiveRoles = new ArrayList<>(Arrays.asList(requiredRoles));
+        if (effectiveRoles.contains("ADMIN") && !effectiveRoles.contains("SUPER_ADMIN")) {
+            effectiveRoles.add("SUPER_ADMIN");
+        }
+
+        boolean hasRole = effectiveRoles.contains(currentRole);
 
         if (!hasRole) {
             log.warn("角色权限不足: 当前角色={}, 需要角色={}, 路径={}", currentRole, Arrays.toString(requiredRoles), request.getServletPath());
