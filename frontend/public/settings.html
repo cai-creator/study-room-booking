@@ -163,6 +163,14 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
         通知设置
       </button>
+      <button id="tab-security" class="tab-btn flex items-center gap-1.5" data-tab="security" onclick="switchTab('security')" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+        安全设置
+      </button>
+      <button id="tab-workspace" class="tab-btn flex items-center gap-1.5" data-tab="workspace" onclick="switchTab('workspace')" style="display:none;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+        工作台
+      </button>
     </div>
 
     <!-- ===== Personal Info Form Card ===== -->
@@ -311,6 +319,117 @@
       </div>
     </div>
 
+    <!-- ===== Security Settings Card ===== -->
+    <div id="panel-security" class="rounded-xl p-5 sm:p-6 mb-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+      <div class="flex items-center gap-2 mb-1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+        <h2 class="text-base font-semibold" style="color: var(--color-text-primary);">安全设置</h2>
+      </div>
+      <p class="text-xs mb-5" style="color: var(--color-text-tertiary);">管理员账号安全配置</p>
+      <div class="space-y-3">
+        <div class="card-item flex items-center justify-between p-4 rounded-lg" style="background: var(--color-bg-secondary);">
+          <div>
+            <div class="text-sm font-medium" style="color: var(--color-text-primary);">账号状态</div>
+            <div id="sec-account-status" class="text-xs mt-1" style="color: var(--color-text-tertiary);">加载中...</div>
+          </div>
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--state-success-bg);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--state-success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+        </div>
+        <div class="card-item flex items-center justify-between p-4 rounded-lg" style="background: var(--color-bg-secondary);">
+          <div>
+            <div class="text-sm font-medium" style="color: var(--color-text-primary);">登录设备管理</div>
+            <div class="text-xs mt-1" style="color: var(--color-text-tertiary);">查看活跃会话并退出其他设备</div>
+          </div>
+          <button onclick="forceLogoutOtherDevices()" class="text-xs px-3 py-1.5 rounded-md transition-colors" style="color: var(--state-error); background: var(--state-error-bg); border: none; cursor: pointer;">退出其他设备</button>
+        </div>
+        <div class="card-item flex items-center justify-between p-4 rounded-lg" style="background: var(--color-bg-secondary);">
+          <div>
+            <div class="text-sm font-medium" style="color: var(--color-text-primary);">登录失败锁定</div>
+            <div class="text-xs mt-1" style="color: var(--color-text-tertiary);">连续5次登录失败将自动锁定30分钟</div>
+          </div>
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--state-info-bg);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--state-info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+          </div>
+        </div>
+        <div class="card-item flex items-center justify-between p-4 rounded-lg" style="background: var(--color-bg-secondary);">
+          <div>
+            <div class="text-sm font-medium" style="color: var(--color-text-primary);">二次验证（2FA）</div>
+            <div class="text-xs mt-1" style="color: var(--color-text-tertiary);">管理员敏感操作二次身份验证</div>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded-md" style="background: var(--color-bg-tertiary); color: var(--color-text-tertiary);">待启用</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Workspace Card ===== -->
+    <div id="panel-workspace" class="rounded-xl p-5 sm:p-6 mb-6 hidden" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
+      <div class="flex items-center gap-2 mb-1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+        <h2 class="text-base font-semibold" style="color: var(--color-text-primary);">工作台</h2>
+      </div>
+      <p class="text-xs mb-5" style="color: var(--color-text-tertiary);">管理员工作概览</p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <a href="../admin/pages/space-management.html" class="card-item rounded-xl p-4 text-center no-underline" style="background: var(--color-bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border);">
+          <div class="w-10 h-10 rounded-lg mx-auto mb-3 flex items-center justify-center" style="background: var(--brand-primary-lighter);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          </div>
+          <div class="text-sm font-medium">空间管理</div>
+          <div class="text-xs mt-1" style="color: var(--color-text-tertiary);">校区·楼栋·楼层</div>
+        </a>
+        <a href="../admin/pages/user-management.html" class="card-item rounded-xl p-4 text-center no-underline" style="background: var(--color-bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border);">
+          <div class="w-10 h-10 rounded-lg mx-auto mb-3 flex items-center justify-center" style="background: var(--state-success-bg);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--state-success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="text-sm font-medium">用户管理</div>
+          <div class="text-xs mt-1" style="color: var(--color-text-tertiary);">学生/管理员</div>
+        </a>
+        <a href="../admin/pages/blacklist.html" class="card-item rounded-xl p-4 text-center no-underline" style="background: var(--color-bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border);">
+          <div class="w-10 h-10 rounded-lg mx-auto mb-3 flex items-center justify-center" style="background: var(--state-error-bg);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--state-error)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><line x1="9" x2="15" y1="9" y2="15"/><line x1="15" x2="9" y1="9" y2="15"/></svg>
+          </div>
+          <div class="text-sm font-medium">黑名单</div>
+          <div class="text-xs mt-1" style="color: var(--color-text-tertiary);">爽约管理</div>
+        </a>
+        <a href="../admin/pages/reports.html" class="card-item rounded-xl p-4 text-center no-underline" style="background: var(--color-bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border);">
+          <div class="w-10 h-10 rounded-lg mx-auto mb-3 flex items-center justify-center" style="background: var(--state-warning-bg);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--state-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+          </div>
+          <div class="text-sm font-medium">数据报表</div>
+          <div class="text-xs mt-1" style="color: var(--color-text-tertiary);">使用率分析</div>
+        </a>
+      </div>
+      <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <a href="notifications.html" class="card-item rounded-xl p-4 flex items-center gap-4 no-underline transition-colors" style="background: var(--color-bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border);">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--brand-primary-lighter);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          </div>
+          <div>
+            <div class="text-sm font-medium">消息通知</div>
+            <div class="text-xs" style="color: var(--color-text-tertiary);">查看所有消息</div>
+          </div>
+        </a>
+        <a href="../admin/pages/dashboard.html" class="card-item rounded-xl p-4 flex items-center gap-4 no-underline transition-colors" style="background: var(--color-bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border);">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--state-info-bg);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--state-info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          </div>
+          <div>
+            <div class="text-sm font-medium">大屏看板</div>
+            <div class="text-xs" style="color: var(--color-text-tertiary);">实时使用率</div>
+          </div>
+        </a>
+        <button onclick="alert('操作日志查看: 待后续对接')" class="card-item rounded-xl p-4 flex items-center gap-4 text-left transition-colors" style="background: var(--color-bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border); cursor: pointer;">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: var(--state-warning-bg);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--state-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M5 12h.01M12 5h.01M12 19h.01M19 12h.01"/></svg>
+          </div>
+          <div>
+            <div class="text-sm font-medium">操作日志</div>
+            <div class="text-xs" style="color: var(--color-text-tertiary);">审计历史操作</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
     <!-- ===== Account Security Card ===== -->
     <div class="rounded-xl p-5 sm:p-6 mb-6" style="background: var(--surface-card); border: var(--surface-card-border); box-shadow: var(--shadow-sm);">
       <h2 class="text-base font-semibold mb-4" style="color: var(--color-text-primary);">账号安全</h2>
@@ -433,8 +552,13 @@
       document.getElementById('panel-profile').classList.toggle('hidden', tab !== 'profile');
       document.getElementById('panel-password').classList.toggle('hidden', tab !== 'password');
       document.getElementById('panel-notification').classList.toggle('hidden', tab !== 'notification');
+      var secPanel = document.getElementById('panel-security');
+      var wsPanel = document.getElementById('panel-workspace');
+      if (secPanel) secPanel.classList.toggle('hidden', tab !== 'security');
+      if (wsPanel) wsPanel.classList.toggle('hidden', tab !== 'workspace');
       if (tab === 'profile') loadProfile();
       if (tab === 'notification') loadNotificationPreference();
+      if (tab === 'security') loadSecurity();
     };
 
     function loadProfile() {
@@ -462,7 +586,7 @@
 
       if (dispName) dispName.textContent = data.realName || data.username || '--';
       if (roleBadge) roleBadge.textContent = getRoleLabel(data.role);
-      if (profileId) profileId.textContent = '学号: ' + (data.username || '--');
+      if (profileId) profileId.textContent = (data.role === 'ADMIN' || data.role === 'SUPER_ADMIN' ? '工号: ' : '学号: ') + (data.username || '--');
       if (profileAvatar) profileAvatar.textContent = (data.realName || data.username || 'U').charAt(0);
       if (avatarEl) avatarEl.textContent = (data.realName || data.username || 'U').charAt(0);
       if (nameEl) nameEl.textContent = data.realName || data.username || '';
@@ -666,8 +790,34 @@
         if (statsRow) statsRow.style.display = 'none';
         var tabNotif = document.getElementById('tab-notification');
         if (tabNotif) tabNotif.style.display = 'none';
+        var tabSecurity = document.getElementById('tab-security');
+        if (tabSecurity) tabSecurity.style.display = '';
+        var tabWorkspace = document.getElementById('tab-workspace');
+        if (tabWorkspace) tabWorkspace.style.display = '';
+        var profileIdEl = document.getElementById('profile-id');
+        if (profileIdEl) profileIdEl.textContent = '工号: ' + (user.username || '--');
       }
     }
+
+    function loadSecurity() {
+      AuthAPI.getCurrentUser().then(function(data) {
+        var statusEl = document.getElementById('sec-account-status');
+        if (!statusEl) return;
+        if (data.status === 1) {
+          statusEl.innerHTML = '<span style="color: var(--state-success);">● 正常</span>';
+        } else {
+          statusEl.innerHTML = '<span style="color: var(--state-error);">● 已禁用</span>';
+        }
+      }).catch(function() {
+        var statusEl = document.getElementById('sec-account-status');
+        if (statusEl) statusEl.innerHTML = '<span style="color: var(--color-text-tertiary);">--</span>';
+      });
+    }
+
+    window.forceLogoutOtherDevices = function() {
+      if (!confirm('确定要退出其他所有设备的登录吗？')) return;
+      alert('该功能待后续对接');
+    };
 
     initByRole();
     loadProfile();
