@@ -55,6 +55,8 @@
 
   // ========= 统一导航栏 UI 初始化 =========
   window.initNavbarUI = function () {
+    fixNavbarPaths();
+
     var user = (window.Utils && Utils.getUser) ? Utils.getUser() : null;
 
     if (user) {
@@ -123,6 +125,59 @@
         }
       })
       .catch(function () { /* 静默失败 */ });
+  }
+
+  function fixNavbarPaths() {
+    var path = window.location.pathname;
+
+    var inStudentRoot = /\/student\/[^/]+\.html$/.test(path) && !/\/student\/pages\//.test(path);
+    var inAdminRoot   = /\/admin\/[^/]+\.html$/.test(path)   && !/\/admin\/pages\//.test(path);
+    var inPublic      = /\/public\//.test(path);
+
+    if (!inStudentRoot && !inAdminRoot && !inPublic) return;
+
+    // data-page 导航链接
+    var pagePrefix = '';
+    if (inStudentRoot) pagePrefix = 'pages/';
+    else if (inAdminRoot) pagePrefix = 'pages/';
+    else if (inPublic) {
+      var hasHomeLink = document.querySelector('a[data-page="home.html"]') !== null;
+      pagePrefix = hasHomeLink ? '../student/pages/' : '../admin/pages/';
+    }
+
+    document.querySelectorAll('.nav-link[data-page]').forEach(function (link) {
+      var href = link.getAttribute('href');
+      if (!href || href.indexOf('://') !== -1 || href.charAt(0) === '/') return;
+      if (href.indexOf(pagePrefix) !== 0) {
+        link.setAttribute('href', pagePrefix + href);
+      }
+    });
+
+    // Logo 链接
+    document.querySelectorAll('nav a[href]').forEach(function (link) {
+      var href = link.getAttribute('href');
+      if (!href || href.indexOf('://') !== -1 || href.charAt(0) === '/') return;
+
+      if (inStudentRoot && href === 'home.html') {
+        link.setAttribute('href', 'pages/home.html');
+      } else if (inAdminRoot && href === 'space-management.html') {
+        link.setAttribute('href', 'pages/space-management.html');
+      } else if (inPublic) {
+        if (href === 'home.html') {
+          link.setAttribute('href', '../student/pages/home.html');
+        } else if (href === 'space-management.html') {
+          link.setAttribute('href', '../admin/pages/space-management.html');
+        }
+      }
+    });
+
+    // ../../public/ 相关链接（设置、通知）在 public 目录下需修正
+    document.querySelectorAll('a[href*="../../public/"]').forEach(function (link) {
+      var href = link.getAttribute('href');
+      if (inPublic && href.indexOf('../../public/') === 0) {
+        link.setAttribute('href', href.replace('../../public/', './'));
+      }
+    });
   }
 
   // 向后兼容：保留旧函数名作为别名
